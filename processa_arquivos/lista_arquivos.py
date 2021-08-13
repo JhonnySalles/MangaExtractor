@@ -31,4 +31,4 @@ def percorreDiretorio(caminho='', manga='', linguagem=''):
                     capitulo = pasta[pasta.index("capitulo"):]
                     capitulo = capitulo.replace("capitulo", "").strip()
 
-                print("volume: " + volume + " - capítulo: " + capitulo + " - scan: " + scan)
+                
