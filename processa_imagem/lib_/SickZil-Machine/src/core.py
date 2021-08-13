@@ -9,15 +9,9 @@ import numpy as np
 import utils.imutils as iu
 import utils.fp as fp
 
-
-
-config = tf.ConfigProto()
+config = tf.compat.v1.ConfigProto()
 config.gpu_options.allow_growth = True
 graph = tf.Graph()
-
-
-
-
 
 seg_limit = 4000000 # dev-machine: state, and init with user info...
 compl_limit = 657666 #  then.. what is the optimal size?
@@ -40,7 +34,7 @@ def load_model(mpath, version):
             )
 load_model(consts.SNETPATH, '0.1.0')
 load_model(consts.CNETPATH, '0.1.0')
-sess = tf.Session(config=config,graph=graph)
+sess = tf.compat.v1.Session(config=config,graph=graph)
 
 
 #----------------------------------------------------------------
