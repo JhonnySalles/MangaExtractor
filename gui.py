@@ -8,7 +8,7 @@ from banco.bdUtil import testaConexao, criaTabela, gravarDados
 
 ###################################################
 #Simular um teste sem abrir a janela
-isTeste = True
+isTeste = False
 
 def teste():
     operacao = Operacao("a", "F:/Novapasta", "pt")
