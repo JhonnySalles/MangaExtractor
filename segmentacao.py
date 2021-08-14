@@ -2,7 +2,7 @@ import os
 originalWorkingPath=os.getcwd()
 import sys
 sys.path.append("./lib_/SickZil-Machine/src/")
-#Dentro de core está com o caminho fixo para SNETPATH e CNETPATH
+#Dentro do arquivo consts core está com o caminho fixo para SNETPATH e CNETPATH
 import core
 import imgio
 import utils.fp as fp

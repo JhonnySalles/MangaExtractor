@@ -2,7 +2,7 @@
 import json
 import utils.futils as fu
 
-FOLDERPATH = 'F:/Projeto/MangaExtractor/processa_imagem/lib_/SickZil-Machine/resource'
+FOLDERPATH = 'F:/Projeto/MangaExtractor/lib_/SickZil-Machine/resource'
 
 config = {}
 def load_config(config_fpath = FOLDERPATH + '/config.json'):

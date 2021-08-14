@@ -12,10 +12,10 @@ import subprocess
 from classes import Texto
 
 class TextOcr():
-    def __init__(self,  language, ocrType):
+    def __init__(self, operacao):
         self.service=None
-        self.ocrType=ocrType
-        self.language = language
+        self.ocrType=operacao.ocrType
+        self.language = operacao.linguagem
 
 
     def getGoogleCred(self,):
@@ -110,7 +110,7 @@ class TextOcr():
     def getTextFromImg(self,imgPath,rectList,textOnlyFolder):
         fileName=os.path.basename(imgPath)
         img = cv2.imread(textOnlyFolder+fileName)
-        textos = []
+        texto = []
         rectP,rect=rectList
         sequencia = 0
         for x1,y1,x2,y2 in rectP: 
@@ -124,9 +124,9 @@ class TextOcr():
 
             print(text)
             if text.strip() != "":
-                textos.append(Texto(text,sequencia,x1,y1,x2,y2))
+                texto.append(Texto(text,sequencia,x1,y1,x2,y2))
                 sequencia += 1
-        
-        return textos
+                
+        return texto
         
  

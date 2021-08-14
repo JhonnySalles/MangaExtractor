@@ -9,13 +9,14 @@ from ocr import TextOcr
 from classes import Manga
 
 class ImageProcess:
-    def __init__(self, language, manga, folder):
+    def __init__(self, operacao):
         pass
 
         # Caminhos temporários
-        self.language = language
-        self.manga = manga
-        self.folder = folder
+        self.operacao = operacao
+        self.language = operacao.linguagem
+        self.manga = operacao.manga
+        self.folder = ''.join(operacao.caminho + "/").replace("//","/")
         self.tempFolder = self.folder + "tmp/"
         self.textOnlyFolder=self.tempFolder+"textOnly/"
         self.inpaintedFolder=self.tempFolder+"inpainted/"
@@ -31,7 +32,8 @@ class ImageProcess:
 
     def limpaDiretorios(self):
         for filePath in [self.textOnlyFolder, self.inpaintedFolder, self.transalatedFolder]:
-            shutil.rmtree(filePath)
+            if os.path.exists(filePath):
+                shutil.rmtree(filePath)
             os.makedirs(filePath)
 
     def extraiInformacoesDiretorio(self, diretorio):
@@ -61,48 +63,48 @@ class ImageProcess:
         manga.isScan = isScan
 
         return manga
+
+    def criaClasseManga(self, diretorio, arquivo):
+        manga = None
+        if self.operacao.isFolder:
+            manga = self.extraiInformacoesDiretorio(diretorio)
+        else:
+            manga = Manga(self.operacao.manga, self.operacao.volume, self.operacao.capitulo)
+            manga.scan = self.operacao.scan
+            manga.isScan = bool(manga.scan.strip() == "")
+
+        manga.nomePagina = arquivo
+        manga.arquivo = os.path.join(diretorio, arquivo)
+        md5hash = hashlib.md5(Image.open(os.path.join(diretorio, arquivo)).tobytes())
+        manga.hashPagina = md5hash.hexdigest()
+        return manga
                 
     def processaImagens(self):
         self.criaDiretorios
-        textos = []
+        processados = []
 
         segmentacao = TextSegmenation()
         deteccao = TextDetection(0.025)
-        ocr = TextOcr(self.language, "windowocr")
-
+        ocr = TextOcr(self.operacao)
+        
+        print("Iniciado o processamento....")
         for diretorio, subpastas, arquivos in os.walk(self.folder):
-            if "tmp" in subpastas: #Exclui as pastas temporárias
+            if "tmp" in subpastas: #Ignora as pastas temporárias da busca
                 subpastas.remove("tmp")
                 continue
 
             for arquivo in arquivos:
                 if arquivo.lower().endswith(('.png', '.jpg', '.jpeg')):
                     print(os.path.join(diretorio, arquivo)) # Caminho completo
-                    manga = self.extraiInformacoesDiretorio(diretorio)
-                    manga.nomePagina = arquivo
-                    manga.arquivo = os.path.join(diretorio, arquivo)
-                    md5hash = hashlib.md5(Image.open(os.path.join(diretorio, arquivo)).tobytes())
-                    manga.hashPagina = md5hash.hexdigest()
+                    manga = self.criaClasseManga(diretorio, arquivo)
 
                     segmentacao.segmentPage(os.path.join(diretorio, arquivo),self.inpaintedFolder,self.textOnlyFolder)
                     coordenadas = deteccao.textDetect(os.path.join(diretorio, arquivo),self.textOnlyFolder)
-                    textos = ocr.getTextFromImg(os.path.join(diretorio, arquivo),coordenadas,self.textOnlyFolder)
-                    manga.addTexto(textos)
+                    manga.textos = ocr.getTextFromImg(os.path.join(diretorio, arquivo),coordenadas,self.textOnlyFolder)
+                    processados.append(manga)
+
                     break
+            #Faz a limpeza para que arquivos com o mesmo nome não impactem
+            self.limpaDiretorios()
 
-            #self.limpaDiretorios()
-
-        return textos
-
-
-def main():
-    processa = ImageProcess("jp", "Flywing", "F:/Novapasta/")
-    textos = processa.processaImagens()
-    print(textos)
-
-if __name__ == '__main__':
-    main()
-
-
-
-                            
+        return processados                           

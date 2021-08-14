@@ -27,3 +27,17 @@ class Manga:
 
     def addTexto(self, texto):
         self.textos.append(texto)
+
+class Operacao:
+    def __init__(self, manga, caminho, linguagem):
+        pass
+        
+        self.manga = manga
+        self.caminho = caminho
+        self.linguagem = linguagem
+        self.volume = None
+        self.capitulo = None
+        self.scan = None
+        self.base = manga
+        self.isFolder = False
+        self.ocrType = "windowocr"
