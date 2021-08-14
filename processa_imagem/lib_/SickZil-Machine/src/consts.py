@@ -2,8 +2,10 @@
 import json
 import utils.futils as fu
 
+FOLDERPATH = 'F:/Projeto/MangaExtractor/processa_imagem/lib_/SickZil-Machine/resource'
+
 config = {}
-def load_config(config_fpath = './resource/config.json'):
+def load_config(config_fpath = FOLDERPATH + '/config.json'):
     global config
     with open(config_fpath) as f:
         config = json.load(f)
@@ -20,8 +22,8 @@ PREV_MASKDIR = 'prev_' + MASKDIR
 # core config
 #TF_CPP_MIN_LOG_LEVEL = '1' #'3'
 TF_CPP_MIN_LOG_LEVEL = '3'
-SNETPATH = './resource/snet/snet-0.1.0.pb'
-CNETPATH = './resource/cnet/cnet-0.1.0.pb'
+SNETPATH = FOLDERPATH + '/snet/snet-0.1.0.pb'
+CNETPATH = FOLDERPATH + '/cnet/cnet-0.1.0.pb'
 #TODO: it.. has.. some... smell...
 def model_name(mpath, version):
     return {
