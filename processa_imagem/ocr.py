@@ -9,15 +9,17 @@ from tqdm import tqdm
 import cv2
 import re
 import subprocess
+from classes import Texto
 
 class TextOcr():
-    def __init__(self, ocrType):
+    def __init__(self,  language, ocrType):
         self.service=None
         self.ocrType=ocrType
+        self.language = language
 
 
     def getGoogleCred(self,):
-        SCOPES = ['https://www.googleapis.com/auth/drive']
+        SCOPES = ['https://console.cloud.google.com/']
         creds = None
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
@@ -40,7 +42,12 @@ class TextOcr():
         return service
 
     def filterText(self,inputText):
-        inputText = re.sub('[\\\\+/§◎*)@<>#%(&=$_\-^01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz:;«¢~「」〃ゝゞヽヾ一●▲・ヽ÷①↓®▽■◆『£〆∴∞▼™↑←]', '', inputText)   #remove special char
+        if (self.language == "jp"):
+            caracteres = '[\\\\+/§◎*)@<>#%(&=$_\-^01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz:;«¢~「」〃ゝゞヽヾ一●▲・ヽ÷①↓®▽■◆『£〆∴∞▼™↑←]'
+        else:
+            caracteres = '[\\\\+/§◎*)@<>#%(&=$_\-^«¢~「」〃ゝゞヽヾ一●▲・ヽ÷①↓®▽■◆『£〆∴∞▼™↑←]'     
+        
+        inputText = re.sub(caracteres, '', inputText)   #remove special cha
         inputText = ''.join(inputText.split())    #remove whitespace
         return inputText
 
@@ -71,8 +78,10 @@ class TextOcr():
                 with  open(txtPath, "r", encoding="utf-8" ) as f:   text_google = f.read()    #txt to str
                 text_google=text_google.replace('\ufeff', '') 
                 text_google=self.filterText(text_google)
+                print(text_google)
             except:
                 exceptionCount+=1
+                print('exception')
                 continue
             break
         return text_google   
@@ -101,18 +110,23 @@ class TextOcr():
     def getTextFromImg(self,imgPath,rectList,textOnlyFolder):
         fileName=os.path.basename(imgPath)
         img = cv2.imread(textOnlyFolder+fileName)
-        textList=[]
+        textos = []
         rectP,rect=rectList
+        sequencia = 0
         for x1,y1,x2,y2 in rectP: 
-          # Cropping the text block for giving input to OCR 
-          cropped = img[y1: y2, x1: x2] 
-          
-          if self.ocrType=="googleocr":
-            text=self.getTextGoogleOcr(cropped)          
-          elif self.ocrType=="windowocr":
-            text=self.getTextWindowOcr(cropped)
-          textList+=[text]
+            # Cropping the text block for giving input to OCR 
+            cropped = img[y1: y2, x1: x2] 
+
+            if self.ocrType=="googleocr":
+                text=self.getTextGoogleOcr(cropped)          
+            elif self.ocrType=="windowocr":
+                text=self.getTextWindowOcr(cropped)
+
+            print(text)
+            if text.strip() != "":
+                textos.append(Texto(text,sequencia,x1,y1,x2,y2))
+                sequencia += 1
         
-        return textList
+        return textos
         
  

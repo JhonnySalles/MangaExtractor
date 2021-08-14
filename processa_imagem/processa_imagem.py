@@ -1,0 +1,108 @@
+import os
+import shutil
+from PIL import Image
+from numpy.lib.function_base import append
+import hashlib
+from segmentacao import TextSegmenation
+from detecao import TextDetection
+from ocr import TextOcr
+from classes import Manga
+
+class ImageProcess:
+    def __init__(self, language, manga, folder):
+        pass
+
+        # Caminhos temporários
+        self.language = language
+        self.manga = manga
+        self.folder = folder
+        self.tempFolder = self.folder + "tmp/"
+        self.textOnlyFolder=self.tempFolder+"textOnly/"
+        self.inpaintedFolder=self.tempFolder+"inpainted/"
+        self.transalatedFolder=self.tempFolder+"translated/"
+    
+    def criaDiretorios(self):
+        for filePath in [self.textOnlyFolder, self.inpaintedFolder, self.transalatedFolder]:
+            if not os.path.exists(filePath):
+                os.makedirs(filePath)
+            else:
+                shutil.rmtree(filePath)
+                os.makedirs(filePath)
+
+    def limpaDiretorios(self):
+        for filePath in [self.textOnlyFolder, self.inpaintedFolder, self.transalatedFolder]:
+            shutil.rmtree(filePath)
+            os.makedirs(filePath)
+
+    def extraiInformacoesDiretorio(self, diretorio):
+        pasta = os.path.basename(diretorio) # Pasta que está
+
+        if "[" in pasta:
+            scan = pasta[pasta.index("["):pasta.index("]")]
+            scan = scan.replace("[","").replace("]","").strip()
+            isScan = bool(scan) # Caso a scan seja vazia será falso
+        else:
+            scan = ""
+            isScan = bool("FALSE")
+
+        pasta = pasta.lower()
+        volume = pasta[pasta.index("volume"):pasta.index("-", pasta.index("volume"))]
+        volume = volume.replace("volume", "").strip()
+
+        if "capítulo" in pasta:
+            capitulo = pasta[pasta.index("capítulo"):]
+            capitulo = capitulo.replace("capítulo", "").strip()
+        else:
+            capitulo = pasta[pasta.index("capitulo"):]
+            capitulo = capitulo.replace("capitulo", "").strip()
+
+        manga = Manga(self.manga, volume, capitulo)
+        manga.scan = scan
+        manga.isScan = isScan
+
+        return manga
+                
+    def processaImagens(self):
+        self.criaDiretorios
+        textos = []
+
+        segmentacao = TextSegmenation()
+        deteccao = TextDetection(0.025)
+        ocr = TextOcr(self.language, "windowocr")
+
+        for diretorio, subpastas, arquivos in os.walk(self.folder):
+            if "tmp" in subpastas: #Exclui as pastas temporárias
+                subpastas.remove("tmp")
+                continue
+
+            for arquivo in arquivos:
+                if arquivo.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    print(os.path.join(diretorio, arquivo)) # Caminho completo
+                    manga = self.extraiInformacoesDiretorio(diretorio)
+                    manga.nomePagina = arquivo
+                    manga.arquivo = os.path.join(diretorio, arquivo)
+                    md5hash = hashlib.md5(Image.open(os.path.join(diretorio, arquivo)).tobytes())
+                    manga.hashPagina = md5hash.hexdigest()
+
+                    segmentacao.segmentPage(os.path.join(diretorio, arquivo),self.inpaintedFolder,self.textOnlyFolder)
+                    coordenadas = deteccao.textDetect(os.path.join(diretorio, arquivo),self.textOnlyFolder)
+                    textos = ocr.getTextFromImg(os.path.join(diretorio, arquivo),coordenadas,self.textOnlyFolder)
+                    manga.addTexto(textos)
+                    break
+
+            #self.limpaDiretorios()
+
+        return textos
+
+
+def main():
+    processa = ImageProcess("jp", "Flywing", "F:/Novapasta/")
+    textos = processa.processaImagens()
+    print(textos)
+
+if __name__ == '__main__':
+    main()
+
+
+
+                            

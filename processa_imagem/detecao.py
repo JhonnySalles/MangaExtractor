@@ -23,7 +23,6 @@ class TextDetection():
         Rect = [cv2.boundingRect(i) for i in contours]                                              #no padding, box    #x,y,w,h
         RectP = [(max(int(i[0]-noiseSizeParam),0),max(int(i[1]-noiseSizeParam),0),min(int(i[0]+i[2]+noiseSizeParam),img.shape[1]),min(int(i[1]+i[3]+noiseSizeParam),img.shape[0])) for i in Rect]       #with padding, box  x1,y1,x2,y2 
 
-        
         return RectP,Rect
 
     def textDetect(self,imgPath,textOnlyFolder):
@@ -31,7 +30,4 @@ class TextDetection():
         img = cv2.imread(textOnlyFolder+fileName)
         rectP,rect= self.text_detect(img,ele_size=(int(img.shape[0]*self.contourSize),int(img.shape[0]*self.contourSize)))  #x,y
         rectList=[rectP,rect]
-            
         return rectList
-
-
