@@ -24,7 +24,7 @@ O programa percorre as imagens na pasta informada o sistema irá realizar um pr�
 
 Após realizar o tratamento da imagem, será identificado as coordenadas na imagem que contém texto e processado individualmente utilizando os procedimentos do [text detection](https://github.com/qzane/text-detection)
 
-Com as imagens recortadas em uma lista será então utilizado o WindowsOCR para o reconhcimento dos textos em cada seguimento da imagem.
+Com as imagens recortadas em uma lista será então utilizado o WinOCR para o reconhcimento dos textos em cada seguimento da imagem.
 
 Após obter as informações e gerar um objeto contendo as informações, estará salvando elas em um banco MySQL, no qual deve ser previamente criado.
 
