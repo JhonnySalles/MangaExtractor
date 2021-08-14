@@ -122,8 +122,8 @@ class TextOcr():
             elif self.ocrType=="windowocr":
                 text=self.getTextWindowOcr(cropped)
 
-            print(text)
             if text.strip() != "":
+                print(text)
                 texto.append(Texto(text,sequencia,x1,y1,x2,y2))
                 sequencia += 1
                 

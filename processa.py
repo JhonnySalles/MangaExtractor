@@ -103,7 +103,6 @@ class ImageProcess:
                     manga.textos = ocr.getTextFromImg(os.path.join(diretorio, arquivo),coordenadas,self.textOnlyFolder)
                     processados.append(manga)
 
-                    break
             #Faz a limpeza para que arquivos com o mesmo nome não impactem
             self.limpaDiretorios()
 
