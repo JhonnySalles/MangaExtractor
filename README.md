@@ -16,6 +16,7 @@
  <a href="#Exemplos">Exemplos</a>
 </p>
 
+
 ## Sobre
 
 Programa foi criado em Python utilizando de alguns recursos e apis a fim de estar reconhecendo os caracteres e convertendo para texto editável.
@@ -27,6 +28,7 @@ Após realizar o tratamento da imagem, será identificado as coordenadas na imag
 Com as imagens recortadas em uma lista será então utilizado o WinOCR para o reconhcimento dos textos em cada seguimento da imagem.
 
 Após obter as informações e gerar um objeto contendo as informações, estará salvando elas em um banco MySQL, no qual deve ser previamente criado.
+
 
 ### Estrutura da classe
     Class
@@ -48,6 +50,7 @@ Após obter as informações e gerar um objeto contendo as informações, estar�
     
 > Classe com informações da página que está sendo processada
 
+
 ### Estrutura do banco de dados
 
 | id | manga | volume | capitulo | nome_pagina | numero_pagina | linguagem | hash_pagina |
@@ -65,10 +68,12 @@ Após obter as informações e gerar um objeto contendo as informações, estar�
 
 > Tabela referente as informações dos textos identificados dos balões de fala
 
+
 ## Histórico de Release
 
 * 0.0.1
     * Em progresso.
+
 
 ### Features
 
@@ -76,10 +81,11 @@ Após obter as informações e gerar um objeto contendo as informações, estar�
 - [X] Segmentação da imagem em partes menores
 - [X] Reconhecimento OCR dos textos
 - [X] Obter a posição do texto na imagem
-- [X] Salvar as informações no banco de dados
+- [X] Salvar as informações no banco de dados,
+- [X] Tesseract
 - [ ] Melhoria no reconhecimento do texto
 - [ ] API Cloud Vision 
-- [ ] Tesseract
+
 
 ## Contribuindo
 
@@ -94,6 +100,7 @@ Após obter as informações e gerar um objeto contendo as informações, estar�
 [travis-image]: https://img.shields.io/travis/dbader/node-datadog-metrics/master.svg?style=flat-square
 [travis-url]: https://travis-ci.org/dbader/node-datadog-metrics
 [wiki]: https://github.com/yourname/MangaExtractor/wiki
+
 
 ## Exemplos
 
