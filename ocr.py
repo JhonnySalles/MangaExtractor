@@ -22,6 +22,14 @@ class TextOcr():
         self.ocrType=operacao.ocrType
         self.language = operacao.linguagem
         self.tesseractLocation = ''.join(operacao.pastaTesseract + '/tesseract.exe').replace('//', '/')
+        self.tesseractConfig = None
+
+        if (self.language == 'ja'):
+            self.tesseractConfig = r' -l jpn+jpn_vert '
+        elif (self.language == 'en'):
+            self.tesseractConfig = r' -l eng '
+        elif (self.language == 'pt'):
+            self.tesseractConfig = r' -l por '
 
     def getGoogleCred(self,):
         SCOPES = ['https://console.cloud.google.com/']
@@ -122,7 +130,12 @@ class TextOcr():
         inputFile="lib_/input.jpg"
         cv2.imwrite(inputFile, img)  
         pytesseract.pytesseract.tesseract_cmd=self.tesseractLocation
-        text = pytesseract.image_to_string(Image.open(inputFile))
+
+        if not (self.tesseractConfig is None):
+            text = pytesseract.image_to_string(Image.open(inputFile), config=self.tesseractConfig)
+        else:
+            text = pytesseract.image_to_string(Image.open(inputFile))
+
         text=self.filterText(text)
         return text
         

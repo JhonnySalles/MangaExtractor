@@ -32,7 +32,10 @@ class ImageProcess:
     def extraiInformacoesDiretorio(self, diretorio):
         pasta = os.path.basename(diretorio) # Pasta que está
 
-        if "[" in pasta:
+        if ("[JPN]" in pasta.upper()) or ("[JAP]" in pasta.upper()):
+            scan = ""
+            isScan = bool("FALSE")
+        elif "[" in pasta:
             scan = pasta[pasta.index("["):pasta.index("]")]
             scan = scan.replace("[","").replace("]","").strip()
             isScan = bool(scan) # Caso a scan seja vazia será falso
@@ -41,13 +44,17 @@ class ImageProcess:
             isScan = bool("FALSE")
 
         pasta = pasta.lower()
-        volume = pasta[pasta.index("volume"):pasta.index("-", pasta.index("volume"))]
-        volume = volume.replace("volume", "").strip()
 
         if "capítulo" in pasta:
+            volume = pasta[pasta.index("volume"):pasta.index("capítulo")]
+            volume = volume.replace("volume", "").replace("-", "").strip()
+
             capitulo = pasta[pasta.index("capítulo"):]
             capitulo = capitulo.replace("capítulo", "").strip()
         else:
+            volume = pasta[pasta.index("volume"):pasta.index("capitulo")]
+            volume = volume.replace("volume", "").replace("-", "").strip()
+
             capitulo = pasta[pasta.index("capitulo"):]
             capitulo = capitulo.replace("capitulo", "").strip()
 
@@ -109,7 +116,5 @@ class ImageProcess:
                     manga.numeroPagina = pagina
                     manga.linguagem = self.language
                     processados.append(manga)
-
-            break
 
         return processados                           
