@@ -6,7 +6,7 @@ import sys
 from PySimpleGUI.PySimpleGUI import ConvertArgsToSingleString
 sys.path.append("./banco/")
 
-from processa import ImageProcess
+from processa import ImageProcess, extraiNomeDiretorio
 from classes import Operacao
 from banco.bdUtil import BdUtil, testaConexao
 
@@ -36,7 +36,7 @@ layout = [  [sg.Text('Caminho', text_color='orangered', size =(15, 1)), sg.Input
             [sg.Text('Scan',size =(15, 1)), sg.InputText(key='scan')],
             [sg.Text('Base', text_color='orangered', size =(15, 1)), sg.InputText(key='base')],
             [sg.Text('Caminho Tesseract', text_color='cornflowerblue',size =(15, 1)), sg.Input(key='tesseract', default_text='C:/Program Files/Tesseract-OCR'), sg.FolderBrowse('Selecionar pasta')],
-            [sg.Text('Linguagem',size =(15, 1)),sg.Combo(['Português','Japonês','Inglês','Japonês (vertical)','Japonês (horizontal)'],default_value='Português',key='linguagem',size =(15, 1))],
+            [sg.Text('Linguagem',size =(15, 1)),sg.Combo(['Português','Japonês','Inglês','Japonês (vertical)','Japonês (horizontal)'],default_value='Japonês',key='linguagem',size =(15, 1))],
             [sg.Text('Recurso OCR',size =(15, 1)),sg.Combo(['WinOCR','Tesseract'], default_value='Tesseract', key='ocrtype',size =(15, 1))],
             [sg.Checkbox('Carregar Informações da pasta?', default=True, key="get_informacao")],
             [sg.Multiline(size=(80,10), key='-OUTPUT-')],
@@ -59,7 +59,7 @@ def validaCampos(values):
     if (values['caminho'].strip() == ''):
         aviso('Favor informar um caminho de origem!')
         return False
-    elif not os.exits(''.join(values['caminho']).replace('\\', '/').replace('//', '/')):
+    elif not os.path.exists(''.join(values['caminho']).replace('\\', '/').replace('//', '/')):
         aviso('Caminho informado não encontrado!')
         return False
 
@@ -67,7 +67,7 @@ def validaCampos(values):
         aviso('Favor informar um nome!')
         return False
 
-    if (values['Base'].strip() == ''):
+    if (values['base'].strip() == ''):
         aviso('Favor informar uma base!')
         return False
 
@@ -126,39 +126,18 @@ def extraiInformacoesDiretorio(values):
     caminho = values["caminho"]
 
     if (os.path.exists(caminho)):
-        caminho = values["caminho"]
         manga = values["manga"]
-        scan = values['scan']
         pasta = ""
 
         for diretorio, subpastas, arquivos in os.walk(caminho):
             if "tmp" in subpastas: #Ignora as pastas temporárias da busca
                 subpastas.remove("tmp")
-                continue
 
-            pasta = os.path.basename(diretorio)
-            if ("[JPN]" in pasta.upper()) or ("[JAP]" in pasta.upper()):
-                pasta = pasta.replace("[JAP]", "").replace("[JPN]", "")
-                scan = ""
-            elif "[" in pasta:
-                scan = pasta[pasta.index("["):pasta.index("]")]
-                scan = scan.replace("[","").replace("]","").strip()
-                pasta = pasta.replace("[", "").replace("]", "").replace(scan, "").strip()
-
-            if ("volume" in pasta.lower()):
-                pasta = pasta[:pasta.lower().index("volume")]
-            elif ("capitulo" in pasta.lower()):
-                pasta = pasta[:pasta.lower().index("capitulo")]
-            elif ("capítulo" in pasta.lower()):
-                pasta = pasta[:pasta.lower().index("capítulo")]
-
-            pasta = pasta.replace(" - ", "").strip()
-            manga = pasta
+            pasta = subpastas[0]
+            manga = extraiNomeDiretorio(pasta)
             break
 
-        window['caminho'].Update(caminho)
         window['manga'].Update(manga)
-        window['scan'].Update(scan)
 
 if isTeste:
     teste(None)

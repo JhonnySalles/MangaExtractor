@@ -24,8 +24,6 @@ class TextDetection():
         else:
             contours, hierarchy = res
 
-
-        
         noiseSizeParam=int(ele_size[0]/3)
         contours=[i for i in contours if i.shape[0]>noiseSizeParam** 2]     
         Rect = [cv2.boundingRect(i) for i in contours]                                              #no padding, box    #x,y,w,h

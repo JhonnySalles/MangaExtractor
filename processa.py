@@ -9,6 +9,26 @@ from ocr import TextOcr
 from classes import Manga
 from termcolor import colored
 from banco.bdUtil import gravarDados
+
+def extraiNomeDiretorio(diretorio):
+    pasta = os.path.basename(diretorio) # Pasta que está
+
+    if ("[JPN]" in pasta.upper()) or ("[JAP]" in pasta.upper()) or ("[JNP]" not in pasta.upper()):
+        pasta = pasta.replace("[JPN]", "").replace("[JAP]", "").replace("[JNP]", "")
+    elif "[" in pasta:
+        scan = pasta[pasta.index("["):pasta.index("]")]
+        pasta = pasta.replace(scan, "")
+
+    pasta = pasta.replace(" - ", " ")
+
+    if ("volume" in pasta.lower()):
+        pasta = pasta[:pasta.lower().rindex("volume")]
+    elif ("capítulo" in pasta.lower()):
+        pasta = pasta[:pasta.lower().rindex("capítulo")]
+    elif ("capitulo" in pasta.lower()):
+        pasta = pasta[:pasta.lower().rindex("capitulo")]
+
+    return pasta.replace("  ", " ").strip()
 class ImageProcess:
     def __init__(self, operacao):
         pass
@@ -16,7 +36,7 @@ class ImageProcess:
         # Caminhos temporários
         self.operacao = operacao
         self.language = operacao.linguagem
-        self.manga = operacao.manga
+        self.mangaNome = operacao.mangaNome
         self.folder = ''.join(operacao.caminho + "/").replace("//","/")
         self.tempFolder = self.folder + "tmp/"
         self.textOnlyFolder=self.tempFolder+"textOnly/"
@@ -28,35 +48,6 @@ class ImageProcess:
             if os.path.exists(filePath):
                 shutil.rmtree(filePath)
             os.makedirs(filePath)
-
-    def extraiNomeDiretorio(self, diretorio):
-        if not self.operacao.getNomePasta:
-            return
-
-        pasta = os.path.basename(diretorio) # Pasta que está
-
-        if ("[JPN]" in pasta.upper()) or ("[JAP]" in pasta.upper()) or ("[JNP]" not in pasta.upper()):
-            pasta = pasta.replace("[JPN]", "").replace("[JAP]", "").replace("[JNP]", "")
-        elif "[" in pasta:
-            scan = pasta[pasta.index("["):pasta.index("]")]
-            pasta = pasta.replace(scan, "")
- 
-        pasta = pasta.replace(" - ", "")
-
-        if ("capítulo" in pasta.lower()) or ("capitulo" in pasta.lower()) or ("extra" in pasta.lower()):
-            if "capítulo" in pasta.lower():
-                volume = pasta[pasta.lower().index("volume"):pasta.lower().index("capítulo")]
-                capitulo = pasta[pasta.index("capítulo"):]
-            elif "capitulo" in pasta.lower() :
-                volume = pasta[pasta.lower().index("volume"):pasta.lower().index("capitulo")]
-                capitulo = pasta[pasta.lower().index("capitulo"):]
-            elif "extra" in pasta.lower() :
-                volume = pasta[pasta.lower().index("volume"):pasta.lower().index("extra")]
-                capitulo = pasta[pasta.lower().index("extra"):]
-
-            pasta = pasta.replace(volume, "").replace(capitulo, "")
-
-        self.manga = pasta
 
     def extraiInformacoesDiretorio(self, diretorio):
         pasta = os.path.basename(diretorio) # Pasta que está
@@ -71,29 +62,31 @@ class ImageProcess:
 
         pasta = pasta.lower()
 
+        volume = 0
+        capitulo = 0
         isExtra  = False
-        if ("capítulo" in pasta) or ("capitulo" in pasta) or ("extra" in pasta):
+        if ("capítulo" in pasta) or ("capitulo" in pasta) or (("extra" in pasta) and (pasta.rindex("volume") < pasta.rindex("extra"))):
             if "capítulo" in pasta :
-                volume = pasta[pasta.index("volume"):pasta.index("capítulo")]
+                volume = pasta[pasta.rindex("volume"):pasta.rindex("capítulo")]
                 volume = volume.replace("volume", "").replace("-", "").strip()
 
-                capitulo = pasta[pasta.index("capítulo"):]
+                capitulo = pasta[pasta.rindex("capítulo"):]
                 capitulo = capitulo.replace("capítulo", "").strip()
             elif "capitulo" in pasta :
-                volume = pasta[pasta.index("volume"):pasta.index("capitulo")]
+                volume = pasta[pasta.rindex("volume"):pasta.rindex("capitulo")]
                 volume = volume.replace("volume", "").replace("-", "").strip()
 
-                capitulo = pasta[pasta.index("capitulo"):]
+                capitulo = pasta[pasta.rindex("capitulo"):]
                 capitulo = capitulo.replace("capitulo", "").strip()
-            elif "extra" in pasta :
-                volume = pasta[pasta.index("volume"):pasta.index("extra")]
+            elif "extra" in pasta:
+                volume = pasta[pasta.rindex("volume"):pasta.rindex("extra")]
                 volume = volume.replace("volume", "").replace("-", "").strip()
 
-                capitulo = pasta[pasta.index("extra"):]
+                capitulo = pasta[pasta.rindex("extra"):]
                 capitulo = capitulo.replace("extra", "").strip()
-                isExtra  = True
+                isExtra  = True            
 
-        manga = Manga(self.manga, volume, capitulo)
+        manga = Manga(self.mangaNome, volume, capitulo)
         manga.scan = scan
         manga.isScan = isScan
         manga.isExtra = isExtra
@@ -105,9 +98,9 @@ class ImageProcess:
         if self.operacao.getInformacaoPasta:
             manga = self.extraiInformacoesDiretorio(diretorio)
         else:
-            manga = Manga(self.operacao.manga, self.operacao.volume, self.operacao.capitulo)
+            manga = Manga(self.operacao.mangaNome, self.operacao.volume, self.operacao.capitulo)
             manga.scan = self.operacao.scan
-            manga.isScan = bool(manga.scan.strip() == "")
+            manga.isScan = bool(manga.scan)
 
         manga.nomePagina = arquivo
         manga.arquivo = os.path.join(diretorio, arquivo)
@@ -132,7 +125,11 @@ class ImageProcess:
 
             #Faz a limpeza da pasta temporaria para que arquivos com o mesmo nome não impactem
             self.limpaDiretorios()
-            self.extraiNomeDiretorio(diretorio)
+            if self.operacao.getNomePasta:
+                self.mangaNome = extraiNomeDiretorio(diretorio)
+                print(colored("Nome obtido: " + self.mangaNome, 'yellow', attrs=['reverse', 'blink'])) # Caminho completo
+                if not self.operacao.isTeste:
+                    self.operacao.logMemo.print("Nome obtido: " + self.mangaNome, text_color='yellow')
 
             i += 1
             pagina = 0

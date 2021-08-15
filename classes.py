@@ -23,21 +23,21 @@ class Manga:
         self.hashPagina = ""
         self.scan = ""
         self.isScan = False
+        self.isExtra = False
 
     def addTexto(self, texto):
         self.textos.append(texto)
 
 class Operacao:
-    def __init__(self, window, base, manga, caminho, linguagem):
+    def __init__(self, window, base, mangaNome, caminho, linguagem):
         pass
         
-        self.manga = manga
+        self.mangaNome = mangaNome
         self.caminho = caminho.replace('\\','/')
         self.linguagem = linguagem.lower()
         self.textoVertical = None
         self.volume = None
         self.capitulo = None
-        self.isExtra = False
         self.scan = None
         self.base = base
         self.getInformacaoPasta = True
