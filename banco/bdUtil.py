@@ -8,7 +8,8 @@ volumes = """
         id INT NOT NULL AUTO_INCREMENT,
         manga LONGTEXT NOT NULL,
         volume INT(4) NOT NULL,
-        capitulo INT(11) NOT NULL,
+        capitulo DOUBLE NOT NULL,
+        is_extra Tinyint(1) DEFAULT '0',
         nome_pagina VARCHAR(250) NOT NULL,
         numero_pagina INT(11),
         linguagem VARCHAR(4),
@@ -25,10 +26,10 @@ textos = """
         id_volume INT(11) NOT NULL,
         sequencia INT(4),
         texto LONGTEXT NOT NULL,
-        posicao_x1 double DEFAULT NULL,
-        posicao_y1 double DEFAULT NULL,
-        posicao_x2 double DEFAULT NULL,
-        posicao_y2 double DEFAULT NULL, PRIMARY KEY (id),
+        posicao_x1 DOUBLE DEFAULT NULL,
+        posicao_y1 DOUBLE DEFAULT NULL,
+        posicao_x2 DOUBLE DEFAULT NULL,
+        posicao_y2 DOUBLE DEFAULT NULL, PRIMARY KEY (id),
         KEY %s_volumes_%s_textos_fk (id_volume),
         CONSTRAINT %s_volumes_%s_textos_fk FOREIGN KEY (id_volume) REFERENCES %s_volumes (id) ON DELETE CASCADE ON UPDATE CASCADE
     ) CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -44,13 +45,13 @@ updateTexto = """
     WHERE id = %s
 """
 
-selectVolume = 'SELECT id FROM {} WHERE manga = %s AND volume = %s AND capitulo = %s AND nome_pagina = %s '
+selectVolume = 'SELECT id FROM {} WHERE manga = %s AND volume = %s AND capitulo = %s AND is_extra = %s AND nome_pagina = %s '
 insertVolume = """
-    INSERT INTO {} (manga, volume, capitulo, nome_pagina, numero_pagina, linguagem, hash_pagina, scan, is_raw, is_processado) 
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 0)
+    INSERT INTO {} (manga, volume, capitulo, is_extra, nome_pagina, numero_pagina, linguagem, hash_pagina, scan, is_raw, is_processado) 
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0)
 """
 updateVolume = """
-    UPDATE {} SET manga = %s, volume = %s, capitulo = %s, nome_pagina = %s, numero_pagina = %s, linguagem = %s,
+    UPDATE {} SET manga = %s, volume = %s, capitulo = %s, is_extra = %s, nome_pagina = %s, numero_pagina = %s, linguagem = %s,
         hash_pagina = %s, scan = %s, is_raw = %s, is_processado = 0
     WHERE id = %s
 """
@@ -142,7 +143,7 @@ class BdUtil:
 
             try :
                 id = None
-                args = (manga.nome, manga.volume, manga.capitulo, manga.nomePagina)
+                args = (manga.nome, manga.volume, manga.capitulo, manga.isExtra, manga.nomePagina)
                 cursor = conexao.cursor(buffered=True)
                 sql = selectVolume.format(self.operacao.base + '_volumes')
                 cursor.execute(sql, args)
@@ -150,7 +151,7 @@ class BdUtil:
                 if cursor.rowcount > 0:
                     try:
                         id = cursor.fetchone()[0]
-                        args = (manga.nome, manga.volume, manga.capitulo, manga.nomePagina, 
+                        args = (manga.nome, manga.volume, manga.capitulo, manga.isExtra, manga.nomePagina, 
                                 manga.numeroPagina, manga.linguagem, manga.hashPagina, manga.scan,
                                 manga.isScan, id)
                         sql = updateVolume.format(self.operacao.base + '_volumes')
@@ -166,7 +167,7 @@ class BdUtil:
                             self.operacao.logMemo.print(f'{cursor.rowcount} registro(s) atualizado com sucesso.')
                 else:
                     try:
-                        args = (manga.nome, manga.volume, manga.capitulo, manga.nomePagina, 
+                        args = (manga.nome, manga.volume, manga.capitulo, manga.isExtra, manga.nomePagina, 
                                 manga.numeroPagina, manga.linguagem, manga.hashPagina, manga.scan, manga.isScan)
                         sql = insertVolume.format(self.operacao.base + '_volumes')
                         cursor.execute(sql, args)

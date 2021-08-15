@@ -29,44 +29,80 @@ class ImageProcess:
                 shutil.rmtree(filePath)
             os.makedirs(filePath)
 
+    def extraiNomeDiretorio(self, diretorio):
+        if not self.operacao.getNomePasta:
+            return
+
+        pasta = os.path.basename(diretorio) # Pasta que está
+
+        if ("[JPN]" in pasta.upper()) or ("[JAP]" in pasta.upper()) or ("[JNP]" not in pasta.upper()):
+            pasta = pasta.replace("[JPN]", "").replace("[JAP]", "").replace("[JNP]", "")
+        elif "[" in pasta:
+            scan = pasta[pasta.index("["):pasta.index("]")]
+            pasta = pasta.replace(scan, "")
+ 
+        pasta = pasta.replace(" - ", "")
+
+        if ("capítulo" in pasta.lower()) or ("capitulo" in pasta.lower()) or ("extra" in pasta.lower()):
+            if "capítulo" in pasta.lower():
+                volume = pasta[pasta.lower().index("volume"):pasta.lower().index("capítulo")]
+                capitulo = pasta[pasta.index("capítulo"):]
+            elif "capitulo" in pasta.lower() :
+                volume = pasta[pasta.lower().index("volume"):pasta.lower().index("capitulo")]
+                capitulo = pasta[pasta.lower().index("capitulo"):]
+            elif "extra" in pasta.lower() :
+                volume = pasta[pasta.lower().index("volume"):pasta.lower().index("extra")]
+                capitulo = pasta[pasta.lower().index("extra"):]
+
+            pasta = pasta.replace(volume, "").replace(capitulo, "")
+
+        self.manga = pasta
+
     def extraiInformacoesDiretorio(self, diretorio):
         pasta = os.path.basename(diretorio) # Pasta que está
 
-        if ("[JPN]" in pasta.upper()) or ("[JAP]" in pasta.upper()):
-            scan = ""
-            isScan = bool("FALSE")
-        elif "[" in pasta:
-            scan = pasta[pasta.index("["):pasta.index("]")]
-            scan = scan.replace("[","").replace("]","").strip()
-            isScan = bool(scan) # Caso a scan seja vazia será falso
-        else:
-            scan = ""
-            isScan = bool("FALSE")
+        scan = ""
+        isScan = False
+        if ("[" in pasta):
+            if ("[JPN]" not in pasta.upper()) and ("[JNP]" not in pasta.upper()) and ("[JPN]" not in pasta.upper()): 
+                scan = pasta[pasta.index("["):pasta.index("]")]
+                scan = scan.replace("[","").replace("]","").strip()
+                isScan = bool(scan) # Caso a scan seja vazia será falso 
 
         pasta = pasta.lower()
 
-        if "capítulo" in pasta:
-            volume = pasta[pasta.index("volume"):pasta.index("capítulo")]
-            volume = volume.replace("volume", "").replace("-", "").strip()
+        isExtra  = False
+        if ("capítulo" in pasta) or ("capitulo" in pasta) or ("extra" in pasta):
+            if "capítulo" in pasta :
+                volume = pasta[pasta.index("volume"):pasta.index("capítulo")]
+                volume = volume.replace("volume", "").replace("-", "").strip()
 
-            capitulo = pasta[pasta.index("capítulo"):]
-            capitulo = capitulo.replace("capítulo", "").strip()
-        else:
-            volume = pasta[pasta.index("volume"):pasta.index("capitulo")]
-            volume = volume.replace("volume", "").replace("-", "").strip()
+                capitulo = pasta[pasta.index("capítulo"):]
+                capitulo = capitulo.replace("capítulo", "").strip()
+            elif "capitulo" in pasta :
+                volume = pasta[pasta.index("volume"):pasta.index("capitulo")]
+                volume = volume.replace("volume", "").replace("-", "").strip()
 
-            capitulo = pasta[pasta.index("capitulo"):]
-            capitulo = capitulo.replace("capitulo", "").strip()
+                capitulo = pasta[pasta.index("capitulo"):]
+                capitulo = capitulo.replace("capitulo", "").strip()
+            elif "extra" in pasta :
+                volume = pasta[pasta.index("volume"):pasta.index("extra")]
+                volume = volume.replace("volume", "").replace("-", "").strip()
+
+                capitulo = pasta[pasta.index("extra"):]
+                capitulo = capitulo.replace("extra", "").strip()
+                isExtra  = True
 
         manga = Manga(self.manga, volume, capitulo)
         manga.scan = scan
         manga.isScan = isScan
+        manga.isExtra = isExtra
 
         return manga
 
     def criaClasseManga(self, diretorio, arquivo):
         manga = None
-        if self.operacao.isFolder:
+        if self.operacao.getInformacaoPasta:
             manga = self.extraiInformacoesDiretorio(diretorio)
         else:
             manga = Manga(self.operacao.manga, self.operacao.volume, self.operacao.capitulo)
@@ -96,6 +132,7 @@ class ImageProcess:
 
             #Faz a limpeza da pasta temporaria para que arquivos com o mesmo nome não impactem
             self.limpaDiretorios()
+            self.extraiNomeDiretorio(diretorio)
 
             i += 1
             pagina = 0

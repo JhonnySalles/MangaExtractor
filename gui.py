@@ -15,7 +15,7 @@ from banco.bdUtil import BdUtil, testaConexao
 isTeste = False
 
 def teste(window):
-    operacao = Operacao(window, "b", "F:/Novapasta", "ja")
+    operacao = Operacao(window, "teste",  "teste", "F:/Novapasta", "ja")
     operacao.ocrType = 'tesseract'
     operacao.isTeste = isTeste 
 
@@ -28,18 +28,19 @@ def teste(window):
 #################################################
 sg.theme('Black')   # Cores
 # Layout
-layout = [  [sg.Text('Caminho',text_color='orangered',size =(15, 1)), sg.Input(key='caminho', enable_events=True), sg.FolderBrowse('Selecionar pasta') ],
-            [sg.Text('Manga',text_color='orangered',size =(15, 1)), sg.InputText(key='manga')],
+layout = [  [sg.Text('Caminho', text_color='orangered', size =(15, 1)), sg.Input(key='caminho', enable_events=True, default_text='C:/'), sg.FolderBrowse('Selecionar pasta') ],
+            [sg.Text('Nome Manga', text_color='cornflowerblue', size =(15, 1)), sg.Input(key='manga', enable_events=True)],
+            [sg.Checkbox('Obter o nome do manga da pasta?', default=False, key="get_nome")],
             [sg.Text('Volume',size =(15, 1)), sg.InputText(key='volume')],
             [sg.Text('Capitulo',size =(15, 1)), sg.InputText(key='capitulo')],
             [sg.Text('Scan',size =(15, 1)), sg.InputText(key='scan')],
-            [sg.Text('Base',size =(15, 1)), sg.InputText(key='base')],
+            [sg.Text('Base', text_color='orangered', size =(15, 1)), sg.InputText(key='base')],
             [sg.Text('Caminho Tesseract', text_color='cornflowerblue',size =(15, 1)), sg.Input(key='tesseract', default_text='C:/Program Files/Tesseract-OCR'), sg.FolderBrowse('Selecionar pasta')],
-            [sg.Text('Linguagem',size =(15, 1)),sg.Combo(['Português','Japonês','Inglês'],default_value='Português',key='linguagem',size =(15, 1))],
-            [sg.Text('Recurso OCR',size =(15, 1)),sg.Combo(['WinOCR','Tesseract'],default_value='Tesseract',key='ocrtype',size =(15, 1))],
-            [sg.Checkbox('Carregar Informações da pasta', default=True, key="pasta")],
+            [sg.Text('Linguagem',size =(15, 1)),sg.Combo(['Português','Japonês','Inglês','Japonês (vertical)','Japonês (horizontal)'],default_value='Português',key='linguagem',size =(15, 1))],
+            [sg.Text('Recurso OCR',size =(15, 1)),sg.Combo(['WinOCR','Tesseract'], default_value='Tesseract', key='ocrtype',size =(15, 1))],
+            [sg.Checkbox('Carregar Informações da pasta?', default=True, key="get_informacao")],
             [sg.Multiline(size=(80,10), key='-OUTPUT-')],
-            [sg.ProgressBar(1000, orientation='h', size=(41, 5), key='progressbar')],
+            [sg.ProgressBar(100, orientation='h', size=(41, 5), key='progressbar')],
             [sg.Button('Ok',size =(30, 1)), sg.Text('',size =(7, 1)), sg.Button('Cancel',size =(30, 1))] ]
 
 # Create the Window
@@ -55,8 +56,19 @@ def validaCampos(values):
             aviso('Tesseract não encontrado, favor verificar o caminho informado!')
             return False
 
-    if ((values['caminho'].strip() == '') or (values['manga'].strip() == '')):
-        aviso('Favor verificar os campos obrigatórios!')
+    if (values['caminho'].strip() == ''):
+        aviso('Favor informar um caminho de origem!')
+        return False
+    elif not os.exits(''.join(values['caminho']).replace('\\', '/').replace('//', '/')):
+        aviso('Caminho informado não encontrado!')
+        return False
+
+    if (values['manga'].strip() == '') and ((not values['get_nome']) or (values['get_informacao'])):
+        aviso('Favor informar um nome!')
+        return False
+
+    if (values['Base'].strip() == ''):
+        aviso('Favor informar uma base!')
         return False
 
     return True
@@ -66,25 +78,31 @@ def aviso(text):
 
 def carrega(values):
 
+    vertical = None
     linguagem = ""
-    if (values['manga'] == 'Japonês'):
+    if (values['linguagem'] == 'Japonês'):
         linguagem = "ja"
-    elif (values['manga'] == 'Inglês'):
+    elif (values['linguagem'] == 'Inglês'):
         linguagem = "en"
+    elif (values['linguagem'] == 'Japonês (horizontal)'):
+        linguagem = "ja"
+        vertical = False
+    elif (values['linguagem'] == 'Japonês (vertical)'):
+        linguagem = "ja"
+        vertical  = True
     else:
         linguagem = "pt"
 
-    operacao = Operacao(window, values['manga'], values['caminho'], linguagem)
+    operacao = Operacao(window, values['base'], values['manga'], values['caminho'], linguagem)
         
     operacao.volume = values['volume']
     operacao.capitulo = values['capitulo']
     operacao.scan = values['scan']
-    operacao.isFolder = values['pasta']
+    operacao.getNomePasta = values['get_nome']
+    operacao.getInformacaoPasta = values['get_informacao']
     operacao.ocrType = values['ocrtype'].lower()
     operacao.pastaTesseract = ''.join(values['tesseract'].strip()).replace('\\', '/').replace('//', '/').replace('tesseract.exe', '')
-
-    if values['base'].strip() != "": 
-        operacao.base = values['base']
+    operacao.textoVertical = vertical
 
     return operacao
 
@@ -100,6 +118,9 @@ def processar(values):
 def thread_process():
     processar(values)
     aviso('Processamento concluido.')
+
+def eventoManga(values):
+    window['base'].Update(values['manga'])
 
 def extraiInformacoesDiretorio(values):
     caminho = values["caminho"]
@@ -148,6 +169,8 @@ else:
             break
         elif event == 'caminho':
             extraiInformacoesDiretorio(values)
+        elif event == 'manga':
+            eventoManga(values)
         elif event == 'Ok':
             if not testaConexao():
                 aviso('Não foi possível conectar ao banco de dados')

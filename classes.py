@@ -28,17 +28,20 @@ class Manga:
         self.textos.append(texto)
 
 class Operacao:
-    def __init__(self, window, manga, caminho, linguagem):
+    def __init__(self, window, base, manga, caminho, linguagem):
         pass
         
         self.manga = manga
         self.caminho = caminho.replace('\\','/')
         self.linguagem = linguagem.lower()
+        self.textoVertical = None
         self.volume = None
         self.capitulo = None
+        self.isExtra = False
         self.scan = None
-        self.base = manga
-        self.isFolder = True
+        self.base = base
+        self.getInformacaoPasta = True
+        self.getNomePasta = False
         self.ocrType = "winocr"
         self.pastaTesseract = "C:/Program Files/Tesseract-OCR"
         self.isTeste = window is None

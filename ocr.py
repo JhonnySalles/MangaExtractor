@@ -25,7 +25,12 @@ class TextOcr():
         self.tesseractConfig = None
 
         if (self.language == 'ja'):
-            self.tesseractConfig = r' -l jpn+jpn_vert '
+            if (self.operacao.textoVertical is None):
+                self.tesseractConfig = r' -l jpn+jpn_vert '
+            elif (self.operacao.textoVertical):
+                self.tesseractConfig = r' -l jpn_vert '
+            elif (not self.operacao.textoVertical):
+                self.tesseractConfig = r' -l jpn '
         elif (self.language == 'en'):
             self.tesseractConfig = r' -l eng '
         elif (self.language == 'pt'):
@@ -131,7 +136,7 @@ class TextOcr():
         cv2.imwrite(inputFile, img)  
         pytesseract.pytesseract.tesseract_cmd=self.tesseractLocation
 
-        if not (self.tesseractConfig is None):
+        if (self.tesseractConfig is not None):
             text = pytesseract.image_to_string(Image.open(inputFile), config=self.tesseractConfig)
         else:
             text = pytesseract.image_to_string(Image.open(inputFile))

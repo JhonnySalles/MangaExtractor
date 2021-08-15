@@ -44,13 +44,15 @@ CREATE TABLE `exemplo_volumes` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `manga` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
   `volume` int(4) NOT NULL,
-  `capitulo` int(11) NOT NULL,
+  `capitulo` double NOT NULL,
+  `is_extra` tinyint(1) DEFAULT NULL,
   `nome_pagina` varchar(250) COLLATE utf8mb4_unicode_ci NOT NULL,
   `numero_pagina` int(11) DEFAULT NULL,
   `linguagem` varchar(4) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `hash_pagina` varchar(250) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `scan` varchar(250) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `is_raw` tinyint(1) DEFAULT NULL,
+  `is_processado` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
