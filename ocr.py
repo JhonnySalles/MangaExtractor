@@ -160,7 +160,7 @@ class TextOcr():
                 log = "  • " + text
                 print(log)
                 if not self.operacao.isTeste:
-                    self.operacao.window['-OUTPUT-'].print(log)
+                    self.operacao.logMemo.print(log)
                 texto.append(Texto(text,sequencia,x1,y1,x2,y2))
                 sequencia += 1
                 

@@ -8,7 +8,7 @@ sys.path.append("./banco/")
 
 from processa import ImageProcess
 from classes import Operacao
-from banco.bdUtil import BdUtil, gravarDados, testaConexao
+from banco.bdUtil import BdUtil, testaConexao
 
 ###################################################
 #Simular um teste sem abrir a janela
@@ -23,8 +23,7 @@ def teste(window):
     operacao.base = db.criaTabela(operacao.base)
 
     processa = ImageProcess(operacao)
-    processados = processa.processaImagens()
-    gravarDados(operacao, processados)
+    processa.processaImagens()
 
 #################################################
 sg.theme('Black')   # Cores
@@ -40,10 +39,13 @@ layout = [  [sg.Text('Caminho',text_color='orangered',size =(15, 1)), sg.Input(k
             [sg.Text('Recurso OCR',size =(15, 1)),sg.Combo(['WinOCR','Tesseract'],default_value='Tesseract',key='ocrtype',size =(15, 1))],
             [sg.Checkbox('Carregar Informações da pasta', default=True, key="pasta")],
             [sg.Multiline(size=(80,10), key='-OUTPUT-')],
+            [sg.ProgressBar(1000, orientation='h', size=(41, 5), key='progressbar')],
             [sg.Button('Ok',size =(30, 1)), sg.Text('',size =(7, 1)), sg.Button('Cancel',size =(30, 1))] ]
 
 # Create the Window
 window = sg.Window('Manga Text Extractor', layout)
+progress = window['progressbar']
+logMemo = window['-OUTPUT-']
 
 def validaCampos(values):
 
@@ -93,8 +95,7 @@ def processar(values):
     operacao.base = db.criaTabela(operacao.base)
 
     processa = ImageProcess(operacao)
-    processados = processa.processaImagens()
-    gravarDados(operacao, processados)
+    processa.processaImagens()
 
 def thread_process():
     processar(values)

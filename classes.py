@@ -40,6 +40,11 @@ class Operacao:
         self.base = manga
         self.isFolder = True
         self.ocrType = "winocr"
-        self.window = window
         self.pastaTesseract = "C:/Program Files/Tesseract-OCR"
-        self.isTeste = False
+        self.isTeste = window is None
+        self.window = window
+
+        if not self.isTeste:
+            self.logMemo = window['-OUTPUT-']
+            self.progress = window['progressbar']
+

@@ -8,7 +8,7 @@ from detecao import TextDetection
 from ocr import TextOcr
 from classes import Manga
 from termcolor import colored
-
+from banco.bdUtil import gravarDados
 class ImageProcess:
     def __init__(self, operacao):
         pass
@@ -78,26 +78,28 @@ class ImageProcess:
         md5hash = hashlib.md5(Image.open(os.path.join(diretorio, arquivo)).tobytes())
         manga.hashPagina = md5hash.hexdigest()
         return manga
-                
+      
     def processaImagens(self):
-        processados = []
-
         segmentacao = TextSegmenation()
         deteccao = TextDetection(0.025)
         ocr = TextOcr(self.operacao)
         
+        i = 0
         print("Iniciado o processamento....")
         if not self.operacao.isTeste:
-            self.operacao.window['-OUTPUT-'].print("Iniciado o processamento....")
+            self.operacao.logMemo.print("Iniciado o processamento....")
+            self.operacao.window['progressbar'].Update(len(os.listdir(self.folder)))
 
         for diretorio, subpastas, arquivos in os.walk(self.folder):
-            if "tmp" in subpastas: #Ignora as pastas temporárias da busca
-                subpastas.remove("tmp")
-                continue
+            subpastas[:] = [sub for sub in subpastas if sub not in ['tmp']] #Ignora as pastas temporárias da busca
+            subpastas[:] = [sub for sub in subpastas if "capa" not in sub.lower()] #Ignora as pastas de capa
 
-             #Faz a limpeza para que arquivos com o mesmo nome não impactem
+            #Faz a limpeza da pasta temporaria para que arquivos com o mesmo nome não impactem
             self.limpaDiretorios()
+
+            i += 1
             pagina = 0
+            processados = []
             for arquivo in arquivos:
                 if arquivo.lower().endswith(('.png', '.jpg', '.jpeg')):
                     pagina += 1
@@ -106,7 +108,7 @@ class ImageProcess:
 
                     print(colored(log, 'green', attrs=['reverse', 'blink'])) # Caminho completo
                     if not self.operacao.isTeste:
-                        self.operacao.window['-OUTPUT-'].print(log, text_color='cyan')
+                        self.operacao.logMemo.print(log, text_color='cyan')
 
                     manga = self.criaClasseManga(diretorio, arquivo)
 
@@ -117,4 +119,10 @@ class ImageProcess:
                     manga.linguagem = self.language
                     processados.append(manga)
 
-        return processados                           
+            if len(processados) > 0:
+                gravarDados(self.operacao, processados)
+
+            if not self.operacao.isTeste:
+                self.operacao.progress.UpdateBar(i)
+
+                           

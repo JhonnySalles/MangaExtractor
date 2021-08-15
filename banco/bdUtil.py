@@ -14,7 +14,9 @@ volumes = """
         linguagem VARCHAR(4),
         hash_pagina VARCHAR(250),
         scan VARCHAR(250),
-        is_raw BOOLEAN, PRIMARY KEY (id)
+        is_raw BOOLEAN,
+        is_processado Tinyint(1) DEFAULT '0',
+        PRIMARY KEY (id)
     ) CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci; 
 """
 textos = """
@@ -44,12 +46,12 @@ updateTexto = """
 
 selectVolume = 'SELECT id FROM {} WHERE manga = %s AND volume = %s AND capitulo = %s AND nome_pagina = %s '
 insertVolume = """
-    INSERT INTO {} (manga, volume, capitulo, nome_pagina, numero_pagina, linguagem, hash_pagina, scan, is_raw) 
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    INSERT INTO {} (manga, volume, capitulo, nome_pagina, numero_pagina, linguagem, hash_pagina, scan, is_raw, is_processado) 
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 0)
 """
 updateVolume = """
     UPDATE {} SET manga = %s, volume = %s, capitulo = %s, nome_pagina = %s, numero_pagina = %s, linguagem = %s,
-        hash_pagina = %s, scan = %s, is_raw = %s
+        hash_pagina = %s, scan = %s, is_raw = %s, is_processado = 0
     WHERE id = %s
 """
 class BdUtil:
@@ -70,7 +72,7 @@ class BdUtil:
             except ProgrammingError as e:
                 print(colored(f'Erro na criação da tabela volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
                 if not self.operacao.isTeste:
-                    self.operacao.window['-OUTPUT-'].print(f'Erro na criação da tabela volume: {e.msg}', text_color='red')
+                    self.operacao.logMemo.print(f'Erro na criação da tabela volume: {e.msg}', text_color='red')
 
             try:
                 cursor = conexao.cursor()
@@ -79,7 +81,7 @@ class BdUtil:
             except ProgrammingError as e:
                 print(colored(f'Erro na criação da tabela volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
                 if not self.operacao.isTeste:
-                    self.operacao.window['-OUTPUT-'].print(f'Erro na criação da tabela texto: {e.msg}', text_color='red')
+                    self.operacao.logMemo.print(f'Erro na criação da tabela texto: {e.msg}', text_color='red')
             
             self.tabela = tabela
             return tabela
@@ -89,14 +91,13 @@ class BdUtil:
             if id_volume is None:
                 print(colored(f'Erro ao gravar os dados, não informado id.', 'red', attrs=['reverse', 'blink']))
                 if not self.operacao.isTeste:
-                    self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados, não informado id.', text_color='red')
+                    self.operacao.logMemo.print(f'Erro ao gravar os dados, não informado id.', text_color='red')
                 return 
             elif texto is None:
                 print(colored(f'Erro ao gravar os dados, dados para inserção vazio.', 'red', attrs=['reverse', 'blink']))
                 if not self.operacao.isTeste:
-                    self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados, dados para inserção vazio.', text_color='red')
+                    self.operacao.logMemo.print(f'Erro ao gravar os dados, dados para inserção vazio.', text_color='red')
                 return
-
             try :
                 args = (id_volume, texto.texto)
                 cursor = conexao.cursor(buffered=True)
@@ -113,7 +114,7 @@ class BdUtil:
                     except ProgrammingError as e:
                         print(colored(f'Erro ao atualizar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
                         if not self.operacao.isTeste:
-                            self.operacao.window['-OUTPUT-'].print(f'Erro ao atualizar os dados: {e.msg}', text_color='red')
+                            self.operacao.logMemo.print(f'Erro ao atualizar os dados: {e.msg}', text_color='red')
                 else:
                     try:
                         args = (id_volume, texto.sequencia, texto.texto, texto.posX1, 
@@ -124,19 +125,19 @@ class BdUtil:
                     except ProgrammingError as e:
                         print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
                         if not self.operacao.isTeste:
-                            self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados: {e.msg}', text_color='red')
+                            self.operacao.logMemo.print(f'Erro ao gravar os dados: {e.msg}', text_color='red')
 
             except ProgrammingError as e:
                 print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
                 if not self.operacao.isTeste:
-                    self.operacao.window['-OUTPUT-'].print(f'Erro ao consultar registro: {e.msg}', text_color='red')
+                    self.operacao.logMemo.print(f'Erro ao consultar registro: {e.msg}', text_color='red')
 
     def gravaManga(self, manga=None):
         with conection() as conexao:
             if manga is None:
                 print(colored(f'Erro ao gravar os dados, dados para inserção vazio.', 'red', attrs=['reverse', 'blink']))
                 if not self.operacao.isTeste:
-                    self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados, dados para inserção vazio.', text_color='red')
+                    self.operacao.logMemo.print(f'Erro ao gravar os dados, dados para inserção vazio.', text_color='red')
                 return 
 
             try :
@@ -158,11 +159,11 @@ class BdUtil:
                     except ProgrammingError as e:
                         print(colored(f'Erro ao atualizar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
                         if not self.operacao.isTeste:
-                            self.operacao.window['-OUTPUT-'].print(f'Erro ao atualizar os dados: {e.msg}', text_color='red')
+                            self.operacao.logMemo.print(f'Erro ao atualizar os dados: {e.msg}', text_color='red')
                     else:
                         print(f'{cursor.rowcount} registro(s) atualizado com sucesso.', args)
                         if not self.operacao.isTeste:
-                            self.operacao.window['-OUTPUT-'].print(f'{cursor.rowcount} registro(s) atualizado com sucesso.')
+                            self.operacao.logMemo.print(f'{cursor.rowcount} registro(s) atualizado com sucesso.')
                 else:
                     try:
                         args = (manga.nome, manga.volume, manga.capitulo, manga.nomePagina, 
@@ -174,11 +175,11 @@ class BdUtil:
                     except ProgrammingError as e:
                         print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
                         if not self.operacao.isTeste:
-                            self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados: {e.msg}', text_color='red')
+                            self.operacao.logMemo.print(f'Erro ao gravar os dados: {e.msg}', text_color='red')
                     else:
                         print(f'{cursor.rowcount} registro(s) inserido com sucesso.', args)
                         if not self.operacao.isTeste:
-                            self.operacao.window['-OUTPUT-'].print(f'{cursor.rowcount} registro(s) inserido com sucesso.')
+                            self.operacao.logMemo.print(f'{cursor.rowcount} registro(s) inserido com sucesso.')
 
                 
                 for texto in manga.textos:
@@ -187,7 +188,7 @@ class BdUtil:
             except ProgrammingError as e:
                 print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
                 if not self.operacao.isTeste:
-                    self.operacao.window['-OUTPUT-'].print(f'Erro ao consultar registro: {e.msg}', text_color='red')
+                    self.operacao.logMemo.print(f'Erro ao consultar registro: {e.msg}', text_color='red')
 
 def testaConexao():
     with conection() as conexao:
@@ -199,13 +200,17 @@ def gravarDados(operacao, processados):
 
     util = BdUtil(operacao)
 
-    print('Gravando informações....')
+    print(colored('Gravando informações no banco de dados....', 'blue', attrs=['reverse', 'blink']))
     if not operacao.isTeste:
-        operacao.window['-OUTPUT-'].print('Gravando informações....')
+        operacao.logMemo.print('Gravando informações no banco de dados....', text_color='royalblue')
+
+    print("Manga: " + processados[0].nome + " - Volume: " + processados[0].volume + " - Capitulo: " + processados[0].capitulo)
+    if not operacao.isTeste:
+        operacao.logMemo.print("Manga: " + processados[0].nome + " - Volume: " + processados[0].volume + " - Capitulo: " + processados[0].capitulo)
 
     for manga in processados:
         util.gravaManga(manga)
 
-    print('Gravação concluido.')
+    print(colored('Gravação concluida.', 'blue', attrs=['reverse', 'blink']))
     if not operacao.isTeste:
-        operacao.window['-OUTPUT-'].print('Gravação concluido.')
+        operacao.logMemo.print('Gravação concluido.', text_color='royalblue')
