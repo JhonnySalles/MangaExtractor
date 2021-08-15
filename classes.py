@@ -16,7 +16,6 @@ class Manga:
         self.volume = volume
         self.capitulo = capitulo
         self.arquivo = ""
-        self.arquivoProcessado = ""
         self.nomePagina = ""
         self.numeroPagina = 0
         self.linguagem = ""
@@ -29,11 +28,11 @@ class Manga:
         self.textos.append(texto)
 
 class Operacao:
-    def __init__(self, manga, caminho, linguagem):
+    def __init__(self, window, manga, caminho, linguagem):
         pass
         
         self.manga = manga
-        self.caminho = caminho
+        self.caminho = caminho.replace('\\','/')
         self.linguagem = linguagem
         self.volume = None
         self.capitulo = None
@@ -41,3 +40,4 @@ class Operacao:
         self.base = manga
         self.isFolder = False
         self.ocrType = "windowocr"
+        self.window = window

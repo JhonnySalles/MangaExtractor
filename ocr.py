@@ -10,9 +10,11 @@ import cv2
 import re
 import subprocess
 from classes import Texto
+import PySimpleGUI as sg
 
 class TextOcr():
     def __init__(self, operacao):
+        self.operacao = operacao
         self.service=None
         self.ocrType=operacao.ocrType
         self.language = operacao.linguagem
@@ -123,7 +125,9 @@ class TextOcr():
                 text=self.getTextWindowOcr(cropped)
 
             if text.strip() != "":
-                print(text)
+                log = "  • " + text
+                print(log)
+                self.operacao.window['-OUTPUT-'].print(log)
                 texto.append(Texto(text,sequencia,x1,y1,x2,y2))
                 sequencia += 1
                 

@@ -1,6 +1,7 @@
 from PySimpleGUI.PySimpleGUI import No
 from mysql.connector.errors import ProgrammingError
 from .bd import conection
+from termcolor import colored
 
 volumes = """
     CREATE TABLE IF NOT EXISTS %s_volumes (
@@ -31,35 +32,6 @@ textos = """
     ) CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
 
-tabela = ''
-def criaTabela(nome=None):
-    with conection() as conexao:
-        if nome == None :
-            raise ValueError("Erro na criação da tabela, tabela não informada.")
-
-        tabela = nome.replace(" ", "_")
-        try:
-            cursor = conexao.cursor()
-            cursor.execute(volumes % tabela)
-            conexao.commit()
-        except ProgrammingError as e:
-            print(f'Erro na criação da tabela volume: {e.msg}')
-
-        try:
-            cursor = conexao.cursor()
-            cursor.execute(textos % (tabela, tabela, tabela, tabela, tabela, tabela))
-            conexao.commit()
-        except ProgrammingError as e:
-            print(f'Erro na criação da tabela texto: {e.msg}')
-        
-        return tabela
-
-def testaConexao():
-    with conection() as conexao:
-        if conexao.is_connected():
-            print('Conectado ao banco de dados!')
-        return conexao.is_connected()
-
 selectTexto = 'SELECT id FROM {} WHERE id_volume = %s AND texto = %s '
 insertTexto = """
     INSERT INTO {} (id_volume, sequencia, texto, posicao_x1, posicao_y1, posicao_x2, posicao_y2) 
@@ -69,43 +41,6 @@ updateTexto = """
     UPDATE {} SET sequencia = %s, texto = %s, posicao_x1 = %s, posicao_y1 = %s, posicao_x2 = %s, posicao_y2 = %s
     WHERE id = %s
 """
-
-def gravaTexto(operacao=None, id_volume=None, texto=None):
-    with conection() as conexao:
-        if operacao.base is None :
-            raise ValueError("Erro ao gravar os dados, tabela não informada.")
-        elif id_volume is None:
-            raise ValueError("Erro ao gravar os dados, não informado id.")   
-        elif texto is None:
-            raise ValueError("Erro ao gravar os dados, dados para inserção vazio.") 
-
-        try :
-            args = (id_volume, texto.texto)
-            cursor = conexao.cursor(buffered=True)
-            sql = selectTexto.format(operacao.base + '_textos')
-            cursor.execute(sql, args)
-
-            if cursor.rowcount > 0:
-                try:
-                    args = (texto.sequencia, texto.texto, texto.posX1, texto.posY1, 
-                            texto.posX2, texto.posY2, cursor.fetchone()[0])
-                    sql = updateTexto.format(operacao.base + '_textos')
-                    cursor.execute(sql, args)
-                    conexao.commit()
-                except ProgrammingError as e:
-                    print(f'Erro ao atualizar os dados: {e.msg}')
-            else:
-                try:
-                    args = (id_volume, texto.sequencia, texto.texto, texto.posX1, 
-                            texto.posY1, texto.posX2, texto.posY2)
-                    sql = insertTexto.format(operacao.base + '_textos')
-                    cursor.execute(sql, args)
-                    conexao.commit()
-                except ProgrammingError as e:
-                    print(f'Erro ao gravar os dados: {e.msg}')
-
-        except ProgrammingError as e:
-            print(f'Erro ao consultar registro: {e.msg}')
 
 selectVolume = 'SELECT id FROM {} WHERE manga = %s AND volume = %s AND capitulo = %s AND nome_pagina = %s '
 insertVolume = """
@@ -117,59 +52,145 @@ updateVolume = """
         hash_pagina = %s, scan = %s, is_raw = %s
     WHERE id = %s
 """
+class BdUtil:
+    def __init__(self, operacao):
+        self.operacao = operacao
+        self.tabela = ''
 
-def gravaManga(operacao=None, manga=None):
-    with conection() as conexao:
-        if operacao.base is None :
-            raise ValueError("Erro ao gravar os dados, tabela não informada.")
-        elif manga is None:
-            raise ValueError("Erro ao gravar os dados, dados para inserção vazio.")   
+    def criaTabela(self, nome=None):
+        with conection() as conexao:
+            if nome == None :
+                raise ValueError("Erro na criação da tabela, tabela não informada.")
 
-        try :
-            id = None
-            args = (manga.nome, manga.volume, manga.capitulo, manga.nomePagina)
-            cursor = conexao.cursor(buffered=True)
-            sql = selectVolume.format(operacao.base + '_volumes')
-            cursor.execute(sql, args)
+            tabela = nome.replace(" ", "_")
+            try:
+                cursor = conexao.cursor()
+                cursor.execute(volumes % tabela)
+                conexao.commit()
+            except ProgrammingError as e:
+                print(colored(f'Erro na criação da tabela volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                self.operacao.window['-OUTPUT-'].print(f'Erro na criação da tabela volume: {e.msg}', text_color='red')
 
-            if cursor.rowcount > 0:
-                try:
-                    id = cursor.fetchone()[0]
-                    args = (manga.nome, manga.volume, manga.capitulo, manga.nomePagina, 
-                            manga.numeroPagina, manga.linguagem, manga.hashPagina, manga.scan,
-                            manga.isScan, id)
-                    sql = updateVolume.format(operacao.base + '_volumes')
-                    cursor.execute(sql, args)
-                    conexao.commit()
-                except ProgrammingError as e:
-                    print(f'Erro ao atualizar os dados: {e.msg}')
-                else:
-                    print(f'{cursor.rowcount} registro(s) atualizado com sucesso.', args)
-            else:
-                try:
-                    args = (manga.nome, manga.volume, manga.capitulo, manga.nomePagina, 
-                            manga.numeroPagina, manga.linguagem, manga.hashPagina, manga.scan, manga.isScan)
-                    sql = insertVolume.format(operacao.base + '_volumes')
-                    cursor.execute(sql, args)
-                    conexao.commit()
-                    id = cursor.lastrowid
-                except ProgrammingError as e:
-                    print(f'Erro ao gravar os dados: {e.msg}')
-                else:
-                    print(f'{cursor.rowcount} registro(s) inserido com sucesso.', args)
-
+            try:
+                cursor = conexao.cursor()
+                cursor.execute(textos % (tabela, tabela, tabela, tabela, tabela, tabela))
+                conexao.commit()
+            except ProgrammingError as e:
+                print(colored(f'Erro na criação da tabela volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                self.operacao.window['-OUTPUT-'].print(f'Erro na criação da tabela texto: {e.msg}', text_color='red')
             
-            for texto in manga.textos:
-                try:
-                    gravaTexto(operacao, id, texto)
-                except ProgrammingError as e:
-                    print(f'{e.msg}')
+            self.tabela = tabela
+            return tabela
 
-        except ProgrammingError as e:
-            print(f'Erro ao consultar registro: {e.msg}')
+    def gravaTexto(self, id_volume=None, texto=None):
+        with conection() as conexao:
+            if id_volume is None:
+                print(colored(f'Erro ao gravar os dados, não informado id.', 'red', attrs=['reverse', 'blink']))
+                self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados, não informado id.', text_color='red')
+                return 
+            elif texto is None:
+                print(colored(f'Erro ao gravar os dados, dados para inserção vazio.', 'red', attrs=['reverse', 'blink']))
+                self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados, dados para inserção vazio.', text_color='red')
+                return
+
+            try :
+                args = (id_volume, texto.texto)
+                cursor = conexao.cursor(buffered=True)
+                sql = selectTexto.format(self.operacao.base + '_textos')
+                cursor.execute(sql, args)
+
+                if cursor.rowcount > 0:
+                    try:
+                        args = (texto.sequencia, texto.texto, texto.posX1, texto.posY1, 
+                                texto.posX2, texto.posY2, cursor.fetchone()[0])
+                        sql = updateTexto.format(self.operacao.base + '_textos')
+                        cursor.execute(sql, args)
+                        conexao.commit()
+                    except ProgrammingError as e:
+                        print(colored(f'Erro ao atualizar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                        self.operacao.window['-OUTPUT-'].print(f'Erro ao atualizar os dados: {e.msg}', text_color='red')
+                else:
+                    try:
+                        args = (id_volume, texto.sequencia, texto.texto, texto.posX1, 
+                                texto.posY1, texto.posX2, texto.posY2)
+                        sql = insertTexto.format(operacao.base + '_textos')
+                        cursor.execute(sql, args)
+                        conexao.commit()
+                    except ProgrammingError as e:
+                        print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                        self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados: {e.msg}', text_color='red')
+
+            except ProgrammingError as e:
+                print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                self.operacao.window['-OUTPUT-'].print(f'Erro ao consultar registro: {e.msg}', text_color='red')
+
+    def gravaManga(self, manga=None):
+        with conection() as conexao:
+            if manga is None:
+                print(colored(f'Erro ao gravar os dados, dados para inserção vazio.', 'red', attrs=['reverse', 'blink']))
+                self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados, dados para inserção vazio.', text_color='red')
+                return 
+
+            try :
+                id = None
+                args = (manga.nome, manga.volume, manga.capitulo, manga.nomePagina)
+                cursor = conexao.cursor(buffered=True)
+                sql = selectVolume.format(self.operacao.base + '_volumes')
+                cursor.execute(sql, args)
+
+                if cursor.rowcount > 0:
+                    try:
+                        id = cursor.fetchone()[0]
+                        args = (manga.nome, manga.volume, manga.capitulo, manga.nomePagina, 
+                                manga.numeroPagina, manga.linguagem, manga.hashPagina, manga.scan,
+                                manga.isScan, id)
+                        sql = updateVolume.format(self.operacao.base + '_volumes')
+                        cursor.execute(sql, args)
+                        conexao.commit()
+                    except ProgrammingError as e:
+                        print(colored(f'Erro ao atualizar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                        self.operacao.window['-OUTPUT-'].print(f'Erro ao atualizar os dados: {e.msg}', text_color='red')
+                    else:
+                        print(f'{cursor.rowcount} registro(s) atualizado com sucesso.', args)
+                        self.operacao.window['-OUTPUT-'].print(f'{cursor.rowcount} registro(s) atualizado com sucesso.')
+                else:
+                    try:
+                        args = (manga.nome, manga.volume, manga.capitulo, manga.nomePagina, 
+                                manga.numeroPagina, manga.linguagem, manga.hashPagina, manga.scan, manga.isScan)
+                        sql = insertVolume.format(self.operacao.base + '_volumes')
+                        cursor.execute(sql, args)
+                        conexao.commit()
+                        id = cursor.lastrowid
+                    except ProgrammingError as e:
+                        print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                        self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados: {e.msg}', text_color='red')
+                    else:
+                        print(f'{cursor.rowcount} registro(s) inserido com sucesso.', args)
+                        self.operacao.window['-OUTPUT-'].print(f'{cursor.rowcount} registro(s) inserido com sucesso.')
+
+                
+                for texto in manga.textos:
+                    self.gravaTexto(id, texto)
+
+            except ProgrammingError as e:
+                print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                self.operacao.window['-OUTPUT-'].print(f'Erro ao consultar registro: {e.msg}', text_color='red')
+
+def testaConexao():
+    with conection() as conexao:
+        return conexao.is_connected()
 
 def gravarDados(operacao, processados):
+    if operacao.base is None :
+        raise ValueError("Erro ao gravar os dados, tabela não informada.")
+
+    util = BdUtil(operacao)
+
     print('Gravando informações....')
+    operacao.window['-OUTPUT-'].print('Gravando informações....')
+
     for manga in processados:
-       gravaManga(operacao, manga)
+        util.gravaManga(manga)
+
     print('Gravação concluido.')
+    operacao.window['-OUTPUT-'].print('Gravação concluido.')

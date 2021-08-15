@@ -1,17 +1,18 @@
+import threading
 import PySimpleGUI as sg
 import sys
 sys.path.append("./banco/")
 
 from processa import ImageProcess
 from classes import Operacao
-from banco.bdUtil import testaConexao, criaTabela, gravarDados
+from banco.bdUtil import BdUtil, gravarDados, testaConexao
 
 ###################################################
 #Simular um teste sem abrir a janela
 isTeste = False
 
-def teste():
-    operacao = Operacao("a", "F:/Novapasta", "pt")
+def teste(window):
+    operacao = Operacao(window, "a", "F:/Novapasta", "pt")
         
     operacao.volume = ""
     operacao.capitulo = ""
@@ -19,7 +20,8 @@ def teste():
     operacao.base = "a"
     operacao.isFolder = True # Define que deve carregar as informações da pasta
 
-    operacao.base = criaTabela(operacao.base)
+    db = BdUtil(operacao)
+    operacao.base = db.criaTabela(operacao.base)
 
     processa = ImageProcess(operacao)
     processados = processa.processaImagens()
@@ -36,7 +38,7 @@ layout = [  [sg.Text('Caminho',text_color='red',size =(15, 1)), sg.Input(key='ca
             [sg.Text('Base',size =(15, 1)), sg.InputText(key='base')],
             [sg.Text('Linguagem',size =(15, 1)),sg.Combo(['Português','Japonês','Inglês'],default_value='Português',key='linguagem',size =(15, 1))],
             [sg.Checkbox('Carregar Informações da pasta', default=True, key="pasta")],
-            #[sg.Output(size=(70,10), key='-OUTPUT-')],
+            [sg.Multiline(size=(70,10), key='-OUTPUT-')],
             [sg.Button('Ok',size =(30, 1)), sg.Button('Cancel',size =(30, 1))] ]
 
 # Create the Window
@@ -58,7 +60,7 @@ def carrega(values):
     else:
         linguagem = "pt"
 
-    operacao = Operacao(values['manga'], values['caminho'], linguagem)
+    operacao = Operacao(window, values['manga'], values['caminho'], linguagem)
         
     operacao.volume = values['volume']
     operacao.capitulo = values['capitulo']
@@ -71,19 +73,19 @@ def carrega(values):
 
     return operacao
 
-
 def processar(values):
-    if not testaConexao():
-        aviso('Não foi possível conectar ao banco de dados')
-        return
-
     operacao = carrega(values)
-    operacao.base = criaTabela(operacao.base)
+    
+    db = BdUtil(operacao)
+    operacao.base = db.criaTabela(operacao.base)
 
     processa = ImageProcess(operacao)
     processados = processa.processaImagens()
     gravarDados(operacao, processados)
 
+def thread_process():
+    processar(values)
+    aviso('Processamento concluido.')
 
 if isTeste:
     teste()
@@ -92,9 +94,11 @@ else:
         event, values = window.read()
         if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
             break
+        elif not testaConexao():
+            aviso('Não foi possível conectar ao banco de dados')
         elif validaCampos(values):
-            processar(values)
+            threading.Thread(target=thread_process, daemon=True).start()
         else:
-            aviso('Favor verificar os campos')
+            aviso('Favor verificar os campos!')
 
     window.close()

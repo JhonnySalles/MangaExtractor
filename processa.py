@@ -7,6 +7,7 @@ from segmentacao import TextSegmenation
 from detecao import TextDetection
 from ocr import TextOcr
 from classes import Manga
+from termcolor import colored
 
 class ImageProcess:
     def __init__(self, operacao):
@@ -88,19 +89,29 @@ class ImageProcess:
         ocr = TextOcr(self.operacao)
         
         print("Iniciado o processamento....")
+        self.operacao.window['-OUTPUT-'].print("Iniciado o processamento....")
+
         for diretorio, subpastas, arquivos in os.walk(self.folder):
             if "tmp" in subpastas: #Ignora as pastas temporárias da busca
                 subpastas.remove("tmp")
                 continue
-
+            pagina = 0
             for arquivo in arquivos:
                 if arquivo.lower().endswith(('.png', '.jpg', '.jpeg')):
-                    print(os.path.join(diretorio, arquivo)) # Caminho completo
+                    pagina += 1
+
+                    log = os.path.join(diretorio, arquivo)
+
+                    print(colored(log, 'green', attrs=['reverse', 'blink'])) # Caminho completo
+                    self.operacao.window['-OUTPUT-'].print(log, text_color='cyan')
+
                     manga = self.criaClasseManga(diretorio, arquivo)
 
                     segmentacao.segmentPage(os.path.join(diretorio, arquivo),self.inpaintedFolder,self.textOnlyFolder)
                     coordenadas = deteccao.textDetect(os.path.join(diretorio, arquivo),self.textOnlyFolder)
                     manga.textos = ocr.getTextFromImg(os.path.join(diretorio, arquivo),coordenadas,self.textOnlyFolder)
+                    manga.numeroPagina = pagina
+                    manga.linguagem = self.language
                     processados.append(manga)
 
             #Faz a limpeza para que arquivos com o mesmo nome não impactem
