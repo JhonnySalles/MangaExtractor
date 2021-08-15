@@ -33,11 +33,13 @@ class Operacao:
         
         self.manga = manga
         self.caminho = caminho.replace('\\','/')
-        self.linguagem = linguagem
+        self.linguagem = linguagem.lower()
         self.volume = None
         self.capitulo = None
         self.scan = None
         self.base = manga
-        self.isFolder = False
-        self.ocrType = "windowocr"
+        self.isFolder = True
+        self.ocrType = "winocr"
         self.window = window
+        self.pastaTesseract = "C:/Program Files/Tesseract-OCR"
+        self.isTeste = False

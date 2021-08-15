@@ -21,18 +21,10 @@ class ImageProcess:
         self.tempFolder = self.folder + "tmp/"
         self.textOnlyFolder=self.tempFolder+"textOnly/"
         self.inpaintedFolder=self.tempFolder+"inpainted/"
-        self.transalatedFolder=self.tempFolder+"translated/"
-    
-    def criaDiretorios(self):
-        for filePath in [self.textOnlyFolder, self.inpaintedFolder, self.transalatedFolder]:
-            if not os.path.exists(filePath):
-                os.makedirs(filePath)
-            else:
-                shutil.rmtree(filePath)
-                os.makedirs(filePath)
+        #self.transalatedFolder=self.tempFolder+"translated/"
 
     def limpaDiretorios(self):
-        for filePath in [self.textOnlyFolder, self.inpaintedFolder, self.transalatedFolder]:
+        for filePath in [self.textOnlyFolder, self.inpaintedFolder]:
             if os.path.exists(filePath):
                 shutil.rmtree(filePath)
             os.makedirs(filePath)
@@ -81,7 +73,6 @@ class ImageProcess:
         return manga
                 
     def processaImagens(self):
-        self.criaDiretorios
         processados = []
 
         segmentacao = TextSegmenation()
@@ -89,12 +80,16 @@ class ImageProcess:
         ocr = TextOcr(self.operacao)
         
         print("Iniciado o processamento....")
-        self.operacao.window['-OUTPUT-'].print("Iniciado o processamento....")
+        if not self.operacao.isTeste:
+            self.operacao.window['-OUTPUT-'].print("Iniciado o processamento....")
 
         for diretorio, subpastas, arquivos in os.walk(self.folder):
             if "tmp" in subpastas: #Ignora as pastas temporárias da busca
                 subpastas.remove("tmp")
                 continue
+
+             #Faz a limpeza para que arquivos com o mesmo nome não impactem
+            self.limpaDiretorios()
             pagina = 0
             for arquivo in arquivos:
                 if arquivo.lower().endswith(('.png', '.jpg', '.jpeg')):
@@ -103,7 +98,8 @@ class ImageProcess:
                     log = os.path.join(diretorio, arquivo)
 
                     print(colored(log, 'green', attrs=['reverse', 'blink'])) # Caminho completo
-                    self.operacao.window['-OUTPUT-'].print(log, text_color='cyan')
+                    if not self.operacao.isTeste:
+                        self.operacao.window['-OUTPUT-'].print(log, text_color='cyan')
 
                     manga = self.criaClasseManga(diretorio, arquivo)
 
@@ -114,7 +110,6 @@ class ImageProcess:
                     manga.linguagem = self.language
                     processados.append(manga)
 
-            #Faz a limpeza para que arquivos com o mesmo nome não impactem
-            self.limpaDiretorios()
+            break
 
         return processados                           

@@ -69,7 +69,8 @@ class BdUtil:
                 conexao.commit()
             except ProgrammingError as e:
                 print(colored(f'Erro na criação da tabela volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
-                self.operacao.window['-OUTPUT-'].print(f'Erro na criação da tabela volume: {e.msg}', text_color='red')
+                if not self.operacao.isTeste:
+                    self.operacao.window['-OUTPUT-'].print(f'Erro na criação da tabela volume: {e.msg}', text_color='red')
 
             try:
                 cursor = conexao.cursor()
@@ -77,7 +78,8 @@ class BdUtil:
                 conexao.commit()
             except ProgrammingError as e:
                 print(colored(f'Erro na criação da tabela volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
-                self.operacao.window['-OUTPUT-'].print(f'Erro na criação da tabela texto: {e.msg}', text_color='red')
+                if not self.operacao.isTeste:
+                    self.operacao.window['-OUTPUT-'].print(f'Erro na criação da tabela texto: {e.msg}', text_color='red')
             
             self.tabela = tabela
             return tabela
@@ -86,11 +88,13 @@ class BdUtil:
         with conection() as conexao:
             if id_volume is None:
                 print(colored(f'Erro ao gravar os dados, não informado id.', 'red', attrs=['reverse', 'blink']))
-                self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados, não informado id.', text_color='red')
+                if not self.operacao.isTeste:
+                    self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados, não informado id.', text_color='red')
                 return 
             elif texto is None:
                 print(colored(f'Erro ao gravar os dados, dados para inserção vazio.', 'red', attrs=['reverse', 'blink']))
-                self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados, dados para inserção vazio.', text_color='red')
+                if not self.operacao.isTeste:
+                    self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados, dados para inserção vazio.', text_color='red')
                 return
 
             try :
@@ -108,27 +112,31 @@ class BdUtil:
                         conexao.commit()
                     except ProgrammingError as e:
                         print(colored(f'Erro ao atualizar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
-                        self.operacao.window['-OUTPUT-'].print(f'Erro ao atualizar os dados: {e.msg}', text_color='red')
+                        if not self.operacao.isTeste:
+                            self.operacao.window['-OUTPUT-'].print(f'Erro ao atualizar os dados: {e.msg}', text_color='red')
                 else:
                     try:
                         args = (id_volume, texto.sequencia, texto.texto, texto.posX1, 
                                 texto.posY1, texto.posX2, texto.posY2)
-                        sql = insertTexto.format(operacao.base + '_textos')
+                        sql = insertTexto.format(self.operacao.base + '_textos')
                         cursor.execute(sql, args)
                         conexao.commit()
                     except ProgrammingError as e:
                         print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
-                        self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados: {e.msg}', text_color='red')
+                        if not self.operacao.isTeste:
+                            self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados: {e.msg}', text_color='red')
 
             except ProgrammingError as e:
                 print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
-                self.operacao.window['-OUTPUT-'].print(f'Erro ao consultar registro: {e.msg}', text_color='red')
+                if not self.operacao.isTeste:
+                    self.operacao.window['-OUTPUT-'].print(f'Erro ao consultar registro: {e.msg}', text_color='red')
 
     def gravaManga(self, manga=None):
         with conection() as conexao:
             if manga is None:
                 print(colored(f'Erro ao gravar os dados, dados para inserção vazio.', 'red', attrs=['reverse', 'blink']))
-                self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados, dados para inserção vazio.', text_color='red')
+                if not self.operacao.isTeste:
+                    self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados, dados para inserção vazio.', text_color='red')
                 return 
 
             try :
@@ -149,10 +157,12 @@ class BdUtil:
                         conexao.commit()
                     except ProgrammingError as e:
                         print(colored(f'Erro ao atualizar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
-                        self.operacao.window['-OUTPUT-'].print(f'Erro ao atualizar os dados: {e.msg}', text_color='red')
+                        if not self.operacao.isTeste:
+                            self.operacao.window['-OUTPUT-'].print(f'Erro ao atualizar os dados: {e.msg}', text_color='red')
                     else:
                         print(f'{cursor.rowcount} registro(s) atualizado com sucesso.', args)
-                        self.operacao.window['-OUTPUT-'].print(f'{cursor.rowcount} registro(s) atualizado com sucesso.')
+                        if not self.operacao.isTeste:
+                            self.operacao.window['-OUTPUT-'].print(f'{cursor.rowcount} registro(s) atualizado com sucesso.')
                 else:
                     try:
                         args = (manga.nome, manga.volume, manga.capitulo, manga.nomePagina, 
@@ -163,10 +173,12 @@ class BdUtil:
                         id = cursor.lastrowid
                     except ProgrammingError as e:
                         print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
-                        self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados: {e.msg}', text_color='red')
+                        if not self.operacao.isTeste:
+                            self.operacao.window['-OUTPUT-'].print(f'Erro ao gravar os dados: {e.msg}', text_color='red')
                     else:
                         print(f'{cursor.rowcount} registro(s) inserido com sucesso.', args)
-                        self.operacao.window['-OUTPUT-'].print(f'{cursor.rowcount} registro(s) inserido com sucesso.')
+                        if not self.operacao.isTeste:
+                            self.operacao.window['-OUTPUT-'].print(f'{cursor.rowcount} registro(s) inserido com sucesso.')
 
                 
                 for texto in manga.textos:
@@ -174,7 +186,8 @@ class BdUtil:
 
             except ProgrammingError as e:
                 print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
-                self.operacao.window['-OUTPUT-'].print(f'Erro ao consultar registro: {e.msg}', text_color='red')
+                if not self.operacao.isTeste:
+                    self.operacao.window['-OUTPUT-'].print(f'Erro ao consultar registro: {e.msg}', text_color='red')
 
 def testaConexao():
     with conection() as conexao:
@@ -187,10 +200,12 @@ def gravarDados(operacao, processados):
     util = BdUtil(operacao)
 
     print('Gravando informações....')
-    operacao.window['-OUTPUT-'].print('Gravando informações....')
+    if not operacao.isTeste:
+        operacao.window['-OUTPUT-'].print('Gravando informações....')
 
     for manga in processados:
         util.gravaManga(manga)
 
     print('Gravação concluido.')
-    operacao.window['-OUTPUT-'].print('Gravação concluido.')
+    if not operacao.isTeste:
+        operacao.window['-OUTPUT-'].print('Gravação concluido.')

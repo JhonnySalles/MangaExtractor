@@ -10,7 +10,10 @@ import cv2
 import re
 import subprocess
 from classes import Texto
-import PySimpleGUI as sg
+import pytesseract as pyte
+from PIL import Image
+import PIL
+import pytesseract
 
 class TextOcr():
     def __init__(self, operacao):
@@ -18,7 +21,7 @@ class TextOcr():
         self.service=None
         self.ocrType=operacao.ocrType
         self.language = operacao.linguagem
-
+        self.tesseractLocation = ''.join(operacao.pastaTesseract + '/tesseract.exe').replace('//', '/')
 
     def getGoogleCred(self,):
         SCOPES = ['https://console.cloud.google.com/']
@@ -44,13 +47,19 @@ class TextOcr():
         return service
 
     def filterText(self,inputText):
-        if (self.language == "jp"):
+        if (self.language == "ja"):
             caracteres = '[\\\\+/§◎*)@<>#%(&=$_\-^01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz:;«¢~「」〃ゝゞヽヾ一●▲・ヽ÷①↓®▽■◆『£〆∴∞▼™↑←]'
         else:
             caracteres = '[\\\\+/§◎*)@<>#%(&=$_\-^«¢~「」〃ゝゞヽヾ一●▲・ヽ÷①↓®▽■◆『£〆∴∞▼™↑←]'     
         
         inputText = re.sub(caracteres, '', inputText)   #remove special cha
-        inputText = ''.join(inputText.split())    #remove whitespace
+
+        if (self.language == "ja"):
+            inputText = ''.join(inputText.split())    #remove whitespace
+        else: 
+            inputText = ' '.join(inputText.split())    #remove whitespace
+            inputText = inputText.capitalize()         #Letras minuscula com a primeira maiuscula
+        
         return inputText
 
         
@@ -108,6 +117,14 @@ class TextOcr():
             if text=="True":
                 return True
         return False
+
+    def getTextTesseractOcr(self,img):
+        inputFile="lib_/input.jpg"
+        cv2.imwrite(inputFile, img)  
+        pytesseract.pytesseract.tesseract_cmd=self.tesseractLocation
+        text = pytesseract.image_to_string(Image.open(inputFile))
+        text=self.filterText(text)
+        return text
         
     def getTextFromImg(self,imgPath,rectList,textOnlyFolder):
         fileName=os.path.basename(imgPath)
@@ -121,13 +138,16 @@ class TextOcr():
 
             if self.ocrType=="googleocr":
                 text=self.getTextGoogleOcr(cropped)          
-            elif self.ocrType=="windowocr":
+            elif self.ocrType=="winocr":
                 text=self.getTextWindowOcr(cropped)
+            elif self.ocrType=="tesseract":
+                text=self.getTextTesseractOcr(cropped)
 
             if text.strip() != "":
                 log = "  • " + text
                 print(log)
-                self.operacao.window['-OUTPUT-'].print(log)
+                if not self.operacao.isTeste:
+                    self.operacao.window['-OUTPUT-'].print(log)
                 texto.append(Texto(text,sequencia,x1,y1,x2,y2))
                 sequencia += 1
                 

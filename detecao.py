@@ -16,7 +16,15 @@ class TextDetection():
         img_threshold = cv2.threshold(img_sobel,0,255,cv2.THRESH_OTSU+cv2.THRESH_BINARY)
         element = cv2.getStructuringElement(cv2.MORPH_RECT,ele_size)
         img_threshold_morp = cv2.morphologyEx(img_threshold[1],cv2.MORPH_CLOSE,element)
-        contours, hierarchy = cv2.findContours(img_threshold_morp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+        #contours, hierarchy = cv2.findContours(img_threshold_morp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        res = cv2.findContours(img_threshold_morp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        if cv2.__version__.split(".")[0] == '3':
+            _, contours, hierarchy = res
+        else:
+            contours, hierarchy = res
+
+
         
         noiseSizeParam=int(ele_size[0]/3)
         contours=[i for i in contours if i.shape[0]>noiseSizeParam** 2]     
@@ -30,4 +38,9 @@ class TextDetection():
         img = cv2.imread(textOnlyFolder+fileName)
         rectP,rect= self.text_detect(img,ele_size=(int(img.shape[0]*self.contourSize),int(img.shape[0]*self.contourSize)))  #x,y
         rectList=[rectP,rect]
+
+        for i in rectP: # Desenha na imagem da pasta o retangulo
+            cv2.rectangle(img,i[:2],i[2:],(0,0,255))
+        cv2.imwrite(textOnlyFolder+fileName, img) 
+        
         return rectList

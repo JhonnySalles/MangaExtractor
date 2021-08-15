@@ -31,6 +31,7 @@ class TextSegmenation():
         #text resize by 1000px height 
         img = cv2.imread(imgPath)
         size=1000
+
         if img.shape[0]>size:
             img = cv2.resize(img, (int(size*img.shape[1]/img.shape[0]),size), interpolation = cv2.INTER_AREA)
             cv2.imwrite(imgPath, img) 
