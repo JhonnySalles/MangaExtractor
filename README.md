@@ -13,6 +13,7 @@
  <a href="#Histórico-de-Release">Histórico de Release</a> • 
  <a href="#Features">Features</a> • 
  <a href="#Contribuindo">Contribuindo</a> • 
+ <a href="#Instalação">Instalação</a> • 
  <a href="#Exemplos">Exemplos</a>
 </p>
 
@@ -83,8 +84,8 @@ Após obter as informações e gerar um objeto contendo as informações, estar�
 - [X] Obter a posição do texto na imagem
 - [X] Salvar as informações no banco de dados,
 - [X] Tesseract
+- [ ] Remoção do furigana na linguagem japonês
 - [ ] Melhoria no reconhecimento do texto
-- [ ] API Cloud Vision 
 
 
 ## Contribuindo
@@ -100,6 +101,22 @@ Após obter as informações e gerar um objeto contendo as informações, estar�
 [travis-image]: https://img.shields.io/travis/dbader/node-datadog-metrics/master.svg?style=flat-square
 [travis-url]: https://travis-ci.org/dbader/node-datadog-metrics
 [wiki]: https://github.com/yourname/MangaExtractor/wiki
+
+## Instalação
+
+> Para instalar o projeto, primeiro instale a ultima versão do python e baixe o fonte em uma pasta para montar a estrutura estrutura.
+
+> Após baixar, abra o console (cmd) na pasta com o código fonte e execute o seguinte comando para instalar as dependências.
+
+    pip install -r requirements.txt
+
+> Após a instalação das dependências baixe e instale a versão do executável do [Tesseract](https://github.com/UB-Mannheim/tesseract/wiki) para windows nesse link, seguindo os procedimentos ali descritos.
+
+> Para a execução do script inicial do programa, digite no console o seguinte comando
+
+    python gui.py
+
+> Recomenda-se o uso do Visual Studio para a edição dos scripts python.
 
 
 ## Exemplos
