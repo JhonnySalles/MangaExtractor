@@ -49,7 +49,6 @@ progress = window['progressbar']
 logMemo = window['-OUTPUT-']
 
 def validaCampos(values):
-
     if values['ocrtype'].lower() == 'tesseract':
         file = ''.join(values['tesseract'].strip()).replace('\\', '/').replace('//', '/').replace('tesseract.exe', '')
         if (values['tesseract'].strip() == '') or (not os.path.isfile(file + '/tesseract.exe')):
@@ -138,22 +137,25 @@ def extraiInformacoesDiretorio(values):
             break
 
         window['manga'].Update(manga)
+def main():
+    if isTeste:
+        teste(None)
+    else:
+        while True:
+            event, values = window.read()
+            if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
+                break
+            elif event == 'caminho':
+                extraiInformacoesDiretorio(values)
+            elif event == 'manga':
+                eventoManga(values)
+            elif event == 'Ok':
+                if not testaConexao():
+                    aviso('Não foi possível conectar ao banco de dados')
+                elif validaCampos(values):
+                    threading.Thread(target=thread_process, daemon=True).start()
+            
+        window.close()
 
-if isTeste:
-    teste(None)
-else:
-    while True:
-        event, values = window.read()
-        if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
-            break
-        elif event == 'caminho':
-            extraiInformacoesDiretorio(values)
-        elif event == 'manga':
-            eventoManga(values)
-        elif event == 'Ok':
-            if not testaConexao():
-                aviso('Não foi possível conectar ao banco de dados')
-            elif validaCampos(values):
-                threading.Thread(target=thread_process, daemon=True).start()
-        
-    window.close()
+if __name__ == '__main__':
+  main()
