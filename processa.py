@@ -6,7 +6,7 @@ import hashlib
 from segmentacao import TextSegmenation
 from detecao import TextDetection
 from ocr import TextOcr
-from classes import Manga
+from classes import Manga, PrintLog
 from termcolor import colored
 from banco.bdUtil import gravarDados
 from furigana import RemoveFurigana
@@ -15,7 +15,7 @@ from furigana import RemoveFurigana
 def extraiNomeDiretorio(diretorio):
     pasta = os.path.basename(diretorio)  # Obtem o nome da pasta
 
-    if ("[JPN]" in pasta.upper()) or ("[JAP]" in pasta.upper()) or ("[JNP]" not in pasta.upper()):
+    if ("[JPN]" in pasta.upper()) or ("[JAP]" in pasta.upper()) or ("[JNP]" in pasta.upper()):
         pasta = pasta.replace("[JPN]", "").replace("[JAP]", "").replace("[JNP]", "")
     elif "[" in pasta:
         scan = pasta[pasta.index("["):pasta.index("]")]
@@ -120,10 +120,11 @@ class ImageProcess:
         furigana = RemoveFurigana(self.operacao)
 
         i = 0
-        print("Iniciado o processamento....")
         if not self.operacao.isTeste:
-            self.operacao.logMemo.print("Iniciado o processamento....")
-            self.operacao.window['progressbar'].Update(len(os.listdir(self.folder)))
+            self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog("Iniciado o processamento...."))
+            self.operacao.window.write_event_value('-THREAD_PROGRESSBAR_MAX-', len(os.listdir(self.folder)))
+        else:
+            print("Iniciado o processamento....")
 
         for diretorio, subpastas, arquivos in os.walk(self.folder):
             # Ignora as pastas temporárias da busca
@@ -136,9 +137,10 @@ class ImageProcess:
             self.limpaDiretorios()
             if self.operacao.getNomePasta:
                 self.mangaNome = extraiNomeDiretorio(diretorio)
-                print(colored("Nome obtido: " + self.mangaNome, 'yellow', attrs=['reverse', 'blink']))  # Caminho completo
                 if not self.operacao.isTeste:
-                    self.operacao.logMemo.print("Nome obtido: " + self.mangaNome, text_color='yellow')
+                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog("Nome obtido: " + self.mangaNome, 'yellow'))
+                else:
+                    print(colored("Nome obtido: " + self.mangaNome, 'yellow', attrs=['reverse', 'blink']))
 
             i += 1
             pagina = 0
@@ -148,11 +150,11 @@ class ImageProcess:
                     pagina += 1
 
                     log = os.path.join(diretorio, arquivo)
-
                     # Caminho completo
-                    print(colored(log, 'green', attrs=['reverse', 'blink']))
                     if not self.operacao.isTeste:
-                        self.operacao.logMemo.print(log, text_color='cyan')
+                        self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(log, 'green'))
+                    else:
+                        print(colored(log, 'green', attrs=['reverse', 'blink']))
 
                     manga = self.criaClasseManga(diretorio, arquivo)
 
@@ -172,4 +174,5 @@ class ImageProcess:
                 gravarDados(self.operacao, processados)
 
             if not self.operacao.isTeste:
-                self.operacao.progress.UpdateBar(i)
+                self.operacao.window.write_event_value('-THREAD_PROGRESSBAR_UPDATE-', i)
+

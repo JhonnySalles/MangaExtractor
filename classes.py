@@ -29,6 +29,13 @@ class Manga:
         self.textos.append(texto)
 
 
+class PrintLog:
+    def __init__(self, mensagem, cor=None):
+        pass
+        self.mensagem = mensagem
+        self.cor = cor
+
+
 class Operacao:
     def __init__(self, window, base, mangaNome, caminho, linguagem):
         pass
@@ -51,4 +58,4 @@ class Operacao:
 
         if not self.isTeste:
             self.logMemo = window['-OUTPUT-']
-            self.progress = window['progressbar']
+            self.progress = window['-PROGRESSBAR-']

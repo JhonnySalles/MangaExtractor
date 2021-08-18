@@ -8,7 +8,7 @@ import pickle
 import cv2
 import re
 import subprocess
-from classes import Texto
+from classes import Texto, PrintLog
 from PIL import Image
 import pytesseract
 
@@ -130,8 +130,8 @@ class TextOcr():
                 return True
         return False
 
-    def getTextTesseractOcr(self, img):
-        inputFile = "lib_/input.jpg"
+    def getTextTesseractOcr(self, img, folder):
+        inputFile = folder + "input.jpg"
         cv2.imwrite(inputFile, img)
         pytesseract.pytesseract.tesseract_cmd = self.tesseractLocation
 
@@ -143,13 +143,13 @@ class TextOcr():
         text = self.filterText(text)
         return text
 
-    def getText(self, cropped):
+    def getText(self, cropped, folder):
         if self.ocrType == "googleocr":
             text = self.getTextGoogleOcr(cropped)
         elif self.ocrType == "winocr":
             text = self.getTextWindowOcr(cropped)
         elif self.ocrType == "tesseract":
-            text = self.getTextTesseractOcr(cropped)
+            text = self.getTextTesseractOcr(cropped, folder)
         
         return text
 
@@ -170,27 +170,32 @@ class TextOcr():
             # Cropping the text block for giving input to OCR
             cropped = img[y1: y2, x1: x2]
 
-            text = self.getText(cropped)
+            text = self.getText(cropped, folder)
 
             if text.strip() != "":
                 log = "  • " + text
-                print(log)
                 if not self.operacao.isTeste:
-                    self.operacao.logMemo.print(log)
+                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(log)) 
+                else:
+                    print(log)
+
                 texto.append(Texto(text, sequencia, x1, y1, x2, y2))
                 sequencia += 1
                 cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 0, 255))
             elif self.operacao.furigana:
-                img2 = cv2.imread(textOnlyFolder+fileName)
+                folder = textOnlyFolder
+                img2 = cv2.imread(folder+fileName)
                 # Cropping the text block for giving input to OCR
                 cropped = img2[y1: y2, x1: x2]
-                text = self.getText(cropped)
+                text = self.getText(cropped, folder)
 
                 if text.strip() != "":
                     log = "  • " + text
-                    print(log)
                     if not self.operacao.isTeste:
-                        self.operacao.logMemo.print(log)
+                        self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(log)) 
+                    else:
+                        print(log)
+
                     texto.append(Texto(text, sequencia, x1, y1, x2, y2))
                     sequencia += 1
                     cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 0, 255))

@@ -2,6 +2,9 @@ from PySimpleGUI.PySimpleGUI import No
 from mysql.connector.errors import ProgrammingError
 from .bd import conection
 from termcolor import colored
+import sys
+sys.path.append("../")
+from classes import PrintLog
 
 volumes = """
     CREATE TABLE IF NOT EXISTS %s_volumes (
@@ -73,18 +76,20 @@ class BdUtil:
                 cursor.execute(volumes % tabela)
                 conexao.commit()
             except ProgrammingError as e:
-                print(colored(f'Erro na criação da tabela volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
                 if not self.operacao.isTeste:
-                    self.operacao.logMemo.print(f'Erro na criação da tabela volume: {e.msg}', text_color='red')
+                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela volume: {e.msg}', 'red')) 
+                else:
+                    print(colored(f'Erro na criação da tabela volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
             try:
                 cursor = conexao.cursor()
                 cursor.execute(textos % (tabela, tabela, tabela, tabela, tabela, tabela))
                 conexao.commit()
             except ProgrammingError as e:
-                print(colored(f'Erro na criação da tabela volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
                 if not self.operacao.isTeste:
-                    self.operacao.logMemo.print(f'Erro na criação da tabela texto: {e.msg}', text_color='red')
+                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela texto: {e.msg}', 'red'))
+                else:
+                    print(colored(f'Erro na criação da tabela texto: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
             self.tabela = tabela
             return tabela
@@ -92,14 +97,16 @@ class BdUtil:
     def gravaTexto(self, id_volume=None, texto=None):
         with conection() as conexao:
             if id_volume is None:
-                print(colored(f'Erro ao gravar os dados, não informado id.','red', attrs=['reverse', 'blink']))
                 if not self.operacao.isTeste:
-                    self.operacao.logMemo.print(f'Erro ao gravar os dados, não informado id.', text_color='red')
+                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar os dados, não informado id.', 'red'))
+                else:
+                    print(colored('Erro ao gravar os dados, não informado id.', 'red', attrs=['reverse', 'blink']))
                 return
             elif texto is None:
-                print(colored(f'Erro ao gravar os dados, dados para inserção vazio.','red', attrs=['reverse', 'blink']))
                 if not self.operacao.isTeste:
-                    self.operacao.logMemo.print(f'Erro ao gravar os dados, dados para inserção vazio.', text_color='red')
+                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar os dados, dados para inserção vazio.', 'red'))
+                else:
+                    print(colored('Erro ao gravar os dados, dados para inserção vazio.', 'red', attrs=['reverse', 'blink']))
                 return
             try:
                 args = (id_volume, texto.texto)
@@ -115,9 +122,10 @@ class BdUtil:
                         cursor.execute(sql, args)
                         conexao.commit()
                     except ProgrammingError as e:
-                        print(colored(f'Erro ao atualizar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
                         if not self.operacao.isTeste:
-                            self.operacao.logMemo.print(f'Erro ao atualizar os dados: {e.msg}', text_color='red')
+                            self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao atualizar os dados: {e.msg}', 'red'))
+                        else:
+                            print(colored(f'Erro ao atualizar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
                 else:
                     try:
                         args = (id_volume, texto.sequencia, texto.texto, texto.posX1,
@@ -126,21 +134,24 @@ class BdUtil:
                         cursor.execute(sql, args)
                         conexao.commit()
                     except ProgrammingError as e:
-                        print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
                         if not self.operacao.isTeste:
-                            self.operacao.logMemo.print(f'Erro ao gravar os dados: {e.msg}', text_color='red')
-
+                            self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao gravar os dados: {e.msg}', 'red'))
+                        else:
+                            print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
             except ProgrammingError as e:
-                print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
                 if not self.operacao.isTeste:
-                    self.operacao.logMemo.print(f'Erro ao consultar registro: {e.msg}', text_color='red')
+                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao consultar registro: {e.msg}',  'red'))
+                else:
+                    print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
+
 
     def gravaManga(self, manga=None):
         with conection() as conexao:
             if manga is None:
-                print(colored(f'Erro ao gravar os dados, dados para inserção vazio.','red', attrs=['reverse', 'blink']))
                 if not self.operacao.isTeste:
-                    self.operacao.logMemo.print(f'Erro ao gravar os dados, dados para inserção vazio.', text_color='red')
+                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar os dados, dados para inserção vazio.', 'red')) 
+                else:
+                    print(colored('Erro ao gravar os dados, dados para inserção vazio.', 'red', attrs=['reverse', 'blink']))
                 return
 
             try:
@@ -160,9 +171,10 @@ class BdUtil:
                         cursor.execute(sql, args)
                         conexao.commit()
                     except ProgrammingError as e:
-                        print(colored(f'Erro ao atualizar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
                         if not self.operacao.isTeste:
-                            self.operacao.logMemo.print(f'Erro ao atualizar os dados: {e.msg}', text_color='red')
+                            self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao atualizar os dados: {e.msg}', 'red')) 
+                        else:
+                            print(colored(f'Erro ao atualizar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
                 else:
                     try:
                         args = (manga.nome, manga.volume, manga.capitulo, manga.isExtra, manga.nomePagina,
@@ -172,17 +184,19 @@ class BdUtil:
                         conexao.commit()
                         id = cursor.lastrowid
                     except ProgrammingError as e:
-                        print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
                         if not self.operacao.isTeste:
-                            self.operacao.logMemo.print(f'Erro ao gravar os dados: {e.msg}', text_color='red')
+                            self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao gravar os dados: {e.msg}', 'red')) 
+                        else:
+                            print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
                 for texto in manga.textos:
                     self.gravaTexto(id, texto)
 
             except ProgrammingError as e:
-                print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
                 if not self.operacao.isTeste:
-                    self.operacao.logMemo.print(f'Erro ao consultar registro: {e.msg}', text_color='red')
+                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao consultar registro: {e.msg}',  'red')) 
+                else:
+                    print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
 
 def testaConexao():
@@ -196,17 +210,18 @@ def gravarDados(operacao, processados):
 
     util = BdUtil(operacao)
 
-    print(colored('Gravando informações no banco de dados....','blue', attrs=['reverse', 'blink']))
+    log = "Manga: " + processados[0].nome + " - Volume: " + processados[0].volume + " - Capitulo: " + processados[0].capitulo
     if not operacao.isTeste:
-        operacao.logMemo.print('Gravando informações no banco de dados....', text_color='royalblue')
-
-    print("Manga: " + processados[0].nome + " - Volume: " + processados[0].volume + " - Capitulo: " + processados[0].capitulo)
-    if not operacao.isTeste:
-        operacao.logMemo.print("Manga: " + processados[0].nome + " - Volume: " + processados[0].volume + " - Capitulo: " + processados[0].capitulo)
+        operacao.window.write_event_value('-THREAD_LOG-', PrintLog('Gravando informações no banco de dados....', 'blue'))
+        operacao.window.write_event_value('-THREAD_LOG-', PrintLog(log)) 
+    else:
+        print(colored('Gravando informações no banco de dados....', 'blue', attrs=['reverse', 'blink']))
+        print(log)
 
     for manga in processados:
         util.gravaManga(manga)
 
-    print(colored('Gravação concluida.', 'blue', attrs=['reverse', 'blink']))
     if not operacao.isTeste:
-        operacao.logMemo.print('Gravação concluido.', text_color='royalblue')
+        operacao.window.write_event_value('-THREAD_LOG-', PrintLog('Gravação concluida.', 'blue'))
+    else:
+        print(colored('Gravação concluida.', 'blue', attrs=['reverse', 'blink']))
