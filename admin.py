@@ -6,8 +6,12 @@
 # (C) COPYRIGHT © Preston Landers 2010
 # Released under the same license as Python 2.6.5
 
-#https://stackoverflow.com/questions/19672352/how-to-run-python-script-with-elevated-privilege-on-windows
-import sys, os, traceback, types
+# https://stackoverflow.com/questions/19672352/how-to-run-python-script-with-elevated-privilege-on-windows
+import sys
+import os
+import traceback
+import types
+
 
 def isUserAdmin():
 
@@ -18,20 +22,25 @@ def isUserAdmin():
             return ctypes.windll.shell32.IsUserAnAdmin()
         except:
             traceback.print_exc()
-            print( "Admin check failed, assuming not an admin.")
+            print("Admin check failed, assuming not an admin.")
             return False
     elif os.name == 'posix':
         # Check for root on Posix
         return os.getuid() == 0
     else:
-        raise RuntimeError( "Unsupported operating system for this module: %s" % (os.name,))
+        raise RuntimeError(
+            "Unsupported operating system for this module: %s" % (os.name,))
+
 
 def runAsAdmin(cmdLine=None, wait=True):
 
     if os.name != 'nt':
-        raise RuntimeError( "This function is only implemented on Windows.")
+        raise RuntimeError("This function is only implemented on Windows.")
 
-    import win32api, win32con, win32event, win32process
+    import win32api
+    import win32con
+    import win32event
+    import win32process
     from win32com.shell.shell import ShellExecuteEx
     from win32com.shell import shellcon
 
@@ -39,9 +48,9 @@ def runAsAdmin(cmdLine=None, wait=True):
 
     if cmdLine is None:
         cmdLine = [python_exe] + sys.argv
-    elif type(cmdLine) !=list :
+    elif type(cmdLine) != list:
         raise ValueError("cmdLine is not a sequence.")
-    
+
     cmd = '"%s"' % (cmdLine[0],)
     # XXX TODO: isn't there a function or something we can call to massage command line params?
     params = " ".join(['"%s"' % (x,) for x in cmdLine[1:]])
@@ -65,28 +74,29 @@ def runAsAdmin(cmdLine=None, wait=True):
                               lpParameters=params)
 
     if wait:
-        procHandle = procInfo['hProcess']    
+        procHandle = procInfo['hProcess']
         obj = win32event.WaitForSingleObject(procHandle, win32event.INFINITE)
         rc = win32process.GetExitCodeProcess(procHandle)
-        #print "Process handle %s returned code %s" % (procHandle, rc)
+        # print "Process handle %s returned code %s" % (procHandle, rc)
     else:
         rc = None
 
     return rc
 
+
 def test():
     rc = 0
     if not isUserAdmin():
-        print ("You're not an admin.", os.getpid(), "params: ", sys.argv)
+        print("You're not an admin.", os.getpid(), "params: ", sys.argv)
     else:
-        print ("You are an admin!", os.getpid(), "params: ", sys.argv)
+        print("You are an admin!", os.getpid(), "params: ", sys.argv)
         rc = 0
-    
-    rc = runAsAdmin(["C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe ","""help"""])
-    
-        
+
+    rc = runAsAdmin(
+        ["C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe ", """help"""])
+
     return rc
 
-    
+
 if __name__ == "__main__":
     sys.exit(test())

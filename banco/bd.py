@@ -10,8 +10,10 @@ parametros = dict(
     database='manga_extractor'
 )
 
-#o context serve para utilizar o with, ou seja que sempre
-#terá a conexão aberta até enquanto tiver no escopo e destroi sozinho
+# o context serve para utilizar o with, ou seja que sempre
+# terá a conexão aberta até enquanto tiver no escopo e destroi sozinho
+
+
 @contextmanager
 def conection():
     conexao = connect(**parametros)
