@@ -13,7 +13,6 @@ sys.path.append("./banco/")
 ###################################################
 # Simular um teste sem abrir a janela
 isTeste = False
-useTread = True
 
 def teste(window):
     operacao = Operacao(window, "teste",  "teste", "F:/Manga2", "ja")
@@ -41,8 +40,8 @@ layout = [[sg.Text('Caminho', text_color='orangered', size=(15, 1)), sg.Input(ke
           [sg.Text('Caminho Tesseract', text_color='cornflowerblue', size=(15, 1)), sg.Input(key='tesseract', default_text='C:/Program Files/Tesseract-OCR'), sg.FolderBrowse('Selecionar pasta')],
           [sg.Text('Linguagem', size=(15, 1)), sg.Combo(['Português', 'Japonês', 'Inglês', 'Japonês (vertical)', 'Japonês (horizontal)'], default_value='Japonês', key='linguagem', size=(15, 1))],
           [sg.Text('Recurso OCR', size=(15, 1)), sg.Combo(['WinOCR', 'Tesseract'], default_value='Tesseract', key='ocrtype', size=(15, 1))],
-          [sg.Checkbox('Carregar Informações da pasta?', default=True, key="get_informacao"), sg.Checkbox('Limpar furigana?', default=False, key="furigana")],
-          [sg.Checkbox('Obter o nome do manga da pasta?', default=False, key="get_nome"), sg.Checkbox('Filtro adicional para limpar o furigana?', default=False, key="filtro_adicional")],
+          [sg.Checkbox('Carregar Informações da pasta?', default=True, key="get_informacao", size=(30, 1)), sg.Checkbox('Limpar furigana?', default=False, key="furigana")],
+          [sg.Checkbox('Obter o nome do manga da pasta?', default=False, key="get_nome", size=(30, 1)), sg.Checkbox('Filtro adicional para limpar o furigana?', default=False, key="filtro_adicional")],
           [sg.Multiline(size=(80, 10), key='-OUTPUT-')],
           [sg.ProgressBar(100, orientation='h', size=(41, 5), key='progressbar')],
           [sg.Button('Ok', size=(30, 1)), sg.Text('', size=(7, 1)), sg.Button('Cancel', size=(30, 1))]]
@@ -115,9 +114,7 @@ def carrega(values):
     return operacao
 
 
-def processar(values):
-    operacao = carrega(values)
-
+def processar(operacao):
     db = BdUtil(operacao)
     operacao.base = db.criaTabela(operacao.base)
 
@@ -126,7 +123,7 @@ def processar(values):
 
 
 def thread_process(values):
-    processar(values)
+    processar(carrega(values))
     aviso('Processamento concluido.')
 
 
@@ -169,10 +166,8 @@ def main():
                 if not testaConexao():
                     aviso('Não foi possível conectar ao banco de dados')
                 elif validaCampos(values):
-                    if not useTread:
-                        threading.Thread(target=thread_process(values),daemon=True).start()
-                    else:
-                        thread_process(values)
+                    threading.Thread(target=thread_process(values),daemon=True).start()
+    
 
         window.close()
 
