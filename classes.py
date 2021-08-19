@@ -30,10 +30,11 @@ class Manga:
 
 
 class PrintLog:
-    def __init__(self, mensagem, cor=None):
+    def __init__(self, mensagem, cor=None, save=True):
         pass
         self.mensagem = mensagem
         self.cor = cor
+        self.save = save
 
 
 class Operacao:

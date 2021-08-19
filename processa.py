@@ -10,6 +10,7 @@ from classes import Manga, PrintLog
 from termcolor import colored
 from banco.bdUtil import gravarDados
 from furigana import RemoveFurigana
+import re
 
 
 def extraiNomeDiretorio(diretorio):
@@ -67,8 +68,8 @@ class ImageProcess:
 
         pasta = pasta.lower()
 
-        volume = 0
-        capitulo = 0
+        volume = '0'
+        capitulo = '0'
         isExtra = False
         if ("capítulo" in pasta) or ("capitulo" in pasta) or (("extra" in pasta) and (pasta.rindex("volume") < pasta.rindex("extra"))):
             if "capítulo" in pasta:
@@ -90,6 +91,16 @@ class ImageProcess:
                 capitulo = pasta[pasta.rindex("extra"):]
                 capitulo = capitulo.replace("extra", "").strip()
                 isExtra = True
+
+            volume = re.sub('\D', '', volume)
+            capitulo = re.sub('\D', '', capitulo)
+
+            if volume == "":
+                volume = '0'
+
+            if capitulo == "":
+                capitulo = '0'
+
 
         manga = Manga(self.mangaNome, volume, capitulo)
         manga.scan = scan

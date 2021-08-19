@@ -40,7 +40,7 @@ layout = [[sg.Text('Caminho', text_color='orangered', size=(15, 1)), sg.Input(ke
           [sg.Text('Scan', size=(15, 1)), sg.InputText(key='-SCAN-')],
           [sg.Text('Base', text_color='orangered', size=(15, 1)), sg.InputText(key='-BASE-')],
           [sg.Text('Caminho Tesseract', text_color='cornflowerblue', size=(15, 1)), sg.Input(key='-TESSERACT_LOCATE-', default_text='C:/Program Files/Tesseract-OCR'), sg.FolderBrowse('Selecionar pasta')],
-          [sg.Text('Linguagem', size=(15, 1)), sg.Combo(['Português', 'Japonês', 'Inglês', 'Japonês (vertical)', 'Japonês (horizontal)'], default_value='Japonês', key='-LINGUAGEM-', size=(15, 1))],
+          [sg.Text('Linguagem', size=(15, 1)), sg.Combo(['Português', 'Japonês', 'Inglês', 'Japonês (vertical)', 'Japonês (horizontal)'], default_value='Japonês', key='-LINGUAGEM-', size=(15, 1), enable_events=True)],
           [sg.Text('Recurso OCR', size=(15, 1)), sg.Combo(['WinOCR', 'Tesseract'], default_value='Tesseract', key='-OCRTYPE-', size=(15, 1))],
           [sg.Checkbox('Carregar Informações da pasta?', default=True, key="-GET_INFORMACAO-", size=(30, 1)), sg.Checkbox('Limpar furigana?', default=False, key="-FURIGANA-")],
           [sg.Checkbox('Obter o nome do manga da pasta?', default=False, key="-GET_NOME-", size=(30, 1)), sg.Checkbox('Filtro adicional para limpar o furigana?', default=False, key="-FILTRO_ADICIONAL_FURIGANA-")],
@@ -52,6 +52,7 @@ layout = [[sg.Text('Caminho', text_color='orangered', size=(15, 1)), sg.Input(ke
 window = sg.Window('Manga Text Extractor', layout)
 progress = window['-PROGRESSBAR-']
 logMemo = window['-OUTPUT-']
+operacao = None
 
 
 def validaCampos(values):
@@ -100,6 +101,7 @@ def carrega(values):
     else:
         linguagem = "pt"
 
+    global operacao # Usa a variavel global
     operacao = Operacao(window, values['-BASE-'], values['-MANGA-'], values['-CAMINHO-'], linguagem)
 
     operacao.volume = values['-VOLUME-']
@@ -110,9 +112,8 @@ def carrega(values):
     operacao.ocrType = values['-OCRTYPE-'].lower()
     operacao.pastaTesseract = ''.join(values['-TESSERACT_LOCATE-'].strip()).replace('\\', '/').replace('//', '/').replace('tesseract.exe', '')
     operacao.textoVertical = vertical
-    operacao.furigana = values['-FURIGANA-']
-    operacao.filtroAdicional = values['-FILTRO_ADICIONAL_FURIGANA-']
-
+    operacao.furigana = False if linguagem != "ja" else values['-FURIGANA-']
+    operacao.filtroAdicional = False if linguagem != "ja" else values['-FILTRO_ADICIONAL_FURIGANA-']
     return operacao
 
 
@@ -126,7 +127,7 @@ def processar(operacao):
 
 def thread_process(operacao, window):
     processar(operacao)
-    window.write_event_value('-THREAD_END-', 'Processamento concluído com sucesso. \n Manga: ' + operacao.mangaNome) 
+    window.write_event_value('-THREAD_END-', 'Processamento concluído com sucesso. \nManga: ' + operacao.mangaNome) 
 
 
 def eventoManga(values):
@@ -175,13 +176,17 @@ def printLog(printLog):
         if not isTeste:
             logMemo.print(printLog.mensagem, text_color=corMemo)
 
+    if (printLog.save) and (operacao is not None):
+        with open(operacao.caminho + '/log.txt', 'a+', encoding='utf-8') as file:
+            file.write(printLog.mensagem + '\n')
 
-inicio = datetime.now()
-MaxProgress = 1
+
 def main():
     if isTeste:
         teste(None)
     else:
+        MaxProgress = 1
+        inicio = datetime.now()
         while True:
             event, values = window.read()
             if event == sg.WIN_CLOSED or event == 'Cancel':  # if user closes window or clicks cancel
@@ -190,11 +195,19 @@ def main():
                 extraiInformacoesDiretorio(values)
             elif event == '-MANGA-':
                 eventoManga(values)
+            elif event == '-LINGUAGEM-':
+                if "japonês" not in values['-LINGUAGEM-'].lower():
+                   window['-FURIGANA-'].update(value=False, disabled=True)
+                   window['-FILTRO_ADICIONAL_FURIGANA-'].update(value=False, disabled=True)
+                else:
+                    window['-FURIGANA-'].update(disabled=False)  
+                    window['-FILTRO_ADICIONAL_FURIGANA-'].update(disabled=False)  
             elif event == 'Ok':
                 if not testaConexao():
                     aviso('Não foi possível conectar ao banco de dados')
                 elif validaCampos(values):
                     inicio = datetime.now()
+                    logMemo.Update('')
                     printLog(PrintLog('Inicido do processo: ' + inicio.strftime("%H:%M:%S"), 'yellow'))
                     operacao = carrega(values)
                     threading.Thread(target=thread_process,args=(operacao, window),daemon=True).start()
@@ -208,8 +221,11 @@ def main():
                 MaxProgress = values[event]
             elif event == '-THREAD_END-':
                 intervalo = datetime.now() - inicio
+                progress.UpdateBar(MaxProgress, MaxProgress)
                 printLog(PrintLog('Fim do processo: ' + datetime.now().strftime("%H:%M:%S"), 'yellow'))
                 printLog(PrintLog('Tempo decorrido: ' + str(intervalo), 'yellow'))
+                if operacao.furigana:
+                    printLog(PrintLog('Com limpeza de furigana.'))
                 aviso(values[event])
 
         window.close()
