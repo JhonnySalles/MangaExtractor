@@ -126,7 +126,7 @@ def processar(operacao):
 
 def thread_process(operacao, window):
     processar(operacao)
-    window.write_event_value('-THREAD_END-', 'Processamento concluído com sucesso.') 
+    window.write_event_value('-THREAD_END-', 'Processamento concluído com sucesso. \n Manga: ' + operacao.mangaNome) 
 
 
 def eventoManga(values):
@@ -143,6 +143,9 @@ def extraiInformacoesDiretorio(values):
         for diretorio, subpastas, arquivos in os.walk(caminho):
             if "tmp" in subpastas:  # Ignora as pastas temporárias da busca
                 subpastas.remove("tmp")
+
+            if len(subpastas) < 1:
+                return
 
             pasta = subpastas[0]
             manga = extraiNomeDiretorio(pasta)
@@ -174,7 +177,6 @@ def printLog(printLog):
 
 
 inicio = datetime.now()
-fim = datetime.now()
 MaxProgress = 1
 def main():
     if isTeste:
@@ -205,11 +207,10 @@ def main():
             elif event == '-THREAD_PROGRESSBAR_MAX-':
                 MaxProgress = values[event]
             elif event == '-THREAD_END-':
+                intervalo = datetime.now() - inicio
+                printLog(PrintLog('Fim do processo: ' + datetime.now().strftime("%H:%M:%S"), 'yellow'))
+                printLog(PrintLog('Tempo decorrido: ' + str(intervalo), 'yellow'))
                 aviso(values[event])
-                fim = datetime.now()
-                printLog(PrintLog('Fim do processo: ' + fim.strftime("%H:%M:%S"), 'yellow'))
-                decorrido = inicio - fim
-                printLog(PrintLog('Tempo decorrido: ' + decorrido.strftime("%H:%M:%S"), 'yellow'))
 
         window.close()
 
