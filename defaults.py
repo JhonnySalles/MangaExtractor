@@ -12,3 +12,19 @@ FURIGANA_HORIZONTAL_SIGMA_MULTIPLIER = 0.0
 FURIGANA_BINARY_THRESHOLD = 240
 MINIMUM_TEXT_SIZE_THRESHOLD = 7
 MAXIMUM_VERTICAL_SPACE_VARIANCE = 5.0
+
+####################
+##  BD
+###################
+PARAMETROS_BD = dict(
+    host='localhost',
+    port=3306,
+    user='admin',
+    passwd='admin',
+    database='manga_extractor'
+)
+
+####################
+##  TESSERACT
+###################
+DEFAULT_TESSERACT_FOLDER= "C:/Program Files/Tesseract-OCR"

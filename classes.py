@@ -1,3 +1,5 @@
+import defaults
+
 class Texto:
     def __init__(self, texto, sequencia, posX1, posY1, posX2, posY2):
         pass
@@ -38,7 +40,7 @@ class PrintLog:
 
 
 class Operacao:
-    def __init__(self, window, base, mangaNome, caminho, linguagem):
+    def __init__(self, base, mangaNome, caminho, linguagem, window=None, ocrType='tesseract', furigana=False):
         pass
         self.mangaNome = mangaNome
         self.caminho = caminho.replace('\\', '/')
@@ -50,10 +52,10 @@ class Operacao:
         self.base = base
         self.getInformacaoPasta = True
         self.getNomePasta = False
-        self.furigana = False
+        self.furigana = furigana
         self.filtroAdicional = False
-        self.ocrType = "winocr"
-        self.pastaTesseract = "C:/Program Files/Tesseract-OCR"
+        self.ocrType = ocrType
+        self.pastaTesseract = defaults.DEFAULT_TESSERACT_FOLDER
         self.isTeste = window is None
         self.window = window
 

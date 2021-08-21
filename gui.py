@@ -7,17 +7,17 @@ import os
 import threading
 import PySimpleGUI as sg
 import sys
+from silent import processar as silent
 
 from PySimpleGUI.PySimpleGUI import ConvertArgsToSingleString
 sys.path.append("./banco/")
 
-
-###################################################
 # Simular um teste sem abrir a janela
 isTeste = False
 
-def teste(window):
-    operacao = Operacao(window, "teste",  "teste", "F:/Manga2", "ja")
+###################################################
+def teste():
+    operacao = Operacao("teste",  "teste", "F:/Manga2", "ja")
     operacao.ocrType = 'tesseract'
     operacao.isTeste = isTeste
     operacao.furigana = True
@@ -102,7 +102,7 @@ def carrega(values):
         linguagem = "pt"
 
     global operacao # Usa a variavel global
-    operacao = Operacao(window, values['-BASE-'], values['-MANGA-'], values['-CAMINHO-'], linguagem)
+    operacao = Operacao(values['-BASE-'], values['-MANGA-'], values['-CAMINHO-'], linguagem, window)
 
     operacao.volume = values['-VOLUME-']
     operacao.capitulo = values['-CAPITULO-']
@@ -183,7 +183,7 @@ def printLog(printLog):
 
 def main():
     if isTeste:
-        teste(None)
+        teste()
     else:
         MaxProgress = 1
         inicio = datetime.now()
