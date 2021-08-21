@@ -133,7 +133,7 @@ class ImageProcess:
         i = 0
         if not self.operacao.isTeste:
             self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog("Iniciado o processamento...."))
-            self.operacao.window.write_event_value('-THREAD_PROGRESSBAR_MAX-', len(os.listdir(self.folder)))
+            self.operacao.window.write_event_value('-THREAD_PROGRESSBAR_MAX-', len([f for f in os.listdir(self.folder) if "capa" not in f.lower() and f not in ['tmp']]))
         else:
             print("Iniciado o processamento....")
 
@@ -141,8 +141,7 @@ class ImageProcess:
             # Ignora as pastas temporárias da busca
             subpastas[:] = [sub for sub in subpastas if sub not in ['tmp']]
             # Ignora as pastas de capa
-            subpastas[:] = [
-                sub for sub in subpastas if "capa" not in sub.lower()]
+            subpastas[:] = [sub for sub in subpastas if "capa" not in sub.lower()]
 
             # Faz a limpeza da pasta temporaria para que arquivos com o mesmo nome não impactem
             self.limpaDiretorios()
