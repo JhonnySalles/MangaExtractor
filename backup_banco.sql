@@ -1,6 +1,6 @@
 /*
 SQLyog Ultimate v12.4.1 (64 bit)
-MySQL - 5.7.30-log : Database - manga_extractor
+MySQL - 5.7.30 : Database - manga_extractor
 *********************************************************************
 */
 
@@ -16,22 +16,65 @@ CREATE DATABASE /*!32312 IF NOT EXISTS*/`manga_extractor` /*!40100 DEFAULT CHARA
 
 USE `manga_extractor`;
 
+/*Table structure for table `exemplo_capitulos` */
+
+DROP TABLE IF EXISTS `exemplo_capitulos`;
+
+CREATE TABLE `exemplo_capitulos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id_volume` int(11) DEFAULT NULL,
+  `manga` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `volume` int(4) NOT NULL,
+  `capitulo` double NOT NULL,
+  `linguagem` varchar(4) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `scan` varchar(250) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_extra` tinyint(1) DEFAULT NULL,
+  `is_raw` tinyint(1) DEFAULT NULL,
+  `is_processado` tinyint(1) DEFAULT '0',
+  `vocabulario` longtext COLLATE utf8mb4_unicode_ci,
+  PRIMARY KEY (`id`),
+  KEY `exemplo_volumes_capitulos_fk` (`id_volume`),
+  CONSTRAINT `exemplo_volumes_capitulos_fk` FOREIGN KEY (`id_volume`) REFERENCES `exemplo_volumes` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `exemplo_capitulos` */
+
+/*Table structure for table `exemplo_paginas` */
+
+DROP TABLE IF EXISTS `exemplo_paginas`;
+
+CREATE TABLE `exemplo_paginas` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id_capitulo` int(11) NOT NULL,
+  `nome` varchar(250) DEFAULT NULL,
+  `numero` int(11) DEFAULT NULL,
+  `hash` varchar(250) DEFAULT NULL,
+  `is_processado` tinyint(1) DEFAULT '0',
+  `vocabulario` longtext,
+  PRIMARY KEY (`id`),
+  KEY `exemplo_capitulos_paginas_fk` (`id_capitulo`),
+  CONSTRAINT `exemplo_capitulos_paginas_fk` FOREIGN KEY (`id_capitulo`) REFERENCES `exemplo_capitulos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+/*Data for the table `exemplo_paginas` */
+
 /*Table structure for table `exemplo_textos` */
 
 DROP TABLE IF EXISTS `exemplo_textos`;
 
 CREATE TABLE `exemplo_textos` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `id_volume` int(11) NOT NULL,
+  `id_pagina` int(11) NOT NULL,
   `sequencia` int(4) DEFAULT NULL,
   `texto` longtext COLLATE utf8mb4_unicode_ci,
+  `vocabulario` longtext COLLATE utf8mb4_unicode_ci,
   `posicao_x1` double DEFAULT NULL,
   `posicao_y1` double DEFAULT NULL,
   `posicao_x2` double DEFAULT NULL,
   `posicao_y2` double DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `exemplo_volumes_exemplo_textos_fk` (`id_volume`),
-  CONSTRAINT `exemplo_volumes_exemplo_textos_fk` FOREIGN KEY (`id_volume`) REFERENCES `exemplo_volumes` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  KEY `exemplo_volumes_exemplo_textos_fk` (`id_pagina`),
+  CONSTRAINT `exemplo_paginas_textos_fk` FOREIGN KEY (`id_pagina`) REFERENCES `exemplo_paginas` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Data for the table `exemplo_textos` */
@@ -42,19 +85,12 @@ DROP TABLE IF EXISTS `exemplo_volumes`;
 
 CREATE TABLE `exemplo_volumes` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `manga` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
-  `volume` int(4) NOT NULL,
-  `capitulo` double NOT NULL,
-  `is_extra` tinyint(1) DEFAULT NULL,
-  `nome_pagina` varchar(250) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `numero_pagina` int(11) DEFAULT NULL,
-  `linguagem` varchar(4) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `hash_pagina` varchar(250) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `scan` varchar(250) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `is_raw` tinyint(1) DEFAULT NULL,
-  `is_processado` tinyint(1) DEFAULT '0',
+  `manga` varchar(250) DEFAULT NULL,
+  `volume` int(4) DEFAULT NULL,
+  `linguagem` varchar(4) DEFAULT NULL,
+  `vocabulario` longtext,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*Data for the table `exemplo_volumes` */
 

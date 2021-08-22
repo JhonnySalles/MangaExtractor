@@ -11,24 +11,43 @@ class Texto:
         self.posY2 = posY2
 
 
-class Manga:
-    def __init__(self, nome, volume, capitulo):
+class Pagina:
+    def __init__(self, nome, numero=0):
+        pass
+        self.nome = nome
+        self.numero = numero
+        self.hashPagina = ""
+        self.arquivo = ""
+        self.textos = []
+
+    def addTexto(self, texto):
+        self.textos.append(texto)
+
+class Capitulo:
+    def __init__(self, nome, volume, capitulo, linguagem):
         pass
         self.nome = nome
         self.volume = volume
         self.capitulo = capitulo
-        self.arquivo = ""
-        self.nomePagina = ""
-        self.numeroPagina = 0
-        self.linguagem = ""
-        self.textos = []
-        self.hashPagina = ""
+        self.linguagem = linguagem
+        self.paginas = []
         self.scan = ""
         self.isScan = False
         self.isExtra = False
 
-    def addTexto(self, texto):
-        self.textos.append(texto)
+    def addPagina(self, texto):
+        self.paginas.append(texto)
+
+class Volume:
+    def __init__(self, nome, volume, linguagem, capitulos=[]):
+        pass
+        self.nome = nome
+        self.volume = volume
+        self.linguagem = linguagem
+        self.capitulos = capitulos
+
+    def addCapitulo(self, texto):
+        self.capitulos.append(texto)
 
 
 class PrintLog:

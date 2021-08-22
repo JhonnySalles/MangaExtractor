@@ -6,7 +6,7 @@ import hashlib
 from segmentacao import TextSegmenation
 from detecao import TextDetection
 from ocr import TextOcr
-from classes import Manga, PrintLog
+from classes import PrintLog, Volume, Pagina, Capitulo
 from termcolor import colored
 from banco.bdUtil import gravarDados
 from furigana import RemoveFurigana
@@ -101,28 +101,30 @@ class ImageProcess:
             if capitulo == "":
                 capitulo = '0'
 
+        capitulo = Capitulo(self.mangaNome, volume, capitulo, self.language)
+        capitulo.scan = scan
+        capitulo.isScan = isScan
+        capitulo.isExtra = isExtra
 
-        manga = Manga(self.mangaNome, volume, capitulo)
-        manga.scan = scan
-        manga.isScan = isScan
-        manga.isExtra = isExtra
+        return capitulo
 
-        return manga
-
-    def criaClasseManga(self, diretorio, arquivo):
-        manga = None
-        if self.operacao.getInformacaoPasta:
-            manga = self.extraiInformacoesDiretorio(diretorio)
-        else:
-            manga = Manga(self.operacao.mangaNome, self.operacao.volume, self.operacao.capitulo)
-            manga.scan = self.operacao.scan
-            manga.isScan = bool(manga.scan)
-
-        manga.nomePagina = arquivo
-        manga.arquivo = os.path.join(diretorio, arquivo)
+    def criaClassePagina(self, diretorio, arquivo, numero):
+        pagina = Pagina(arquivo, numero)
+        pagina.arquivo = os.path.join(diretorio, arquivo)
         md5hash = hashlib.md5(Image.open(os.path.join(diretorio, arquivo)).tobytes())
-        manga.hashPagina = md5hash.hexdigest()
-        return manga
+        pagina.hashPagina = md5hash.hexdigest()
+        return pagina
+
+    def criaClasseCapitulo(self, diretorio, arquivo):
+        capitulo = None
+        if self.operacao.getInformacaoPasta:
+            capitulo = self.extraiInformacoesDiretorio(diretorio)
+        else:
+            capitulo = Capitulo(self.mangaNome, self.operacao.volume, self.operacao.capitulo, self.language)
+            capitulo.scan = self.operacao.scan
+            capitulo.isScan = bool(capitulo.scan)
+        
+        return capitulo
 
     def processaImagens(self):
         segmentacao = TextSegmenation(self.operacao)
@@ -154,7 +156,7 @@ class ImageProcess:
 
             i += 1
             pagina = 0
-            processados = []
+            capitulo = self.criaClasseCapitulo(diretorio, arquivo)
             for arquivo in arquivos:
                 if arquivo.lower().endswith(('.png', '.jpg', '.jpeg')):
                     pagina += 1
@@ -166,7 +168,7 @@ class ImageProcess:
                     else:
                         print(colored(log, 'green', attrs=['reverse', 'blink']))
 
-                    manga = self.criaClasseManga(diretorio, arquivo)
+                    pagina = self.criaClassePagina(diretorio, arquivo)
 
                     segmentacao.segmentPage(os.path.join(diretorio, arquivo), self.inpaintedFolder, self.textOnlyFolder)
 
@@ -175,13 +177,12 @@ class ImageProcess:
                         furigana.removeFurigana(os.path.join(self.textOnlyFolder,arquivo), imgGray, imgClean, imgSegment, self.textOnlyFolder, self.furiganaFolder)
 
                     coordenadas = deteccao.textDetect(os.path.join(diretorio, arquivo), self.textOnlyFolder)
-                    manga.textos = ocr.getTextFromImg(os.path.join(diretorio, arquivo), coordenadas, self.textOnlyFolder, self.furiganaFolder)
-                    manga.numeroPagina = pagina
-                    manga.linguagem = self.language
-                    processados.append(manga)
+                    pagina.textos = ocr.getTextFromImg(os.path.join(diretorio, arquivo), coordenadas, self.textOnlyFolder, self.furiganaFolder)
+                    pagina.numeroPagina = pagina
+                    capitulo.addPagina(pagina)
 
-            if len(processados) > 0:
-                gravarDados(self.operacao, processados)
+            if len(capitulo.paginas) > 0:
+                gravarDados(self.operacao, capitulo)
 
             if not self.operacao.isTeste:
                 self.operacao.window.write_event_value('-THREAD_PROGRESSBAR_UPDATE-', i)
