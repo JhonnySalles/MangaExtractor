@@ -45,7 +45,7 @@ layout = [[sg.Text('Caminho', text_color='orangered', size=(15, 1)), sg.Input(ke
           [sg.Checkbox('Carregar Informações da pasta?', default=True, key="-GET_INFORMACAO-", size=(30, 1)), sg.Checkbox('Limpar furigana?', default=False, key="-FURIGANA-")],
           [sg.Checkbox('Obter o nome do manga da pasta?', default=False, key="-GET_NOME-", size=(30, 1)), sg.Checkbox('Filtro adicional para limpar o furigana?', default=False, key="-FILTRO_ADICIONAL_FURIGANA-")],
           [sg.Multiline(size=(80, 10), key='-OUTPUT-')],
-          [sg.ProgressBar(100, orientation='h', size=(41, 5), key='-PROGRESSBAR-')],
+          [sg.ProgressBar(100, orientation='h', size=(44, 5), key='-PROGRESSBAR-')],
           [sg.Button('Ok', size=(30, 1)), sg.Text('', size=(7, 1)), sg.Button('Cancel', size=(30, 1))]]
 
 # Create the Window

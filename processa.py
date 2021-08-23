@@ -101,12 +101,12 @@ class ImageProcess:
             if capitulo == "":
                 capitulo = '0'
 
-        capitulo = Capitulo(self.mangaNome, volume, capitulo, self.language)
-        capitulo.scan = scan
-        capitulo.isScan = isScan
-        capitulo.isExtra = isExtra
+        obj = Capitulo(self.mangaNome, volume, capitulo, self.language)
+        obj.scan = scan
+        obj.isScan = isScan
+        obj.isExtra = isExtra
 
-        return capitulo
+        return obj
 
     def criaClassePagina(self, diretorio, arquivo, numero):
         pagina = Pagina(arquivo, numero)
