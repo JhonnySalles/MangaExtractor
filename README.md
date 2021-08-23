@@ -32,37 +32,65 @@ Após obter as informações e gerar um objeto contendo as informações, estar�
 
 
 ### Estrutura da classe
-    Class
-    ├── nome                   # Nome informado
-    ├── volume                 
-    ├── capitulo               
-    ├── arquivo                # Endereço completo do arquivo que está sendo processado (diretório + nome)
-    ├── nomePagina             # Nome da imagem que está sendo processado
-    ├── numeroPagina           # Um contador sequencial das imagens que estão no diretório
-    ├── linguagem              # Linguagem informa
-    ├── textos                 # Array de textos
-    │   ├── texto              
-    │   ├── sequencia          # Sequencia do texto na imagem
-    │   ├── posX1              # Coordenadas da fala na imagem
-    │   ├── posY1              
-    │   ├── posX2              
-    │   ├── posY2              
-    └── hashPagina             # Hash md5 da imagem que está sendo processada, para futuras comparações
-    
+    Class                       # Classe Volume
+    ├── id                      # Nome informado
+    ├── manga                 
+    ├── volume               
+    ├── linguagem               # Linguagem informada, ou seja a linguagem que está o volume
+    ├── Class capitulos         # Array de classes capitulo
+    │   ├── id
+    │   ├── manga               # As mesmas informações do volume se encontra no capitulo, pois encontra-se
+    │   ├── volume              # mais fácilmente as raws de capitulos soltos.
+    │   ├── capitulo
+    │   ├── linguagem
+    │   ├── scan
+    │   ├── isExtra
+    │   ├── isRaw
+    │   ├── isProcessado
+    │   ├── Class paginas       # Array de classes capitulo
+    │   │   ├── nome            # Nome da imagem que está sendo processado
+    │   │   ├── numero          # Um contador sequencial das imagens que estão no diretório
+    │   │   ├── hashPagina
+    │   │   ├── isProcessado
+    │   │   ├── Class Textos    # Array de classe dos textos da página
+    │   │   │   ├── sequencia
+    │   │   │   ├── posX1       # Coordenadas da fala na imagem
+    │   │   |   ├── posY1              
+    │   │   |   ├── posX2              
+    │   │   |   └── posY2 
+    │   │   └── vocabulario     # Vocabulário da página
+    │   └── vocabulario         # Vocabulário do capitulo
+    ├── vocabulario             # Vocabulário do volume
+    └── hashPagina              # Hash md5 da imagem que está sendo processada, para futuras comparações
+         
 > Classe com informações da página que está sendo processada
 
 
 ### Estrutura do banco de dados
 
-| id | manga | volume | capitulo | nome_pagina | numero_pagina | linguagem | hash_pagina |
-| -- | ----- | ------ | -------- | ----------- | ------------- | --------- | ----------- |
-|  1 | Test  |      1 |       56 | Test01.jpg  |             1 |        JP | 151515as15  |
-|  2 | Dois  |      2 |    115   | D11501.jpg  |             1 |        JP | fdas155151  |
+| id | manga | volume | linguagem | vocabulario |
+| -- | ----- | ------ | --------- | ----------- |
+|  1 | Test  |      1 |        JP | うんそ....  |
+|  2 | Dois  |      2 |        JP | ああそう..  |
+
+> Tabela referente as informações do volume
+
+| id | id_volume | manga | volume | capitulo | linguagem |  scan  | extra |  raw  | processado | vocabulario |
+| -- | --------- | ----- | ------ | -------- | --------- | -------| ----- | ----- | ---------- | ----------- |
+|  1 |         5 | Test  |      1 |       56 |        JP | teste  | true  | true  | false      | うんそ....   |
+|  2 |         6 | Dois  |      2 |      115 |        JP | outro  | false | true  | false      | ああそう..   |
+
+> Tabela referente as informações do capitulo
+
+| id | id_capitulo | nome        | numero        | hash_pagina | is_processado | vocabulario |
+| -- | ----------- | ----------- | ------------- | ----------- | ------------- | ----------- |
+|  1 |           5 | Test01.jpg  |             1 | 151515as15  | false         |             |
+|  2 |           2 | D11501.jpg  |             2 | fdas155151  | true          | うんそ....   |
 
 > Tabela referente as informações da página que está sendo processada
 
 
-| id | id_volume | sequencia | texto                         | posicao_x1 | posicao_y1 | posicao_x2 | posicao_y2 |
+| id | id_pagina | sequencia | texto                         | posicao_x1 | posicao_y1 | posicao_x2 | posicao_y2 |
 | -- | --------- | --------- | ----------------------------- | ---------- | ---------- | ---------- | ---------- |
 |  1 |         1 |         1 | うんそういうことならいんじゃない |         15 |         35 |         55 |         35 |
 |  2 |         1 |         2 | ああそうなんだ                 |          0 |         35 |       154  |        995 |
@@ -84,7 +112,7 @@ Após obter as informações e gerar um objeto contendo as informações, estar�
 - [X] Obter a posição do texto na imagem
 - [X] Salvar as informações no banco de dados,
 - [X] Tesseract
-- [ ] Remoção do furigana na linguagem japonês
+- [X] Remoção do furigana na linguagem japonês
 - [ ] Melhoria no reconhecimento do texto
 
 
