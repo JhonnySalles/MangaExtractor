@@ -83,23 +83,23 @@ updateCapitulo = """
     WHERE id = %s
 """
 
-selectPagina = 'SELECT id FROM {} WHERE id_capitulo = %s AND nome = %s AND hash_pagina = %s '
+selectPagina = 'SELECT id FROM {}_paginas WHERE id_capitulo = %s AND nome = %s AND hash_pagina = %s '
 insertPagina = """
-    INSERT INTO {} (id_capitulo, nome, numero, hash_pagina) 
+    INSERT INTO {}_paginas (id_capitulo, nome, numero, hash_pagina) 
     VALUES (%s, %s, %s, %s)
 """
 updatePagina = """
-    UPDATE {} SET nome = %s, numero = %s, hash_pagina = %s, is_processado = 0
+    UPDATE {}_paginas SET nome = %s, numero = %s, hash_pagina = %s, is_processado = 0
     WHERE id = %s
 """
 
-selectTexto = 'SELECT id FROM {} WHERE id_pagina = %s AND texto = %s '
+selectTexto = 'SELECT id FROM {}_textos WHERE id_pagina = %s AND texto = %s '
 insertTexto = """
-    INSERT INTO {} (id_pagina, sequencia, texto, posicao_x1, posicao_y1, posicao_x2, posicao_y2) 
+    INSERT INTO {}_textos (id_pagina, sequencia, texto, posicao_x1, posicao_y1, posicao_x2, posicao_y2) 
     VALUES (%s, %s, %s, %s, %s, %s, %s)
 """
 updateTexto = """
-    UPDATE {} SET sequencia = %s, texto = %s, posicao_x1 = %s, posicao_y1 = %s, posicao_x2 = %s, posicao_y2 = %s
+    UPDATE {}_textos SET sequencia = %s, texto = %s, posicao_x1 = %s, posicao_y1 = %s, posicao_x2 = %s, posicao_y2 = %s
     WHERE id = %s
 """
 
@@ -176,14 +176,14 @@ class BdUtil:
             try:
                 args = (id_pagina, texto.texto)
                 cursor = conexao.cursor(buffered=True)
-                sql = selectTexto.format(self.operacao.base + '_textos')
+                sql = selectTexto.format(self.operacao.base)
                 cursor.execute(sql, args)
 
                 if cursor.rowcount > 0:
                     try:
                         args = (texto.sequencia, texto.texto, texto.posX1, texto.posY1,
                                 texto.posX2, texto.posY2, cursor.fetchone()[0])
-                        sql = updateTexto.format(self.operacao.base + '_textos')
+                        sql = updateTexto.format(self.operacao.base)
                         cursor.execute(sql, args)
                         conexao.commit()
                     except ProgrammingError as e:
@@ -195,7 +195,7 @@ class BdUtil:
                     try:
                         args = (id_pagina, texto.sequencia, texto.texto, texto.posX1,
                                 texto.posY1, texto.posX2, texto.posY2)
-                        sql = insertTexto.format(self.operacao.base + '_textos')
+                        sql = insertTexto.format(self.operacao.base)
                         cursor.execute(sql, args)
                         conexao.commit()
                     except ProgrammingError as e:
@@ -223,14 +223,14 @@ class BdUtil:
                 id = None
                 args = (id_capitulo, pagina.nome, pagina.hashPagina)
                 cursor = conexao.cursor(buffered=True)
-                sql = selectPagina.format(self.operacao.base + '_volumes')
+                sql = selectPagina.format(self.operacao.base)
                 cursor.execute(sql, args)
 
                 if cursor.rowcount > 0:
                     try:
                         id = cursor.fetchone()[0]
                         args = (pagina.nome, pagina.numero, pagina.hashPagina, id)
-                        sql = updatePagina.format(self.operacao.base + '_volumes')
+                        sql = updatePagina.format(self.operacao.base)
                         cursor.execute(sql, args)
                         conexao.commit()
                     except ProgrammingError as e:
@@ -241,7 +241,7 @@ class BdUtil:
                 else:
                     try:
                         args = (id_capitulo, pagina.nome, pagina.numero, pagina.hashPagina)
-                        sql = insertPagina.format(self.operacao.base + '_volumes')
+                        sql = insertPagina.format(self.operacao.base)
                         cursor.execute(sql, args)
                         conexao.commit()
                         id = cursor.lastrowid

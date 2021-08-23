@@ -155,11 +155,11 @@ class ImageProcess:
                     print(colored("Nome obtido: " + self.mangaNome, 'yellow', attrs=['reverse', 'blink']))
 
             i += 1
-            pagina = 0
-            capitulo = self.criaClasseCapitulo(diretorio, arquivo)
+            numeroPagina = 0
+            capitulo = self.criaClasseCapitulo(diretorio, arquivos[0])
             for arquivo in arquivos:
                 if arquivo.lower().endswith(('.png', '.jpg', '.jpeg')):
-                    pagina += 1
+                    numeroPagina += 1
 
                     log = os.path.join(diretorio, arquivo)
                     # Caminho completo
@@ -168,7 +168,7 @@ class ImageProcess:
                     else:
                         print(colored(log, 'green', attrs=['reverse', 'blink']))
 
-                    pagina = self.criaClassePagina(diretorio, arquivo)
+                    pagina = self.criaClassePagina(diretorio, arquivo, numeroPagina)
 
                     segmentacao.segmentPage(os.path.join(diretorio, arquivo), self.inpaintedFolder, self.textOnlyFolder)
 
@@ -178,7 +178,7 @@ class ImageProcess:
 
                     coordenadas = deteccao.textDetect(os.path.join(diretorio, arquivo), self.textOnlyFolder)
                     pagina.textos = ocr.getTextFromImg(os.path.join(diretorio, arquivo), coordenadas, self.textOnlyFolder, self.furiganaFolder)
-                    pagina.numeroPagina = pagina
+                    pagina.numeroPagina = numeroPagina
                     capitulo.addPagina(pagina)
 
             if len(capitulo.paginas) > 0:

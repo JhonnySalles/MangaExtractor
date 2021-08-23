@@ -213,7 +213,7 @@ def main():
                     threading.Thread(target=thread_process,args=(operacao, window),daemon=True).start()
             elif event == '-THREAD_AVISO-':
                 aviso(values[event])
-            elif event == '-THREAD_LOG-':
+            elif event == '-THREAD_LOG-': 
                 printLog(values[event])
             elif event == '-THREAD_PROGRESSBAR_UPDATE-':
                 progress.UpdateBar(values[event], MaxProgress)

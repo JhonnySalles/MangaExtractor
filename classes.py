@@ -39,12 +39,14 @@ class Capitulo:
         self.paginas.append(texto)
 
 class Volume:
-    def __init__(self, nome, volume, linguagem, capitulos=[]):
+    def __init__(self, nome, volume, linguagem, capitulo=None):
         pass
         self.nome = nome
         self.volume = volume
         self.linguagem = linguagem
-        self.capitulos = capitulos
+        self.capitulos = []
+        if capitulo is not None:
+            self.capitulos.append(capitulo) 
 
     def addCapitulo(self, texto):
         self.capitulos.append(texto)
