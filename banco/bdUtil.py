@@ -129,7 +129,6 @@ class BdUtil:
                 cursor = conexao.cursor(buffered=True)
                 cursor.execute(tabelaExist % (NOME_DB, tabela))
 
-                print(cursor.rowcount)
                 if cursor.rowcount > 0:
                     if not self.operacao.isTeste:
                         self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Estrutura de tabelas já existente. Tabela: {tabela}', 'red')) 

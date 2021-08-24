@@ -10,7 +10,7 @@ sys.path.append("./banco/")
 
 def itensProcessar():
     operacoes = []
-    operacoes.append(Operacao("teste",  "manga", r'D:/Teste/Jap', "ja", furigana=True, isSilent=True))
+    operacoes.append(Operacao("base",  "nome", r'D:/Teste/Jap', "ja", furigana=True, isSilent=True))
 
     return operacoes
 
