@@ -1,3 +1,6 @@
+from classes import Operacao
+
+
 BINARY_THRESHOLD = 190
 GAUSSIAN_FILTER_SIGMA = 1.5
 SEGMENTATION_THRESHOLD = 1
@@ -29,3 +32,13 @@ PARAMETROS_BD = dict(
 ##  TESSERACT
 ###################
 DEFAULT_TESSERACT_FOLDER= "C:/Program Files/Tesseract-OCR"
+
+
+####################
+##  SILENT
+###################
+def ITENS_PROCESSAR():
+    operacoes = []
+    operacoes.append(Operacao("base",  "nome", r'F:/teste/jar', "ja", furigana=True, isSilent=True))
+
+    return operacoes

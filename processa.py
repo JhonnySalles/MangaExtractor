@@ -21,7 +21,7 @@ def extraiNomeDiretorio(diretorio):
         pasta = pasta.replace("[JPN]", "").replace("[JAP]", "").replace("[JNP]", "")
     elif "[" in pasta:
         scan = pasta[pasta.index("["):pasta.index("]")]
-        pasta = pasta.replace(scan, "")
+        pasta = pasta.replace(scan, "").replace("[", "").replace("]", "")
 
     pasta = pasta.replace(" - ", " ")
 
@@ -156,6 +156,9 @@ class ImageProcess:
                     self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog("Nome obtido: " + self.mangaNome, 'yellow'))
                 else:
                     print(colored("Nome obtido: " + self.mangaNome, 'yellow', attrs=['reverse', 'blink']))
+
+            if len(arquivos) <= 0:
+                continue
 
             i += 1
             numeroPagina = 0

@@ -1,18 +1,12 @@
 from banco.bdUtil import BdUtil, testaConexao
-from classes import Operacao, PrintLog
+from classes import PrintLog
 from processa import ImageProcess
 from datetime import datetime
 from util import printLog
+from defaults import ITENS_PROCESSAR
 import os
 import sys
 sys.path.append("./banco/")
-
-
-def itensProcessar():
-    operacoes = []
-    operacoes.append(Operacao("base",  "nome", r'D:/Teste/Jap', "ja", furigana=True, isSilent=True))
-
-    return operacoes
 
 
 def processar():
@@ -21,7 +15,7 @@ def processar():
         printLog(PrintLog("Não foi possivel conectar ao banco de dados.", caminho=caminhoAplicacao, isSilent=True))
         return
 
-    itens = itensProcessar()
+    itens = ITENS_PROCESSAR()
     for operacao in itens:
         operacao.caminhoAplicacao = caminhoAplicacao
         try:
