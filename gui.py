@@ -1,13 +1,12 @@
 from banco.bdUtil import BdUtil, testaConexao
 from classes import Operacao, PrintLog
 from processa import ImageProcess, extraiNomeDiretorio
-from termcolor import colored
 from datetime import datetime
 import os
 import threading
 import PySimpleGUI as sg
 import sys
-from silent import processar as silent
+from util import printLog
 
 from PySimpleGUI.PySimpleGUI import ConvertArgsToSingleString
 sys.path.append("./banco/")
@@ -51,7 +50,7 @@ layout = [[sg.Text('Caminho', text_color='orangered', size=(15, 1)), sg.Input(ke
 # Create the Window
 window = sg.Window('Manga Text Extractor', layout)
 progress = window['-PROGRESSBAR-']
-logMemo = window['-OUTPUT-']
+LOGMEMO = window['-OUTPUT-']
 operacao = None
 
 
@@ -85,7 +84,6 @@ def aviso(text):
 
 
 def carrega(values):
-
     vertical = None
     linguagem = ""
     if (values['-LINGUAGEM-'] == 'Japonês'):
@@ -156,35 +154,11 @@ def extraiInformacoesDiretorio(values):
         window['-BASE-'].Update(manga)
 
 
-def printLog(printLog):
-    if printLog.cor is None:
-        print(printLog.mensagem)
-        if not isTeste:
-            logMemo.print(printLog.mensagem)
-    else:
-        corMemo = ''
-        if printLog.cor == 'green':
-            corMemo = 'cyan'
-        elif printLog.cor == 'yellow':
-            corMemo = 'yellow'
-        elif printLog.cor == 'red':
-            corMemo = 'red'
-        elif printLog.cor == 'blue':
-            corMemo = 'royalblue'
-
-        print(colored(printLog.mensagem, printLog.cor, attrs=['reverse', 'blink']))
-        if not isTeste:
-            logMemo.print(printLog.mensagem, text_color=corMemo)
-
-    if (printLog.save) and (operacao is not None):
-        with open(operacao.caminho + '/log.txt', 'a+', encoding='utf-8') as file:
-            file.write(printLog.mensagem + '\n')
-
-
 def main():
     if isTeste:
         teste()
     else:
+        global operacao
         MaxProgress = 1
         inicio = datetime.now()
         while True:
@@ -207,14 +181,17 @@ def main():
                     aviso('Não foi possível conectar ao banco de dados')
                 elif validaCampos(values):
                     inicio = datetime.now()
-                    logMemo.Update('')
-                    printLog(PrintLog('Inicido do processo: ' + inicio.strftime("%H:%M:%S"), 'yellow'))
+                    LOGMEMO.Update('')
                     operacao = carrega(values)
+                    printLog(PrintLog('Inicido do processo: ' + inicio.strftime("%H:%M:%S"), 'yellow', logMemo=LOGMEMO, caminho=operacao.caminho))
                     threading.Thread(target=thread_process,args=(operacao, window),daemon=True).start()
             elif event == '-THREAD_AVISO-':
                 aviso(values[event])
-            elif event == '-THREAD_LOG-': 
-                printLog(values[event])
+            elif event == '-THREAD_LOG-':
+                prtLog = values[event]
+                prtLog.logMemo = LOGMEMO
+                prtLog.caminho = operacao.caminho 
+                printLog(prtLog)
             elif event == '-THREAD_PROGRESSBAR_UPDATE-':
                 progress.UpdateBar(values[event], MaxProgress)
             elif event == '-THREAD_PROGRESSBAR_MAX-':
@@ -222,10 +199,10 @@ def main():
             elif event == '-THREAD_END-':
                 intervalo = datetime.now() - inicio
                 progress.UpdateBar(MaxProgress, MaxProgress)
-                printLog(PrintLog('Fim do processo: ' + datetime.now().strftime("%H:%M:%S"), 'yellow'))
-                printLog(PrintLog('Tempo decorrido: ' + str(intervalo), 'yellow'))
+                printLog(PrintLog('Fim do processo: ' + datetime.now().strftime("%H:%M:%S"), 'yellow', logMemo=LOGMEMO, caminho=operacao.caminho))
+                printLog(PrintLog('Tempo decorrido: ' + str(intervalo), 'yellow', logMemo=LOGMEMO, caminho=operacao.caminho))
                 if operacao.furigana:
-                    printLog(PrintLog('Com limpeza de furigana.'))
+                    printLog(PrintLog('Com limpeza de furigana.', logMemo=LOGMEMO, caminho=operacao.caminho))
                 aviso(values[event])
 
         window.close()

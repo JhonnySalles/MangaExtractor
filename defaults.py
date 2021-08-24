@@ -16,12 +16,13 @@ MAXIMUM_VERTICAL_SPACE_VARIANCE = 5.0
 ####################
 ##  BD
 ###################
+NOME_DB = 'manga_extractor'
 PARAMETROS_BD = dict(
     host='localhost',
     port=3306,
     user='admin',
     passwd='admin',
-    database='manga_extractor'
+    database=NOME_DB
 )
 
 ####################

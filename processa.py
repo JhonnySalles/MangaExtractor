@@ -10,6 +10,7 @@ from classes import PrintLog, Volume, Pagina, Capitulo
 from termcolor import colored
 from banco.bdUtil import gravarDados
 from furigana import RemoveFurigana
+from util import printLog
 import re
 
 
@@ -136,6 +137,8 @@ class ImageProcess:
         if not self.operacao.isTeste:
             self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog("Iniciado o processamento...."))
             self.operacao.window.write_event_value('-THREAD_PROGRESSBAR_MAX-', len([f for f in os.listdir(self.folder) if "capa" not in f.lower() and f not in ['tmp']]))
+        elif self.operacao.isSilent:
+            printLog(PrintLog("Iniciado o processamento....", caminho=self.operacao.caminhoAplicacao, isSilent=self.operacao.isSilent))
         else:
             print("Iniciado o processamento....")
 
@@ -165,6 +168,8 @@ class ImageProcess:
                     # Caminho completo
                     if not self.operacao.isTeste:
                         self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(log, 'green'))
+                    elif self.operacao.isSilent:
+                        printLog(PrintLog(log, 'green', caminho=self.operacao.caminhoAplicacao, isSilent=self.operacao.isSilent))
                     else:
                         print(colored(log, 'green', attrs=['reverse', 'blink']))
 

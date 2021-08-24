@@ -2,8 +2,35 @@ import numpy as np
 import scipy.ndimage
 from pylab import zeros, amax, median
 import cv2
+from termcolor import colored
 
 
+def printLog(printLog, arquivo='log.txt'):
+    if printLog.cor is None:
+        print(printLog.mensagem)
+        if (not printLog.isTeste) and (not printLog.isSilent):
+            printLog.logMemo.print(printLog.mensagem)
+    else:
+        corMemo = ''
+        if printLog.cor == 'green':
+            corMemo = 'cyan'
+        elif printLog.cor == 'yellow':
+            corMemo = 'yellow'
+        elif printLog.cor == 'red':
+            corMemo = 'red'
+        elif printLog.cor == 'blue':
+            corMemo = 'royalblue'
+
+        print(colored(printLog.mensagem, printLog.cor, attrs=['reverse', 'blink']))
+        if (not printLog.isTeste) and (not printLog.isSilent):
+            printLog.logMemo.print(printLog.mensagem, text_color=corMemo)
+
+    if (printLog.save) and (printLog.caminho is not None):
+        with open(printLog.caminho + '/' + arquivo, 'a+', encoding='utf-8') as file:
+            file.write(printLog.mensagem + '\n')
+
+
+##########################################################
 def area_bb(a):
     return np.prod([max(x.stop-x.start, 0) for x in a[:2]])
 

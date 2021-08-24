@@ -5,6 +5,8 @@ from termcolor import colored
 import sys
 sys.path.append("../")
 from classes import PrintLog, Volume
+from util import printLog
+from defaults import NOME_DB
 
 volumes = """
     CREATE TABLE %s_volumes (
@@ -103,6 +105,14 @@ updateTexto = """
     WHERE id = %s
 """
 
+tabelaExist = """
+    SELECT Table_Name FROM information_schema.tables 
+    WHERE table_schema = "%s" 
+    AND (Table_Name LIKE "%s_textos")
+    GROUP BY Table_Name
+"""
+
+
 class BdUtil:
     def __init__(self, operacao):
         self.operacao = operacao
@@ -115,6 +125,24 @@ class BdUtil:
                 raise ValueError("Erro na criação da tabela, tabela não informada.")
 
             tabela = nome.replace(" ", "_")
+            try:
+                cursor = conexao.cursor(buffered=True)
+                cursor.execute(tabelaExist % (NOME_DB, tabela))
+
+                print(cursor.rowcount)
+                if cursor.rowcount > 0:
+                    if not self.operacao.isTeste:
+                        self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Estrutura de tabelas já existente. Tabela: {tabela}', 'red')) 
+                    else:
+                        print(colored(f'Estrutura de tabelas já existente. Tabela: {tabela}', 'red', attrs=['reverse', 'blink']))
+                    self.tabela = tabela
+                    return tabela
+            except ProgrammingError as e:
+                if not self.operacao.isTeste:
+                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela volume: {e.msg}', 'red')) 
+                else:
+                    print(colored(f'Erro na criação da tabela volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
+
             try:
                 cursor = conexao.cursor()
                 cursor.execute(volumes % tabela)
@@ -380,6 +408,8 @@ def gravarDados(operacao, capitulo):
     if not operacao.isTeste:
         operacao.window.write_event_value('-THREAD_LOG-', PrintLog('Gravando informações no banco de dados....', 'blue'))
         operacao.window.write_event_value('-THREAD_LOG-', PrintLog(log)) 
+    elif operacao.isSilent:
+        printLog(PrintLog('Gravando informações no banco de dados....', caminho=operacao.caminhoAplicacao, isSilent=operacao.isSilent))
     else:
         print(colored('Gravando informações no banco de dados....', 'blue', attrs=['reverse', 'blink']))
         print(log)
@@ -388,5 +418,7 @@ def gravarDados(operacao, capitulo):
 
     if not operacao.isTeste:
         operacao.window.write_event_value('-THREAD_LOG-', PrintLog('Gravação concluida.', 'blue'))
+    elif operacao.isSilent:
+        printLog(PrintLog('Gravação concluida', caminho=operacao.caminhoAplicacao, isSilent=operacao.isSilent))
     else:
         print(colored('Gravação concluida.', 'blue', attrs=['reverse', 'blink']))
