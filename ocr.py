@@ -11,6 +11,7 @@ import subprocess
 from classes import Texto, PrintLog
 from PIL import Image
 import pytesseract
+from defaults import FOLDER_SAVE_IMAGE_NOT_LOCATED_TEXT
 
 
 class TextOcr():
@@ -154,12 +155,19 @@ class TextOcr():
         return text
 
 
-    def getTextFromImg(self, imgPath, rectList, textOnlyFolder, furiganaFolder):
+    def saveNotProcess(self, cropped, name):
+        nomeImgNotProcess = FOLDER_SAVE_IMAGE_NOT_LOCATED_TEXT + '/' + name + '.jpg'
+        cv2.imwrite(nomeImgNotProcess, cropped)
+
+
+    def getTextFromImg(self, imgPath, rectList, textOnlyFolder, furiganaFolder, nameIfNotProcess = ""):
         fileName = os.path.basename(imgPath)
         if self.operacao.furigana:
             folder = furiganaFolder
         else:
             folder = textOnlyFolder
+
+        saveImgNotProcess = (FOLDER_SAVE_IMAGE_NOT_LOCATED_TEXT != "") and (os.path.exists(FOLDER_SAVE_IMAGE_NOT_LOCATED_TEXT)) and (nameIfNotProcess != "")
 
         img = cv2.imread(folder+fileName)
         imgWrite = cv2.imread(folder+fileName)
@@ -181,7 +189,7 @@ class TextOcr():
 
                 texto.append(Texto(text, sequencia, x1, y1, x2, y2))
                 sequencia += 1
-                cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 0, 255))
+                cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 255, 0))
             elif self.operacao.furigana:
                 folder = textOnlyFolder
                 img2 = cv2.imread(folder+fileName)
@@ -198,7 +206,19 @@ class TextOcr():
 
                     texto.append(Texto(text, sequencia, x1, y1, x2, y2))
                     sequencia += 1
-                    cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 0, 255))
+                    cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 255, 0))
+                else:
+                    cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 0, 255)) # Caso não conseguiu identificar o texto pinta de vermelho
+                    if saveImgNotProcess:
+                        self.saveNotProcess(cropped, nameIfNotProcess + '_Seq-' + str(sequencia) + '_Pos-' + str(x1) + '-' + str(y1) + str(x2) + '-' + str(y2) + '_')
 
+            else:
+                cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 0, 255)) # Caso não conseguiu identificar o texto pinta de vermelho
+                if saveImgNotProcess:
+                    self.saveNotProcess(cropped, nameIfNotProcess + '_Seq-' + str(sequencia) + '_Pos-' + str(x1) + '-' + str(y1) + str(x2) + '-' + str(y2) + '_')
+
+            cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 0, 255)) # Caso não conseguiu identificar o texto pinta de vermelho
+                    
+                      
         cv2.imwrite(folder+fileName, imgWrite)
         return texto

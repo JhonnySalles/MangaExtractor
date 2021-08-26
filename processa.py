@@ -6,12 +6,13 @@ import hashlib
 from segmentacao import TextSegmenation
 from detecao import TextDetection
 from ocr import TextOcr
-from classes import PrintLog, Volume, Pagina, Capitulo
+from classes import PrintLog, Pagina, Capitulo
 from termcolor import colored
 from banco.bdUtil import gravarDados
 from furigana import RemoveFurigana
 from util import printLog
 import re
+from unidecode import unidecode
 
 
 def extraiNomeDiretorio(diretorio):
@@ -35,28 +36,7 @@ def extraiNomeDiretorio(diretorio):
     return pasta.replace("  ", " ").strip()
 
 
-class ImageProcess:
-    def __init__(self, operacao):
-        pass
-
-        # Caminhos temporários
-        self.operacao = operacao
-        self.language = operacao.linguagem
-        self.mangaNome = operacao.mangaNome
-        self.folder = ''.join(operacao.caminho + "/").replace("//", "/")
-        self.tempFolder = self.folder + "tmp/"
-        self.textOnlyFolder = self.tempFolder+"textOnly/"
-        self.inpaintedFolder = self.tempFolder+"inpainted/"
-        self.furiganaFolder  = self.tempFolder+"furigana/"
-        # self.transalatedFolder=self.tempFolder+"translated/"
-
-    def limpaDiretorios(self):
-        for filePath in [self.textOnlyFolder, self.inpaintedFolder, self.furiganaFolder]:
-            if os.path.exists(filePath):
-                shutil.rmtree(filePath)
-            os.makedirs(filePath)
-
-    def extraiInformacoesDiretorio(self, diretorio):
+def extraiInformacoesDiretorio(diretorio, mangaNome, language="PT"):
         pasta = os.path.basename(diretorio)  # Pasta que está
 
         scan = ""
@@ -93,8 +73,8 @@ class ImageProcess:
                 capitulo = capitulo.replace("extra", "").strip()
                 isExtra = True
 
-            volume = re.sub('\D', '', volume)
-            capitulo = re.sub('\D', '', capitulo)
+            volume = re.sub(r'[^0-9.]', '', volume)
+            capitulo = re.sub(r'[^0-9.]', '', capitulo)
 
             if volume == "":
                 volume = '0'
@@ -102,12 +82,34 @@ class ImageProcess:
             if capitulo == "":
                 capitulo = '0'
 
-        obj = Capitulo(self.mangaNome, volume, capitulo, self.language)
+        obj = Capitulo(mangaNome, volume, capitulo, language)
         obj.scan = scan
         obj.isScan = isScan
         obj.isExtra = isExtra
 
         return obj
+
+
+class ImageProcess:
+    def __init__(self, operacao):
+        pass
+
+        # Caminhos temporários
+        self.operacao = operacao
+        self.language = operacao.linguagem
+        self.mangaNome = operacao.mangaNome
+        self.folder = ''.join(operacao.caminho + "/").replace("//", "/")
+        self.tempFolder = self.folder + "tmp/"
+        self.textOnlyFolder = self.tempFolder+"textOnly/"
+        self.inpaintedFolder = self.tempFolder+"inpainted/"
+        self.furiganaFolder  = self.tempFolder+"furigana/"
+        # self.transalatedFolder=self.tempFolder+"translated/"
+
+    def limpaDiretorios(self):
+        for filePath in [self.textOnlyFolder, self.inpaintedFolder, self.furiganaFolder]:
+            if os.path.exists(filePath):
+                shutil.rmtree(filePath)
+            os.makedirs(filePath)
 
     def criaClassePagina(self, diretorio, arquivo, numero):
         pagina = Pagina(arquivo, numero)
@@ -119,7 +121,7 @@ class ImageProcess:
     def criaClasseCapitulo(self, diretorio, arquivo):
         capitulo = None
         if self.operacao.getInformacaoPasta:
-            capitulo = self.extraiInformacoesDiretorio(diretorio)
+            capitulo = extraiInformacoesDiretorio(diretorio, self.mangaNome, self.language)
         else:
             capitulo = Capitulo(self.mangaNome, self.operacao.volume, self.operacao.capitulo, self.language)
             capitulo.scan = self.operacao.scan
@@ -141,6 +143,18 @@ class ImageProcess:
             printLog(PrintLog("Iniciado o processamento....", caminho=self.operacao.caminhoAplicacao, isSilent=self.operacao.isSilent))
         else:
             print("Iniciado o processamento....")
+
+
+        IMAGENS_EXTENSOES = ('.png', '.jpg', '.jpeg')
+        for diretorio, subpastas, arquivos in os.walk(self.folder):
+            # Ignora as pastas temporárias da busca
+            subpastas[:] = [sub for sub in subpastas if sub not in ['tmp']]
+            # Ignora as pastas de capa
+            subpastas[:] = [sub for sub in subpastas if "capa" not in sub.lower()]
+
+            for arquivo in arquivos:
+                if arquivo.lower().endswith(IMAGENS_EXTENSOES):
+                    os.rename(os.path.join(diretorio, arquivo), os.path.join(diretorio, unidecode(arquivo)))
 
         for diretorio, subpastas, arquivos in os.walk(self.folder):
             # Ignora as pastas temporárias da busca
@@ -164,7 +178,7 @@ class ImageProcess:
             numeroPagina = 0
             capitulo = self.criaClasseCapitulo(diretorio, arquivos[0])
             for arquivo in arquivos:
-                if arquivo.lower().endswith(('.png', '.jpg', '.jpeg')):
+                if arquivo.lower().endswith(IMAGENS_EXTENSOES):
                     numeroPagina += 1
 
                     log = os.path.join(diretorio, arquivo)
@@ -185,7 +199,8 @@ class ImageProcess:
                         furigana.removeFurigana(os.path.join(self.textOnlyFolder,arquivo), imgGray, imgClean, imgSegment, self.textOnlyFolder, self.furiganaFolder)
 
                     coordenadas = deteccao.textDetect(os.path.join(diretorio, arquivo), self.textOnlyFolder)
-                    pagina.textos = ocr.getTextFromImg(os.path.join(diretorio, arquivo), coordenadas, self.textOnlyFolder, self.furiganaFolder)
+                    nomeImgNotProcess = capitulo.linguagem.upper() + '_No-' + re.sub(r'[^a-zA-Z0-9]', '',capitulo.nome).replace("_", "").lower().strip() + '_Vol-' + capitulo.volume + '_Cap-' + capitulo.capitulo + '_Pag-' + str(numeroPagina)
+                    pagina.textos = ocr.getTextFromImg(os.path.join(diretorio, arquivo), coordenadas, self.textOnlyFolder, self.furiganaFolder, nomeImgNotProcess)
                     pagina.numeroPagina = numeroPagina
                     capitulo.addPagina(pagina)
 

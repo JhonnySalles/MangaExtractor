@@ -1,6 +1,6 @@
 /*
 SQLyog Ultimate v12.4.1 (64 bit)
-MySQL - 5.7.30 : Database - manga_extractor
+MySQL - 5.7.30-log : Database - manga_extractor
 *********************************************************************
 */
 
@@ -48,7 +48,7 @@ CREATE TABLE `exemplo_paginas` (
   `id_capitulo` int(11) NOT NULL,
   `nome` varchar(250) DEFAULT NULL,
   `numero` int(11) DEFAULT NULL,
-  `hash` varchar(250) DEFAULT NULL,
+  `hash_pagina` varchar(250) DEFAULT NULL,
   `is_processado` tinyint(1) DEFAULT '0',
   `vocabulario` longtext,
   PRIMARY KEY (`id`),
@@ -67,11 +67,11 @@ CREATE TABLE `exemplo_textos` (
   `id_pagina` int(11) NOT NULL,
   `sequencia` int(4) DEFAULT NULL,
   `texto` longtext COLLATE utf8mb4_unicode_ci,
-  `vocabulario` longtext COLLATE utf8mb4_unicode_ci,
   `posicao_x1` double DEFAULT NULL,
   `posicao_y1` double DEFAULT NULL,
   `posicao_x2` double DEFAULT NULL,
   `posicao_y2` double DEFAULT NULL,
+  `versaoApp` int(11) DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `exemplo_volumes_exemplo_textos_fk` (`id_pagina`),
   CONSTRAINT `exemplo_paginas_textos_fk` FOREIGN KEY (`id_pagina`) REFERENCES `exemplo_paginas` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -89,6 +89,7 @@ CREATE TABLE `exemplo_volumes` (
   `volume` int(4) DEFAULT NULL,
   `linguagem` varchar(4) DEFAULT NULL,
   `vocabulario` longtext,
+  `is_processado` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

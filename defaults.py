@@ -1,6 +1,14 @@
 from classes import Operacao
 
 
+####################
+##  APLICATIVO
+###################
+VERSAO_APLICATIVO = 1
+
+####################
+##  OCR
+###################
 BINARY_THRESHOLD = 190
 GAUSSIAN_FILTER_SIGMA = 1.5
 SEGMENTATION_THRESHOLD = 1
@@ -15,6 +23,8 @@ FURIGANA_HORIZONTAL_SIGMA_MULTIPLIER = 0.0
 FURIGANA_BINARY_THRESHOLD = 240
 MINIMUM_TEXT_SIZE_THRESHOLD = 7
 MAXIMUM_VERTICAL_SPACE_VARIANCE = 5.0
+
+FOLDER_SAVE_IMAGE_NOT_LOCATED_TEXT=r'F:/Manga/naoreconhecido/'
 
 ####################
 ##  BD

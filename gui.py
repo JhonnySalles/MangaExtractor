@@ -1,26 +1,28 @@
 from banco.bdUtil import BdUtil, testaConexao
 from classes import Operacao, PrintLog
-from processa import ImageProcess, extraiNomeDiretorio
+from processa import ImageProcess, extraiNomeDiretorio, extraiInformacoesDiretorio
 from datetime import datetime
 import os
 import threading
 import PySimpleGUI as sg
 import sys
 from util import printLog
+from unidecode import unidecode
 
 from PySimpleGUI.PySimpleGUI import ConvertArgsToSingleString
 sys.path.append("./banco/")
+
 
 # Simular um teste sem abrir a janela
 isTeste = False
 
 ###################################################
 def teste():
-    operacao = Operacao("teste",  "teste", "F:/Manga2", "ja")
+    operacao = Operacao("kami nomi",  "The World God Only Knows", "F:/Manga/Portuguese3", "pt")
     operacao.ocrType = 'tesseract'
     operacao.isTeste = isTeste
-    operacao.furigana = True
-    operacao.textoVertical = True
+    operacao.furigana = False
+    operacao.textoVertical = False
 
     db = BdUtil(operacao)
     operacao.base = db.criaTabela(operacao.base)
@@ -129,10 +131,10 @@ def thread_process(operacao, window):
 
 
 def eventoManga(values):
-    window['-BASE-'].Update(values['-MANGA-'])
+    window['-BASE-'].Update(unidecode(values['-MANGA-'].strip()))
 
 
-def extraiInformacoesDiretorio(values):
+def eventoCaminho(values):
     caminho = values["-CAMINHO-"]
 
     if (os.path.exists(caminho)):
@@ -142,16 +144,19 @@ def extraiInformacoesDiretorio(values):
         for diretorio, subpastas, arquivos in os.walk(caminho):
             if "tmp" in subpastas:  # Ignora as pastas temporárias da busca
                 subpastas.remove("tmp")
-
             if len(subpastas) < 1:
                 return
-
+                
             pasta = subpastas[0]
             manga = extraiNomeDiretorio(pasta)
+            capitulo = extraiInformacoesDiretorio(pasta, manga)
             break
 
         window['-MANGA-'].Update(manga)
-        window['-BASE-'].Update(manga)
+        window['-VOLUME-'].Update(capitulo.volume)
+        window['-CAPITULO-'].Update(capitulo.capitulo)
+        window['-SCAN-'].Update(capitulo.scan)
+        window['-BASE-'].Update(unidecode(manga.replace("-", " ")))
 
 
 def main():
@@ -166,7 +171,7 @@ def main():
             if event == sg.WIN_CLOSED or event == 'Cancel':  # if user closes window or clicks cancel
                 break
             elif event == '-CAMINHO-':
-                extraiInformacoesDiretorio(values)
+                eventoCaminho(values)
             elif event == '-MANGA-':
                 eventoManga(values)
             elif event == '-LINGUAGEM-':

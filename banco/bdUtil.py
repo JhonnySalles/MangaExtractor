@@ -6,7 +6,7 @@ import sys
 sys.path.append("../")
 from classes import PrintLog, Volume
 from util import printLog
-from defaults import NOME_DB
+from defaults import NOME_DB, VERSAO_APLICATIVO
 
 volumes = """
     CREATE TABLE %s_volumes (
@@ -59,7 +59,9 @@ textos = """
         posicao_x1 DOUBLE DEFAULT NULL,
         posicao_y1 DOUBLE DEFAULT NULL,
         posicao_x2 DOUBLE DEFAULT NULL,
-        posicao_y2 DOUBLE DEFAULT NULL, PRIMARY KEY (id),
+        posicao_y2 DOUBLE DEFAULT NULL,
+        versaoApp int(11) DEFAULT '0', 
+        PRIMARY KEY (id),
         KEY %s_paginas_textos_fk (id_pagina),
         CONSTRAINT %s_paginas_textos_fk FOREIGN KEY (id_pagina) REFERENCES %s_paginas (id) ON DELETE CASCADE ON UPDATE CASCADE
     ) CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -97,11 +99,11 @@ updatePagina = """
 
 selectTexto = 'SELECT id FROM {}_textos WHERE id_pagina = %s AND texto = %s '
 insertTexto = """
-    INSERT INTO {}_textos (id_pagina, sequencia, texto, posicao_x1, posicao_y1, posicao_x2, posicao_y2) 
-    VALUES (%s, %s, %s, %s, %s, %s, %s)
+    INSERT INTO {}_textos (id_pagina, sequencia, texto, posicao_x1, posicao_y1, posicao_x2, posicao_y2, versaoApp) 
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
 """
 updateTexto = """
-    UPDATE {}_textos SET sequencia = %s, texto = %s, posicao_x1 = %s, posicao_y1 = %s, posicao_x2 = %s, posicao_y2 = %s
+    UPDATE {}_textos SET sequencia = %s, texto = %s, posicao_x1 = %s, posicao_y1 = %s, posicao_x2 = %s, posicao_y2 = %s, versaoApp = %s
     WHERE id = %s
 """
 
@@ -209,7 +211,7 @@ class BdUtil:
                 if cursor.rowcount > 0:
                     try:
                         args = (texto.sequencia, texto.texto, texto.posX1, texto.posY1,
-                                texto.posX2, texto.posY2, cursor.fetchone()[0])
+                                texto.posX2, texto.posY2, VERSAO_APLICATIVO, cursor.fetchone()[0])
                         sql = updateTexto.format(self.operacao.base)
                         cursor.execute(sql, args)
                         conexao.commit()
@@ -221,7 +223,7 @@ class BdUtil:
                 else:
                     try:
                         args = (id_pagina, texto.sequencia, texto.texto, texto.posX1,
-                                texto.posY1, texto.posX2, texto.posY2)
+                                texto.posY1, texto.posX2, texto.posY2, VERSAO_APLICATIVO)
                         sql = insertTexto.format(self.operacao.base)
                         cursor.execute(sql, args)
                         conexao.commit()
