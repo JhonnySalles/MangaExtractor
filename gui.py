@@ -142,8 +142,9 @@ def eventoCaminho(values):
         pasta = ""
 
         for diretorio, subpastas, arquivos in os.walk(caminho):
-            if "tmp" in subpastas:  # Ignora as pastas temporárias da busca
-                subpastas.remove("tmp")
+            subpastas[:] = [sub for sub in subpastas if sub not in ['tmp']]
+            subpastas[:] = [sub for sub in subpastas if "capa" not in sub.lower()]
+
             if len(subpastas) < 1:
                 return
                 

@@ -42,7 +42,7 @@ def extraiInformacoesDiretorio(diretorio, mangaNome, language="PT"):
         scan = ""
         isScan = False
         if ("[" in pasta):
-            if ("[JPN]" not in pasta.upper()) and ("[JNP]" not in pasta.upper()) and ("[JPN]" not in pasta.upper()):
+            if ("[JPN]" not in pasta.upper()) and ("[JNP]" not in pasta.upper()) and ("[JAP]" not in pasta.upper()):
                 scan = pasta[pasta.index("["):pasta.index("]")]
                 scan = scan.replace("[", "").replace("]", "").strip()
                 isScan = bool(scan)  # Caso a scan seja vazia será falso

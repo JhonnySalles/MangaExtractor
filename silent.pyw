@@ -11,6 +11,11 @@ sys.path.append("./banco/")
 
 def processar():
     caminhoAplicacao = os.path.abspath('')
+
+    if not os.path.exists(caminhoAplicacao):
+        printLog(PrintLog("Caminho para o log não encontrado: " + caminhoAplicacao, caminho=caminhoAplicacao, isSilent=True))
+        return
+
     if not testaConexao():
         printLog(PrintLog("Não foi possivel conectar ao banco de dados.", caminho=caminhoAplicacao, isSilent=True))
         return
@@ -20,12 +25,12 @@ def processar():
         operacao.caminhoAplicacao = caminhoAplicacao
         try:
             printLog(PrintLog(100*'-', caminho=caminhoAplicacao, isSilent=True))
-            if not os.path.exists(caminhoAplicacao):
-                printLog(PrintLog("Caminho não encontrado: " + caminhoAplicacao, caminho=caminhoAplicacao, isSilent=True))
+            if not os.path.exists(operacao.caminho):
+                printLog(PrintLog("Caminho não encontrado: " + operacao.caminho, caminho=caminhoAplicacao, isSilent=True))
                 continue
 
             inicio = datetime.now()
-            printLog(PrintLog("Iniciando arquivo " + caminhoAplicacao, caminho=caminhoAplicacao, isSilent=True))
+            printLog(PrintLog("Iniciando arquivos em: " + operacao.caminho, caminho=caminhoAplicacao, isSilent=True))
             printLog(PrintLog("Inicido do processo: " + inicio.strftime("%H:%M:%S"), caminho=caminhoAplicacao, isSilent=True))
             db = BdUtil(operacao)
             printLog(PrintLog("Criando base " + operacao.base, caminho=caminhoAplicacao, isSilent=True))

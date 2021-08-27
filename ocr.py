@@ -58,7 +58,6 @@ class TextOcr():
         return service
 
     def filterText(self, inputText):
-        aux = inputText
         if (self.language == "ja"):
             caracteres = '[\\\\+/§◎*)@<>#%(&=$_\-^01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz:;«¢~「」〃ゝゞヽヾ一●▲・ヽ÷①↓®▽■◆『£〆∴∞▼™↑←]'
         else:
@@ -216,9 +215,6 @@ class TextOcr():
                 cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 0, 255)) # Caso não conseguiu identificar o texto pinta de vermelho
                 if saveImgNotProcess:
                     self.saveNotProcess(cropped, nameIfNotProcess + '_Seq-' + str(sequencia) + '_Pos-' + str(x1) + '-' + str(y1) + str(x2) + '-' + str(y2) + '_')
-
-            cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 0, 255)) # Caso não conseguiu identificar o texto pinta de vermelho
-                    
                       
         cv2.imwrite(folder+fileName, imgWrite)
         return texto
