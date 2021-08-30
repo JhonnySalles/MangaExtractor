@@ -25,7 +25,7 @@ class TextSegmenation():
     def __init__(self, operacao):
         pass
         self.operacao = operacao
-        print("Números de GPUs disponíveis: ", len(tf.config.list_physical_devices('GPU')), "\n")
+        print("Números de GPUs disponíveis: " + str(len(tf.config.list_physical_devices('GPU'))) + "\n")
         # tf.reset_default_graph
         #core.load_model(defaults.SNETPATH, '0.1.0')
         #core.load_model(defaults.CNETPATH, '0.1.0')

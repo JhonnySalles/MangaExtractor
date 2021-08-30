@@ -13,6 +13,7 @@ from furigana import RemoveFurigana
 from util import printLog
 import re
 from unidecode import unidecode
+import globals 
 
 
 def extraiNomeDiretorio(diretorio):
@@ -203,6 +204,12 @@ class ImageProcess:
                     pagina.textos = ocr.getTextFromImg(os.path.join(diretorio, arquivo), coordenadas, self.textOnlyFolder, self.furiganaFolder, nomeImgNotProcess)
                     pagina.numeroPagina = numeroPagina
                     capitulo.addPagina(pagina)
+
+                if globals.CANCELAR_OPERACAO:
+                    break
+
+            if globals.CANCELAR_OPERACAO:
+                break
 
             if len(capitulo.paginas) > 0:
                 gravarDados(self.operacao, capitulo)

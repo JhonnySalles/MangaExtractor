@@ -13,13 +13,15 @@ def printLog(printLog, arquivo='log.txt'):
     else:
         corMemo = ''
         if printLog.cor == 'green':
-            corMemo = 'cyan'
+            corMemo = 'LawnGreen'
         elif printLog.cor == 'yellow':
             corMemo = 'yellow'
         elif printLog.cor == 'red':
             corMemo = 'red'
         elif printLog.cor == 'blue':
-            corMemo = 'royalblue'
+            corMemo = 'RoyalBlue1'
+        elif printLog.cor == 'magenta':
+            corMemo = 'magenta2'
 
         print(colored(printLog.mensagem, printLog.cor, attrs=['reverse', 'blink']))
         if (not printLog.isTeste) and (not printLog.isSilent):
