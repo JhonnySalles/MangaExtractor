@@ -199,22 +199,26 @@ def thread_list_process(listaOperacao, window):
             print(colored('Inicio do processo: ' + inicioManga.strftime("%H:%M:%S"), 'yellow', attrs=['reverse', 'blink']))
 
         processar(OPERACAO)
-        mangas += OPERACAO.mangaNome + ', '
-        item[-1] = ' • '
-        intervaloManga = datetime.now() - inicioManga
-        if not isTeste:
-            window.write_event_value('-THREAD_LOG-', PrintLog("Manga processado com exito.... " + OPERACAO.mangaNome, 'magenta'))
-            window.write_event_value('-THREAD_LOG-', PrintLog('Fim do processo: ' + datetime.now().strftime("%H:%M:%S"), 'yellow'))
-            window.write_event_value('-THREAD_LOG-', PrintLog('Tempo decorrido: ' + str(intervaloManga), 'yellow'))
-            window.write_event_value('-THREAD_LOG-', PrintLog(100*'-'))
-            window.write_event_value('-THREAD_LIST_UPDATE-')
-        else:
-            print(colored("Manga processado com exito.... " + OPERACAO.mangaNome, 'magenta', attrs=['reverse', 'blink']))
-            print(colored('Fim do processo: ' + datetime.now().strftime("%H:%M:%S"), 'yellow', attrs=['reverse', 'blink']))
-            print(colored('Tempo decorrido: ' + str(intervaloManga), 'yellow', attrs=['reverse', 'blink']))
-            print(100*'-')
-        
-    mangas = mangas[:mangas.rindex(", ")]
+
+        if not globals.CANCELAR_OPERACAO:
+            mangas += OPERACAO.mangaNome + ', '
+            item[-1] = 'X'
+            intervaloManga = datetime.now() - inicioManga
+            if not isTeste:
+                window.write_event_value('-THREAD_LOG-', PrintLog("Manga processado com exito.... " + OPERACAO.mangaNome, 'magenta'))
+                window.write_event_value('-THREAD_LOG-', PrintLog('Fim do processo: ' + datetime.now().strftime("%H:%M:%S"), 'yellow'))
+                window.write_event_value('-THREAD_LOG-', PrintLog('Tempo decorrido: ' + str(intervaloManga), 'yellow'))
+                window.write_event_value('-THREAD_LOG-', PrintLog(100*'-'))
+                window.write_event_value('-THREAD_LIST_UPDATE-', listaOperacao)
+            else:
+                print(colored("Manga processado com exito.... " + OPERACAO.mangaNome, 'magenta', attrs=['reverse', 'blink']))
+                print(colored('Fim do processo: ' + datetime.now().strftime("%H:%M:%S"), 'yellow', attrs=['reverse', 'blink']))
+                print(colored('Tempo decorrido: ' + str(intervaloManga), 'yellow', attrs=['reverse', 'blink']))
+                print(100*'-')
+    
+    if not globals.CANCELAR_OPERACAO:    
+        mangas = mangas[:mangas.rindex(", ")]
+
     window.write_event_value('-THREAD_END-', 'Processamento da lista concluído com sucesso. \nMangas processados: ' + mangas) 
 
 
@@ -319,7 +323,7 @@ def main():
             elif event == '-THREAD_PROGRESSBAR_MAX-':
                 MaxProgress = values[event]
             elif event == '-THREAD_LIST_UPDATE-':
-                window['-TABLE-'].update(values=listaOperacoes)
+                window['-TABLE-'].update(values=values[event])
             elif event == '-THREAD_END-':
                 if globals.CANCELAR_OPERACAO:
                     printLog(PrintLog('Operação cancelada...', 'yellow', logMemo=LOGMEMO, caminho=OPERACAO.caminho))
