@@ -19,6 +19,9 @@ import globals
 def extraiNomeDiretorio(diretorio):
     pasta = os.path.basename(diretorio)  # Obtem o nome da pasta
 
+    if (pasta.lower() == 'c:/') or (pasta.lower() == 'c:\\') or ("$recycle.bin" in pasta.lower()):
+        return ""
+
     if ("[JPN]" in pasta.upper()) or ("[JAP]" in pasta.upper()) or ("[JNP]" in pasta.upper()):
         pasta = pasta.replace("[JPN]", "").replace("[JAP]", "").replace("[JNP]", "")
     elif "[" in pasta:
@@ -53,7 +56,7 @@ def extraiInformacoesDiretorio(diretorio, mangaNome, language="PT"):
         volume = '0'
         capitulo = '0'
         isExtra = False
-        if ("capítulo" in pasta) or ("capitulo" in pasta) or (("extra" in pasta) and (pasta.rindex("volume") < pasta.rindex("extra"))):
+        if ("volume" in pasta) and (("capítulo" in pasta) or ("capitulo" in pasta) or (("extra" in pasta) and (pasta.rindex("volume") < pasta.rindex("extra")))):
             if "capítulo" in pasta:
                 volume = pasta[pasta.rindex("volume"):pasta.rindex("capítulo")]
                 volume = volume.replace("volume", "").replace("-", "").strip()
