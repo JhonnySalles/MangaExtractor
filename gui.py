@@ -178,6 +178,7 @@ def thread_process(operacao, window):
         processar(operacao)
         window.write_event_value('-THREAD_END-', 'Processamento concluído com sucesso. \nManga: ' + operacao.mangaNome)
     except Exception as e:
+        print(e)
         window.write_event_value('-THREAD_ERROR-', str(e))
 
 
@@ -225,6 +226,7 @@ def thread_list_process(listaOperacao, window):
 
         window.write_event_value('-THREAD_END-', 'Processamento da lista concluído com sucesso. \nMangas processados: ' + mangas) 
     except Exception as e:
+        print(e)
         window.write_event_value('-THREAD_ERROR-', str(e)) 
 
 
@@ -332,7 +334,7 @@ def main():
             elif event == '-THREAD_LIST_UPDATE-':
                 window['-TABLE-'].update(values=values[event])
             elif event == '-THREAD_ERROR-':
-                aviso('Erro no processamento.... ', values[event])
+                aviso('Erro no processamento....\n' + values[event])
                 enableButtons()
             elif event == '-THREAD_END-':
                 if globals.CANCELAR_OPERACAO:
