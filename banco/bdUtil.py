@@ -32,7 +32,7 @@ capitulos = """
         is_processado Tinyint(1) DEFAULT '0',
         vocabulario LONGTEXT COLLATE utf8mb4_unicode_ci,
         PRIMARY KEY (id),
-        KEY %s_volumes_capitulos_fk (id_volume),
+        KEY %s_volumes_fk (id_volume),
         CONSTRAINT %s_volumes_capitulos_fk FOREIGN KEY (id_volume) REFERENCES %s_volumes (id) ON DELETE CASCADE ON UPDATE CASCADE
     ) CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci; 
 """
@@ -46,7 +46,7 @@ paginas = """
         is_processado Tinyint(1) DEFAULT '0',
         vocabulario LONGTEXT,
         PRIMARY KEY (id),
-        KEY %s_capitulos_paginas_fk (id_capitulo),
+        KEY %s_capitulos_fk (id_capitulo),
         CONSTRAINT %s_capitulos_paginas_fk FOREIGN KEY (id_capitulo) REFERENCES %s_capitulos (id) ON DELETE CASCADE ON UPDATE CASCADE
     ) CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
@@ -62,7 +62,7 @@ textos = """
         posicao_y2 DOUBLE DEFAULT NULL,
         versaoApp int(11) DEFAULT '0', 
         PRIMARY KEY (id),
-        KEY %s_paginas_textos_fk (id_pagina),
+        KEY %s_paginas_fk (id_pagina),
         CONSTRAINT %s_paginas_textos_fk FOREIGN KEY (id_pagina) REFERENCES %s_paginas (id) ON DELETE CASCADE ON UPDATE CASCADE
     ) CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """

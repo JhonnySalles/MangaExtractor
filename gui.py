@@ -20,7 +20,7 @@ isTeste = False
 
 ###################################################
 def teste():
-    OPERACAO = Operacao("kami nomi",  "The World God Only Knows", "F:/Manga/Portuguese3", "pt")
+    OPERACAO = Operacao("kami nomi",  "The World God Only Knows", r"F:/Manga/Teste", "pt")
     OPERACAO.ocrType = 'tesseract'
     OPERACAO.isTeste = isTeste
     OPERACAO.furigana = False
@@ -55,7 +55,7 @@ layout = [[sg.Text('Caminho', text_color='orangered', size=(15, 1)), sg.Input(ke
           [sg.Text('Linguagem', size=(15, 1)), sg.Combo(['Português', 'Japonês', 'Inglês', 'Japonês (vertical)', 'Japonês (horizontal)'], default_value='Japonês', key='-LINGUAGEM-', size=(15, 1), enable_events=True)],
           [sg.Text('Recurso OCR', size=(15, 1)), sg.Combo(['WinOCR', 'Tesseract'], default_value='Tesseract', key='-OCRTYPE-', size=(15, 1))],
           [sg.Checkbox('Carregar Informações da pasta?', default=True, key="-GET_INFORMACAO-", size=(30, 1)), sg.Checkbox('Limpar furigana?', default=False, key="-FURIGANA-")],
-          [sg.Checkbox('Obter o nome do manga da pasta?', default=False, key="-GET_NOME-", size=(30, 1)), sg.Checkbox('Filtro adicional para limpar o furigana?', default=False, key="-FILTRO_ADICIONAL_FURIGANA-")],
+          [sg.Checkbox('Obter o nome do manga da pasta?', default=True, key="-GET_NOME-", size=(30, 1)), sg.Checkbox('Filtro adicional para limpar o furigana?', default=False, key="-FILTRO_ADICIONAL_FURIGANA-")],
           [sg.TabGroup([[sg.Tab('Operação', tabOperacao), sg.Tab('Lista operações', tabLista)]])],
           [sg.ProgressBar(100, orientation='h', size=(45, 5), key='-PROGRESSBAR-')]]
 
@@ -122,7 +122,7 @@ def limpaCampos():
     window['-SCAN-'].Update('')
     window['-BASE-'].Update('')
     window['-GET_INFORMACAO-'].Update(True)
-    window['-GET_NOME-'].Update(False)
+    window['-GET_NOME-'].Update(True)
     window['-FURIGANA-'].Update(False)
     window['-FILTRO_ADICIONAL_FURIGANA-'].Update(False)
     window['-FILTRO_ADICIONAL_FURIGANA-'].Update(False)
