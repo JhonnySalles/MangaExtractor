@@ -14,6 +14,7 @@ from util import printLog
 import re
 from unidecode import unidecode
 import globals 
+import shutil
 
 
 def extraiNomeDiretorio(diretorio):
@@ -41,57 +42,122 @@ def extraiNomeDiretorio(diretorio):
 
 
 def extraiInformacoesDiretorio(diretorio, mangaNome, language="PT"):
-        pasta = os.path.basename(diretorio)  # Pasta que está
+    pasta = os.path.basename(diretorio)  # Pasta que está
 
-        scan = ""
-        isScan = False
-        if ("[" in pasta):
-            if ("[JPN]" not in pasta.upper()) and ("[JNP]" not in pasta.upper()) and ("[JAP]" not in pasta.upper()):
-                scan = pasta[pasta.index("["):pasta.index("]")]
-                scan = scan.replace("[", "").replace("]", "").strip()
-                isScan = bool(scan)  # Caso a scan seja vazia será falso
+    scan = ""
+    isScan = False
+    if ("[" in pasta):
+        if ("[JPN]" not in pasta.upper()) and ("[JNP]" not in pasta.upper()) and ("[JAP]" not in pasta.upper()):
+            scan = pasta[pasta.index("["):pasta.index("]")]
+            scan = scan.replace("[", "").replace("]", "").strip()
+            isScan = bool(scan)  # Caso a scan seja vazia será falso
 
-        pasta = pasta.lower()
+    pasta = pasta.lower()
 
-        volume = '0'
-        capitulo = '0'
-        isExtra = False
-        if ("volume" in pasta) and (("capítulo" in pasta) or ("capitulo" in pasta) or (("extra" in pasta) and (pasta.rindex("volume") < pasta.rindex("extra")))):
-            if "capítulo" in pasta:
-                volume = pasta[pasta.rindex("volume"):pasta.rindex("capítulo")]
-                volume = volume.replace("volume", "").replace("-", "").strip()
+    volume = '0'
+    capitulo = '0'
+    isExtra = False
+    if ("volume" in pasta) and (("capítulo" in pasta) or ("capitulo" in pasta) or (("extra" in pasta) and (pasta.rindex("volume") < pasta.rindex("extra")))):
+        if "capítulo" in pasta:
+            volume = pasta[pasta.rindex("volume"):pasta.rindex("capítulo")]
+            volume = volume.replace("volume", "").replace("-", "").strip()
 
-                capitulo = pasta[pasta.rindex("capítulo"):]
-                capitulo = capitulo.replace("capítulo", "").strip()
-            elif "capitulo" in pasta:
-                volume = pasta[pasta.rindex("volume"):pasta.rindex("capitulo")]
-                volume = volume.replace("volume", "").replace("-", "").strip()
+            capitulo = pasta[pasta.rindex("capítulo"):]
+            capitulo = capitulo.replace("capítulo", "").strip()
+        elif "capitulo" in pasta:
+            volume = pasta[pasta.rindex("volume"):pasta.rindex("capitulo")]
+            volume = volume.replace("volume", "").replace("-", "").strip()
 
-                capitulo = pasta[pasta.rindex("capitulo"):]
-                capitulo = capitulo.replace("capitulo", "").strip()
-            elif "extra" in pasta:
-                volume = pasta[pasta.rindex("volume"):pasta.rindex("extra")]
-                volume = volume.replace("volume", "").replace("-", "").strip()
+            capitulo = pasta[pasta.rindex("capitulo"):]
+            capitulo = capitulo.replace("capitulo", "").strip()
+        elif "extra" in pasta:
+            volume = pasta[pasta.rindex("volume"):pasta.rindex("extra")]
+            volume = volume.replace("volume", "").replace("-", "").strip()
 
-                capitulo = pasta[pasta.rindex("extra"):]
-                capitulo = capitulo.replace("extra", "").strip()
-                isExtra = True
+            capitulo = pasta[pasta.rindex("extra"):]
+            capitulo = capitulo.replace("extra", "").strip()
+            isExtra = True
 
-            volume = re.sub(r'[^0-9.]', '', volume)
-            capitulo = re.sub(r'[^0-9.]', '', capitulo)
+        volume = re.sub(r'[^0-9.]', '', volume)
+        capitulo = re.sub(r'[^0-9.]', '', capitulo)
 
-            if volume == "":
-                volume = '0'
+        if volume == "":
+            volume = '0'
 
-            if capitulo == "":
-                capitulo = '0'
+        if capitulo == "":
+            capitulo = '0'
 
-        obj = Capitulo(mangaNome, volume, capitulo, language)
-        obj.scan = scan
-        obj.isScan = isScan
-        obj.isExtra = isExtra
+    obj = Capitulo(mangaNome, volume, capitulo, language)
+    obj.scan = scan
+    obj.isScan = isScan
+    obj.isExtra = isExtra
 
-        return obj
+    return obj
+
+
+def moveArquivosDiretorios(operacao, diretorioOrigem, diretorioDestino, nomePasta):
+    volume = "0"
+    capitulo = "0"
+    i = 0
+    for diretorio, subpastas, arquivos in os.walk(diretorioOrigem):
+        if len(arquivos) == 0:
+            continue
+
+        i += 1
+        if not operacao.isTeste:
+            operacao.window.write_event_value('-THREAD_PROGRESSBAR_MAX-', len(subpastas))
+            operacao.window.write_event_value('-THREAD_PROGRESSBAR_UPDATE-', i)
+
+        for arquivo in arquivos:
+            nome = os.path.basename(arquivo).lower()
+
+            try:
+                if '_v' in nome:
+                    volume = nome[nome.index('_v') + 1:]
+                    volume = volume[:volume.index('_')].replace("_", "")
+                elif '-v' in nome:
+                    volume = nome[nome.index('-v') + 1:]
+                    volume = volume[:volume.index('-')].replace("-", "")
+                elif '(v' in nome:
+                    volume = nome[nome.index('(v') + 1:]
+                    volume = volume[:volume.index(')')].replace("(", "").replace(")", "")
+
+                if ('_ch' in nome) or ('_c' in nome):
+                    capitulo = nome[nome.index('_c') + 1:]
+                    capitulo = capitulo[:capitulo.index('_')].replace("_", "")
+                elif ('-ch' in nome) or ('-c' in nome):
+                    capitulo = nome[nome.index('-c') + 1:]
+                    capitulo = capitulo[:capitulo.index('-')].replace("-", "")
+                elif ('- c' in nome):
+                    capitulo = nome[nome.index('- c') + 1:]
+                    capitulo = capitulo[:capitulo.index('(')].replace("-", "")
+
+                volume = re.sub(r'[^0-9]', '', volume)
+                capitulo = re.sub(r'[^0-9]', '', capitulo)
+                pasta = diretorioDestino + '/' + (nomePasta + ' - Volume ' + volume + ' Capitulo ' +  capitulo)
+                pasta = pasta.strip()
+            except Exception as e:
+                print(e)
+                pasta = diretorioDestino + "/naoreconhecidos/"
+
+            if not os.path.exists(pasta):
+                os.makedirs(pasta)
+
+            arquivoOrigem = os.path.join(diretorio, arquivo)
+            arquivoDestino = os.path.join(pasta).strip()
+
+            shutil.copy2(arquivoOrigem, arquivoDestino)
+
+            if not operacao.isTeste:
+                operacao.window.write_event_value('-THREAD_LOG-', PrintLog("Copiando arquivo " + arquivo + " para: " + arquivoDestino))
+            else:
+                printLog(PrintLog("Copiando arquivo " + arquivo + " para: " + arquivoDestino, logMemo=operacao.logMemo))
+
+            if globals.CANCELAR_OPERACAO:
+                break
+
+        if globals.CANCELAR_OPERACAO:
+            break
 
 
 class ImageProcess:

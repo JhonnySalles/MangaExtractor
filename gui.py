@@ -1,6 +1,6 @@
 from banco.bdUtil import BdUtil, testaConexao
 from classes import Operacao, PrintLog
-from processa import ImageProcess, extraiNomeDiretorio, extraiInformacoesDiretorio
+from processa import ImageProcess, extraiNomeDiretorio, extraiInformacoesDiretorio, moveArquivosDiretorios
 from datetime import datetime
 import os
 import threading
@@ -45,6 +45,11 @@ tabOperacao = [[sg.Multiline(size=(80, 11), key='-OUTPUT-')],
 tabLista = [[sg.Table(listaOperacoes, headings=headings, justification='left', key='-TABLE-', display_row_numbers=False, enable_events=True, auto_size_columns=False, col_widths=[0, 10, 19, 20, 7, 5, 2], size=(80, 10))],
             [sg.Button('Inserir', size=(20, 1), key='-BTN_INSERIR-', use_ttk_buttons=True, disabled_button_color=('white', 'black')), sg.Text('', size=(2, 1)), sg.Button('Remover', key='-BTN_REMOVER-', size=(20, 1), use_ttk_buttons=True, disabled_button_color=('white', 'black')), sg.Text('', size=(2, 1)), sg.Button('Processar Lista', key='-BTN_PROCESSAR_LISTA-', size=(20, 1), use_ttk_buttons=True, disabled_button_color=('white', 'black'))]]
 
+tabMoverImagens = [[sg.Text('Nome da pasta', size=(15, 1)), sg.Input(key='-NOME_PASTA-', default_text='Manga')],
+                   [sg.Text('Caminho Origem', size=(15, 1)), sg.Input(key='-CAMINHO_ORIGEM-', default_text='C:/'), sg.FolderBrowse('Selecionar pasta')],
+                   [sg.Text('Caminho Destino', size=(15, 1)), sg.Input(key='-CAMINHO_DESTINO-', default_text='C:/'), sg.FolderBrowse('Selecionar pasta')],
+                   [sg.Button('Copiar os arquivos', size=(20, 1), key='-BTN_COPIAR_ARQUIVOS-', use_ttk_buttons=True, disabled_button_color=('white', 'black'))]]
+
 layout = [[sg.Text('Caminho', text_color='orangered', size=(15, 1)), sg.Input(key='-CAMINHO-', enable_events=True, default_text='C:/'), sg.FolderBrowse('Selecionar pasta')],
           [sg.Text('Nome Manga', text_color='cornflowerblue', size=(15, 1)), sg.Input(key='-MANGA-', enable_events=True)],
           [sg.Text('Volume', size=(15, 1)), sg.InputText(key='-VOLUME-')],
@@ -56,7 +61,7 @@ layout = [[sg.Text('Caminho', text_color='orangered', size=(15, 1)), sg.Input(ke
           [sg.Text('Recurso OCR', size=(15, 1)), sg.Combo(['WinOCR', 'Tesseract'], default_value='Tesseract', key='-OCRTYPE-', size=(15, 1))],
           [sg.Checkbox('Carregar Informações da pasta?', default=True, key="-GET_INFORMACAO-", size=(30, 1)), sg.Checkbox('Limpar furigana?', default=False, key="-FURIGANA-")],
           [sg.Checkbox('Obter o nome do manga da pasta?', default=True, key="-GET_NOME-", size=(30, 1)), sg.Checkbox('Filtro adicional para limpar o furigana?', default=False, key="-FILTRO_ADICIONAL_FURIGANA-")],
-          [sg.TabGroup([[sg.Tab('Operação', tabOperacao), sg.Tab('Lista operações', tabLista)]])],
+          [sg.TabGroup([[sg.Tab('Operação', tabOperacao), sg.Tab('Lista operações', tabLista), sg.Tab('Montar estrutura de arquivos', tabMoverImagens)]])],
           [sg.ProgressBar(100, orientation='h', size=(45, 5), key='-PROGRESSBAR-')]]
 
 # Create the Window
@@ -99,6 +104,7 @@ def enableButtons():
     window['-BTN_REMOVER-'].Update(disabled=False)
     window['-BTN_PROCESSAR-'].Update(text='Processar')
     window['-BTN_PROCESSAR_LISTA-'].Update(text='Processar Lista')
+    window['-BTN_COPIAR_ARQUIVOS-'].Update(text='Copiar os arquivos')
 
 
 def disableButtons(operacao):
@@ -106,7 +112,11 @@ def disableButtons(operacao):
     window['-BTN_INSERIR-'].Update(disabled=True)
     window['-BTN_REMOVER-'].Update(disabled=True)
 
-    if operacao.upper() == 'OPERAÇÃO':
+    if operacao.upper() == 'COPIA ARQUIVOS':
+        window['-BTN_COPIAR_ARQUIVOS-'].Update(text='Parar processamento')
+        window['-BTN_PROCESSAR-'].Update(disabled=True)
+        window['-BTN_PROCESSAR_LISTA-'].Update(disabled=True)
+    elif operacao.upper() == 'OPERAÇÃO':
         window['-BTN_PROCESSAR-'].Update(text='Parar processamento')
         window['-BTN_PROCESSAR_LISTA-'].Update(disabled=True)
     elif operacao.upper() == 'LISTA':
@@ -230,6 +240,20 @@ def thread_list_process(listaOperacao, window):
         window.write_event_value('-THREAD_ERROR-', str(e)) 
 
 
+def thread_copy_file(operacao, origem, destino, nomePasta):
+    globals.CANCELAR_OPERACAO = False
+    try:
+        if not operacao.isTeste:
+            operacao.window.write_event_value('-THREAD_LOG-', PrintLog("Iniciando a cópia dos arquivos de " + origem + " para " + destino, 'yellow'))
+        else:
+            printLog(PrintLog("Iniciando a cópia dos arquivos de " + origem + " para " + destino, 'yellow'))
+
+        moveArquivosDiretorios(operacao, origem, destino, nomePasta)
+        window.write_event_value('-THREAD_END-', 'Copia dos arquivos concluído com sucesso.')
+    except Exception as e:
+        print(e)
+        window.write_event_value('-THREAD_ERROR-', str(e))
+
 
 def eventoManga(values):
     window['-BASE-'].Update(unidecode(values['-MANGA-'].strip()))
@@ -299,12 +323,19 @@ def main():
                         listaOperacoes.pop()
                     window['-TABLE-'].update(values=listaOperacoes)
                 SELECTED_ROW = None
-            elif ((event == '-BTN_PROCESSAR-') or (event == '-BTN_PROCESSAR_LISTA-')) and (window[event].get_text() == 'Parar processamento'):
+            elif ((event == '-BTN_PROCESSAR-') or (event == '-BTN_PROCESSAR_LISTA-') or (event == '-BTN_COPIAR_ARQUIVOS-')) and (window[event].get_text() == 'Parar processamento'):
                 globals.CANCELAR_OPERACAO = True
-            elif (event == '-BTN_PROCESSAR-') or  (event == '-BTN_PROCESSAR_LISTA-'):
+            elif (event == '-BTN_PROCESSAR-') or (event == '-BTN_PROCESSAR_LISTA-') or (event == '-BTN_COPIAR_ARQUIVOS-'):
                 if not testaConexao():
                     aviso('Não foi possível conectar ao banco de dados')
-                if (event == '-BTN_PROCESSAR_LISTA-'):
+
+                if event == '-BTN_COPIAR_ARQUIVOS-':
+                    disableButtons("COPIA ARQUIVOS")
+                    OPERACAO = Operacao(None, "", "", "", window)
+                    OPERACAO.logMemo = LOGMEMO
+                    OPERACAO.caminho = values['-CAMINHO_DESTINO-']
+                    threading.Thread(target=thread_copy_file,args=(OPERACAO, values['-CAMINHO_ORIGEM-'], values['-CAMINHO_DESTINO-'], values['-NOME_PASTA-']),daemon=True).start()
+                elif (event == '-BTN_PROCESSAR_LISTA-'):
                     if len(listaOperacoes) == 0:
                         aviso('Nenhuma operação na lista.')
                     else:
