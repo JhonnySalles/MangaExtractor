@@ -249,7 +249,7 @@ def thread_copy_file(operacao, origem, destino, nomePasta):
             printLog(PrintLog("Iniciando a cópia dos arquivos de " + origem + " para " + destino, 'yellow'))
 
         moveArquivosDiretorios(operacao, origem, destino, nomePasta)
-        window.write_event_value('-THREAD_END-', 'Montagem da estrutura e cópia dos arquivos concluído com sucesso.')
+        window.write_event_value('-THREAD_END-', ('Montagem da estrutura e cópia dos arquivos concluído com sucesso.\n' + nomePasta))
     except Exception as e:
         print(e)
         window.write_event_value('-THREAD_ERROR-', str(e))

@@ -99,13 +99,17 @@ def moveArquivosDiretorios(operacao, diretorioOrigem, diretorioDestino, nomePast
     volume = "0"
     capitulo = "0"
     i = 0
+    if not operacao.isTeste:
+        for diretorio, subpastas, arquivos in os.walk(diretorioOrigem):
+            operacao.window.write_event_value('-THREAD_PROGRESSBAR_MAX-', len(subpastas))
+            break
+
     for diretorio, subpastas, arquivos in os.walk(diretorioOrigem):
         if len(arquivos) == 0:
             continue
 
         i += 1
         if not operacao.isTeste:
-            operacao.window.write_event_value('-THREAD_PROGRESSBAR_MAX-', len(subpastas))
             operacao.window.write_event_value('-THREAD_PROGRESSBAR_UPDATE-', i)
 
         for arquivo in arquivos:
