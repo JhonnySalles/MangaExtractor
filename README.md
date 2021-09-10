@@ -150,16 +150,16 @@ Após obter as informações e gerar um objeto contendo as informações, estar�
 ## Exemplos
 
 > Tela inicial
-![Tela inicial](https://raw.githubusercontent.com/JhonnySalles/MangaExtractor/main/example/Main.png)
+![Tela inicial](https://github.com/JhonnySalles/MangaExtractor/blob/main/example/Main.png)
 
 > Execução do programa
-![Execução](https://raw.githubusercontent.com/JhonnySalles/MangaExtractor/main/example/Execution.png)
+![Execução](https://github.com/JhonnySalles/MangaExtractor/blob/main/example/Execution.png)
 
 > Imagem de exemplo utilizada
-![Raw](https://raw.githubusercontent.com/JhonnySalles/MangaExtractor/main/example/05_117.jpg)
+![Raw](https://github.com/JhonnySalles/MangaExtractor/blob/main/example/05_117.jpg)
 
 > Texto após o processamento salvo no banco de dados
-![Banco](https://raw.githubusercontent.com/JhonnySalles/MangaExtractor/main/example/Database.png)
+![Banco](https://github.com/JhonnySalles/MangaExtractor/blob/main/example/Database.png)
 
 > Texto processado
 
