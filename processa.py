@@ -188,7 +188,10 @@ class ImageProcess:
     def criaClassePagina(self, diretorio, arquivo, numero):
         pagina = Pagina(arquivo, numero)
         pagina.arquivo = os.path.join(diretorio, arquivo)
-        md5hash = hashlib.md5(Image.open(os.path.join(diretorio, arquivo)).tobytes())
+        md5hash = hashlib.md5()
+        with open(os.path.join(diretorio, arquivo),'rb') as f:
+          line = f.read()
+          md5hash.update(line)
         pagina.hashPagina = md5hash.hexdigest()
         return pagina
 
