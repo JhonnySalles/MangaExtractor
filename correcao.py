@@ -38,11 +38,12 @@ class CorrecaoPagina:
         self.paginaNome = ""
         self.paginaNumero = ""
         self.hashPagina = ""
+        self.isExtra = False
 
 
 selectCapitulo = """
     SELECT id, manga, volume, capitulo, linguagem FROM {}_capitulos
-    WHERE manga = %s AND volume = %s AND capitulo = %s AND linguagem = %s
+    WHERE manga = %s AND volume = %s AND capitulo = %s AND linguagem = %s AND is_extra = %s
 """
 
 correcaoMd5Image = """
@@ -86,14 +87,15 @@ def updatePagina(correcao):
         else:
             idCapitulo = 0
             try:
-                args = (correcao.manga, correcao.volume, correcao.capitulo, correcao.language)
+                args = (correcao.manga, correcao.volume, correcao.capitulo, correcao.language, correcao.isExtra)
                 cursor = conexao.cursor(buffered=True)
                 sql = selectCapitulo.format(tabela)
                 cursor.execute(sql, args)
 
                 if cursor.rowcount <= 0:
-                    sql = selectCapitulo.format(tabela) % (correcao.manga, correcao.volume, correcao.capitulo, correcao.language)
-                    salvaArquivo(sql + " - não encontrado capitulo")
+                    sql = selectCapitulo.format(tabela) % ('"'+correcao.manga+'"', correcao.volume, correcao.capitulo, '"'+correcao.language+'"', correcao.isExtra)
+                    salvaArquivo(sql + " --- " + correcao.manga + ' - vol: ' + correcao.volume + ' cap: ' + correcao.capitulo + " - não encontrado capitulo")
+                    return
                 else:
                     row = cursor.next()
                     idCapitulo = row[0]
@@ -107,10 +109,9 @@ def updatePagina(correcao):
                 sql = correcaoMd5Image.format(tabela)
                 cursor.execute(sql, args)
                 conexao.commit()
-                salvaArquivo(sql % args)
                 if cursor.rowcount <= 0:
-                    sql = correcaoMd5Image.format(tabela) % (correcao.hashPagina, correcao.paginaNome, idCapitulo)
-                    salvaArquivo(sql + " - nenhum registro encontrado no update")
+                    sql = correcaoMd5Image.format(tabela) % ('"'+correcao.hashPagina+'"', '"'+correcao.paginaNome+'"', idCapitulo)
+                    salvaArquivo(sql + " --- " + correcao.manga + ' - vol: ' + correcao.volume + ' cap: ' + correcao.capitulo + " - nenhum registro encontrado no update")
             except ProgrammingError as e:
                 print(colored(f'Erro ao realizar o update do md5: {e.msg}', 'red', attrs=['reverse', 'blink']))
         
@@ -118,13 +119,14 @@ def updatePagina(correcao):
 
                     
 class Correcao:
-    def __init__(self, tabela, language, caminho):
+    def __init__(self, tabela, language, caminho, isExtra):
         pass
 
         # Caminhos temporários
         self.language = language
         self.caminho = ''.join(caminho + "/").replace("//", "/")
         self.tabela = tabela
+        self.isExtra = isExtra
 
     def criaClasseCorrecaoPagina(self, diretorio):
         pasta = os.path.basename(diretorio)  # Pasta que está
@@ -163,6 +165,7 @@ class Correcao:
 
         obj = CorrecaoPagina(self.tabela, extraiNomeDiretorio(diretorio), volume, capitulo)
         obj.language = self.language
+        obj.isExtra = self.isExtra
 
         return obj
 
@@ -179,26 +182,27 @@ class Correcao:
                 continue
 
             numeroPagina = 0
-            pagina = self.criaClasseCorrecaoPagina(diretorio)
             for arquivo in arquivos:
                 if arquivo.lower().endswith(('.png', '.jpg', '.jpeg')):
                     numeroPagina += 1
-
+                    pagina = self.criaClasseCorrecaoPagina(diretorio)
                     md5hash = hashlib.md5()
                     with open(os.path.join(diretorio, arquivo),'rb') as f:
                         line = f.read()
                         md5hash.update(line)
                     pagina.hashPagina = md5hash.hexdigest()
+                    pagina.paginaNome = arquivo
                     paginas.append(pagina)
                     print(os.path.join(diretorio, arquivo))
 
         print(colored("Atualizando as paginas...", 'green', attrs=['reverse', 'blink']))
         for pagina in paginas:
+            print(colored("Atualizando MD5: " + pagina.manga + " - vol: " + pagina.volume + " cap: " + pagina.capitulo + " - " + pagina.paginaNome, 'green', attrs=['reverse', 'blink']))
             updatePagina(pagina)
         print(colored("Concluido.", 'green', attrs=['reverse', 'blink']))
 
             
 if __name__ == '__main__':
-    correcao = Correcao(None, "ja", "G:/reprocessando")
+    correcao = Correcao("Sora no otoshimono", "ja", "G:/reprocessando", True)
     correcao.corrigeMD5()
 

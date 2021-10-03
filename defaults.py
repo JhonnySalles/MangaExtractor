@@ -4,7 +4,7 @@ from classes import Operacao
 ####################
 ##  APLICATIVO
 ###################
-VERSAO_APLICATIVO = 1
+VERSAO_APLICATIVO = 2
 
 ####################
 ##  OCR
