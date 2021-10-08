@@ -4,6 +4,8 @@ from termcolor import colored
 import re
 from banco.bd import conection
 from defaults import NOME_DB
+from unidecode import unidecode
+from PIL import Image
 from mysql.connector.errors import ProgrammingError
 
 
@@ -31,6 +33,7 @@ class CorrecaoPagina:
     def __init__(self, tabela, manga, volume, capitulo):
         pass
         self.tabela = manga if tabela is None else tabela
+        self.tabela = unidecode(self.tabela.replace("-", " "))[:40].strip()
         self.manga = manga
         self.volume = volume
         self.capitulo = capitulo
@@ -38,6 +41,7 @@ class CorrecaoPagina:
         self.paginaNome = ""
         self.paginaNumero = ""
         self.hashPagina = ""
+        self.hashOldPagina = ""
         self.isExtra = False
 
 
@@ -48,7 +52,7 @@ selectCapitulo = """
 
 correcaoMd5Image = """
     UPDATE {}_paginas SET hash_pagina = %s
-    WHERE nome = %s AND id_capitulo = %s
+    WHERE id_capitulo = %s AND (nome = %s or hash_pagina = %s) 
 """
 
 tabelaExist = """
@@ -59,12 +63,20 @@ tabelaExist = """
 """
 
 def salvaArquivo(log):
-    with open(os.path.abspath('') + '/correcao.log', 'a+', encoding='utf-8') as file:
+    with open(os.path.abspath('') + '/sql_nao_processado.log', 'a+', encoding='utf-8') as file:
         file.write(''.join(log).replace("\n", "") + '\n')
 
 def listaCorrecao(descricao):
     with open(os.path.abspath('') + '/listaCorrecao.log', 'a+', encoding='utf-8') as file:
         file.write(descricao + '\n')
+
+def geraSqlArquivo(tabela, correcao, idCapitulo, informacao):
+    sql = selectCapitulo.format(tabela) % ('"'+correcao.manga+'"', correcao.volume, correcao.capitulo, '"'+correcao.language+'"', correcao.isExtra)
+    salvaArquivo(informacao + " --- " + correcao.manga + ' - vol: ' + correcao.volume + ' cap: ' + correcao.capitulo + " --- 1 - "  + sql )
+
+    sql = correcaoMd5Image.format(tabela) % ('"'+correcao.hashPagina+'"', idCapitulo, '"'+correcao.paginaNome+'"', '"'+correcao.hashOldPagina+'"')
+    salvaArquivo(informacao + " --- " + correcao.manga + ' - vol: ' + correcao.volume + ' cap: ' + correcao.capitulo + " --- 2 - " + sql)
+
 
 def updatePagina(correcao):
     with conection() as conexao:
@@ -82,8 +94,7 @@ def updatePagina(correcao):
             return
 
         if arquivo:
-            sql = correcaoMd5Image.format(tabela) % (correcao.hashPagina, correcao.paginaNome, "00000")
-            salvaArquivo(sql)
+            geraSqlArquivo(tabela, correcao, "!000", " - não encontrado tabela")
         else:
             idCapitulo = 0
             try:
@@ -93,8 +104,7 @@ def updatePagina(correcao):
                 cursor.execute(sql, args)
 
                 if cursor.rowcount <= 0:
-                    sql = selectCapitulo.format(tabela) % ('"'+correcao.manga+'"', correcao.volume, correcao.capitulo, '"'+correcao.language+'"', correcao.isExtra)
-                    salvaArquivo(sql + " --- " + correcao.manga + ' - vol: ' + correcao.volume + ' cap: ' + correcao.capitulo + " - não encontrado capitulo")
+                    geraSqlArquivo(tabela, correcao, "$000", " - não encontrado capitulo")
                     return
                 else:
                     row = cursor.next()
@@ -105,17 +115,16 @@ def updatePagina(correcao):
 
             try:
                 cursor = conexao.cursor()
-                args = (correcao.hashPagina, correcao.paginaNome, idCapitulo)
+                args = (correcao.hashPagina, idCapitulo, correcao.paginaNome, correcao.hashOldPagina)
                 sql = correcaoMd5Image.format(tabela)
                 cursor.execute(sql, args)
                 conexao.commit()
                 if cursor.rowcount <= 0:
-                    sql = correcaoMd5Image.format(tabela) % ('"'+correcao.hashPagina+'"', '"'+correcao.paginaNome+'"', idCapitulo)
-                    salvaArquivo(sql + " --- " + correcao.manga + ' - vol: ' + correcao.volume + ' cap: ' + correcao.capitulo + " - nenhum registro encontrado no update")
+                    geraSqlArquivo(tabela, correcao, idCapitulo, " - nenhum registro atualizado no update")
+                else:
+                    listaCorrecao(correcao.language + ' - ' + correcao.manga + ' - vol: ' + correcao.volume + ' cap: ' + correcao.capitulo)
             except ProgrammingError as e:
                 print(colored(f'Erro ao realizar o update do md5: {e.msg}', 'red', attrs=['reverse', 'blink']))
-        
-        listaCorrecao(correcao.language + ' - ' + correcao.manga + ' - vol: ' + correcao.volume + ' cap: ' + correcao.capitulo)
 
                     
 class Correcao:
@@ -191,6 +200,13 @@ class Correcao:
                         line = f.read()
                         md5hash.update(line)
                     pagina.hashPagina = md5hash.hexdigest()
+
+                    try:
+                        md5hashOld = hashlib.md5(Image.open(os.path.join(diretorio, arquivo)).tobytes())
+                        pagina.hashOldPagina = md5hashOld.hexdigest()
+                    except ProgrammingError as e:
+                        print(colored(f'Erro ao carregar hash antigo: {e.msg}', 'red', attrs=['reverse', 'blink']))
+
                     pagina.paginaNome = arquivo
                     paginas.append(pagina)
                     print(os.path.join(diretorio, arquivo))
@@ -199,10 +215,11 @@ class Correcao:
         for pagina in paginas:
             print(colored("Atualizando MD5: " + pagina.manga + " - vol: " + pagina.volume + " cap: " + pagina.capitulo + " - " + pagina.paginaNome, 'green', attrs=['reverse', 'blink']))
             updatePagina(pagina)
-        print(colored("Concluido.", 'green', attrs=['reverse', 'blink']))
+        print(colored("Concluido. " + self.caminho, 'green', attrs=['reverse', 'blink']))
 
             
 if __name__ == '__main__':
-    correcao = Correcao("Sora no otoshimono", "ja", "G:/reprocessando", True)
+    correcao = Correcao(None, "ja", "G:/reprocessando/aa obter pelo nome", False)
     correcao.corrigeMD5()
 
+   
