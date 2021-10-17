@@ -13,7 +13,7 @@ volumes = """
     id int(11) NOT NULL AUTO_INCREMENT,
     manga varchar(250) DEFAULT NULL,
     volume int(4) DEFAULT NULL,
-    linguagem varchar(4) DEFAULT NULL,
+    linguagem varchar(6) DEFAULT NULL,
     vocabulario longtext,
     is_processado Tinyint(1) DEFAULT '0',
     PRIMARY KEY (id)
@@ -26,7 +26,7 @@ capitulos = """
         manga LONGTEXT NOT NULL,
         volume INT(4) NOT NULL,
         capitulo DOUBLE NOT NULL,
-        linguagem VARCHAR(4),
+        linguagem VARCHAR(6),
         scan VARCHAR(250),
         is_extra Tinyint(1) DEFAULT '0',
         is_raw BOOLEAN,
