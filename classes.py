@@ -54,10 +54,10 @@ class Volume:
 
 
 class PrintLog:
-    def __init__(self, mensagem, cor=None, save=True, logMemo=None, isTest=False, directory=None, isSilent=False):
+    def __init__(self, message, color=None, save=True, logMemo=None, isTest=False, directory=None, isSilent=False):
         pass
-        self.mensagem = mensagem
-        self.cor = cor
+        self.message = message
+        self.color = color
         self.save = save
         self.directory = directory
         self.isSilent = isSilent

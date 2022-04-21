@@ -3,7 +3,7 @@ import cv2
 import scipy.ndimage
 import os
 import util
-import limpeza as clean
+import cleaning as clean
 import defaults
 
 

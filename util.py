@@ -9,30 +9,30 @@ import os.path
 
 
 def printLog(printLog, file='log.txt'):
-    if printLog.cor is None:
-        print(printLog.mensagem)
+    if printLog.color is None:
+        print(printLog.message)
         if (not printLog.isTest) and (not printLog.isSilent):
-            printLog.logMemo.print(printLog.mensagem)
+            printLog.logMemo.print(printLog.message)
     else:
         corMemo = ''
-        if printLog.cor == 'green':
+        if printLog.color == 'green':
             corMemo = 'LawnGreen'
-        elif printLog.cor == 'yellow':
+        elif printLog.color == 'yellow':
             corMemo = 'yellow'
-        elif printLog.cor == 'red':
+        elif printLog.color == 'red':
             corMemo = 'red'
-        elif printLog.cor == 'blue':
+        elif printLog.color == 'blue':
             corMemo = 'RoyalBlue1'
-        elif printLog.cor == 'magenta':
+        elif printLog.color == 'magenta':
             corMemo = 'magenta2'
 
-        print(colored(printLog.mensagem, printLog.cor, attrs=['reverse', 'blink']))
+        print(colored(printLog.message, printLog.color, attrs=['reverse', 'blink']))
         if (not printLog.isTest) and (not printLog.isSilent):
-            printLog.logMemo.print(printLog.mensagem, text_color=corMemo)
+            printLog.logMemo.print(printLog.message, text_color=corMemo)
 
     if (printLog.save) and (printLog.directory is not None):
         with open(printLog.directory + '/' + file, 'a+', encoding='utf-8') as file:
-            file.write(printLog.mensagem + '\n')
+            file.write(printLog.message + '\n')
 
 
 def saveConfig(config):

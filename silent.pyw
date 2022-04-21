@@ -1,6 +1,6 @@
 from banco.bdUtil import BdUtil, testConnection
 from classes import PrintLog
-from processa import ImageProcess
+from process import ImageProcess
 from datetime import datetime
 from util import printLog
 from defaults import PROCESS_ITEMS

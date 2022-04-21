@@ -3,8 +3,8 @@ import shutil
 from PIL import Image
 from numpy.lib.function_base import append
 import hashlib
-from segmentacao import TextSegmenation
-from detecao import TextDetection
+from segmentation import TextSegmenation
+from detection import TextDetection
 from ocr import TextOcr
 from classes import PrintLog, Page, Chapter
 from termcolor import colored

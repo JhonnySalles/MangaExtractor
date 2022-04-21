@@ -11,9 +11,9 @@ import cv2
 import tensorflow as tf
 
 import defaults
-import limpeza as clean
+import cleaning as clean
 import util
-import alisamento as als
+import smoothing as smt
 import scipy.ndimage
 import math
 import tensorflow as tf
@@ -128,7 +128,7 @@ class TextSegmenation():
         horizontal_smoothing_threshold = defaults.HORIZONTAL_SMOOTHING_MULTIPLIER*average_size
         (h, w) = cleaned.shape[:2]
 
-        run_length_smoothed = als.RLSO(cv2.bitwise_not(cleaned), vertical_smoothing_threshold, horizontal_smoothing_threshold)
+        run_length_smoothed = smt.RLSO(cv2.bitwise_not(cleaned), vertical_smoothing_threshold, horizontal_smoothing_threshold)
         components = util.get_connected_components(run_length_smoothed)
         text = np.zeros((h, w), np.uint8)
         #return text

@@ -1,6 +1,6 @@
 from banco.bdUtil import BdUtil, testConnection
 from classes import Operation, PrintLog, Config
-from processa import ImageProcess, getDirectoryName, getDirectoryInformation, moveFilesDirectories
+from process import ImageProcess, getDirectoryName, getDirectoryInformation, moveFilesDirectories
 from datetime import datetime
 import os
 import threading
