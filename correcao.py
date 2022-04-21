@@ -3,223 +3,223 @@ import hashlib
 from termcolor import colored
 import re
 from banco.bd import conection
-from defaults import NOME_DB
+from defaults import BD_NAME
 from unidecode import unidecode
 from PIL import Image
 from mysql.connector.errors import ProgrammingError
 
 
-def extraiNomeDiretorio(diretorio):
-    pasta = os.path.basename(diretorio)  # Obtem o nome da pasta
+def getDirectoryName(directory):
+    folder = os.path.basename(directory)  # Obtem o name da folder
 
-    if ("[JPN]" in pasta.upper()) or ("[JAP]" in pasta.upper()) or ("[JNP]" in pasta.upper()):
-        pasta = pasta.replace("[JPN]", "").replace("[JAP]", "").replace("[JNP]", "")
-    elif "[" in pasta:
-        scan = pasta[pasta.index("["):pasta.index("]")]
-        pasta = pasta.replace(scan, "").replace("[", "").replace("]", "")
+    if ("[JPN]" in folder.upper()) or ("[JAP]" in folder.upper()) or ("[JNP]" in folder.upper()):
+        folder = folder.replace("[JPN]", "").replace("[JAP]", "").replace("[JNP]", "")
+    elif "[" in folder:
+        scan = folder[folder.index("["):folder.index("]")]
+        folder = folder.replace(scan, "").replace("[", "").replace("]", "")
 
-    pasta = pasta.replace(" - ", " ")
+    folder = folder.replace(" - ", " ")
 
-    if ("volume" in pasta.lower()):
-        pasta = pasta[:pasta.lower().rindex("volume")]
-    elif ("capítulo" in pasta.lower()):
-        pasta = pasta[:pasta.lower().rindex("capítulo")]
-    elif ("capitulo" in pasta.lower()):
-        pasta = pasta[:pasta.lower().rindex("capitulo")]
+    if ("volume" in folder.lower()):
+        folder = folder[:folder.lower().rindex("volume")]
+    elif ("capítulo" in folder.lower()):
+        folder = folder[:folder.lower().rindex("capítulo")]
+    elif ("capitulo" in folder.lower()):
+        folder = folder[:folder.lower().rindex("capitulo")]
 
-    return pasta.replace("  ", " ").strip()
+    return folder.replace("  ", " ").strip()
 
-class CorrecaoPagina:
-    def __init__(self, tabela, manga, volume, capitulo):
+class CorrectionPage:
+    def __init__(self, table, manga, volume, chapter):
         pass
-        self.tabela = manga if tabela is None else tabela
-        self.tabela = unidecode(self.tabela.replace("-", " "))[:40].strip()
+        self.table = manga if table is None else table
+        self.table = unidecode(self.table.replace("-", " "))[:40].strip()
         self.manga = manga
         self.volume = volume
-        self.capitulo = capitulo
+        self.chapter = chapter
         self.language = ""
-        self.paginaNome = ""
-        self.paginaNumero = ""
-        self.hashPagina = ""
-        self.hashOldPagina = ""
+        self.pageName = ""
+        self.pageNumber = ""
+        self.hashPage = ""
+        self.hashOldPage = ""
         self.isExtra = False
 
 
-selectCapitulo = """
+selectChapter = """
     SELECT id, manga, volume, capitulo, linguagem FROM {}_capitulos
     WHERE manga = %s AND volume = %s AND capitulo = %s AND linguagem = %s AND is_extra = %s
 """
 
-correcaoMd5Image = """
+correctionMd5Image = """
     UPDATE {}_paginas SET hash_pagina = %s
     WHERE id_capitulo = %s AND (nome = %s or hash_pagina = %s) 
 """
 
-tabelaExist = """
+tableExists = """
     SELECT Table_Name FROM information_schema.tables 
     WHERE table_schema = "%s" 
     AND (Table_Name LIKE "%s_textos")
     GROUP BY Table_Name
 """
 
-def salvaArquivo(log):
+def saveFile(log):
     with open(os.path.abspath('') + '/sql_nao_processado.log', 'a+', encoding='utf-8') as file:
         file.write(''.join(log).replace("\n", "") + '\n')
 
-def listaCorrecao(descricao):
+def listCorrection(description):
     with open(os.path.abspath('') + '/listaCorrecao.log', 'a+', encoding='utf-8') as file:
-        file.write(descricao + '\n')
+        file.write(description + '\n')
 
-def geraSqlArquivo(tabela, correcao, idCapitulo, informacao):
-    sql = selectCapitulo.format(tabela) % ('"'+correcao.manga+'"', correcao.volume, correcao.capitulo, '"'+correcao.language+'"', correcao.isExtra)
-    salvaArquivo(informacao + " --- " + correcao.manga + ' - vol: ' + correcao.volume + ' cap: ' + correcao.capitulo + " --- 1 - "  + sql )
+def generateSqlFile(table, correction, idChapter, information):
+    sql = selectChapter.format(table) % ('"'+correction.manga+'"', correction.volume, correction.chapter, '"'+correction.language+'"', correction.isExtra)
+    saveFile(information + " --- " + correction.manga + ' - vol: ' + correction.volume + ' cap: ' + correction.chapter + " --- 1 - "  + sql )
 
-    sql = correcaoMd5Image.format(tabela) % ('"'+correcao.hashPagina+'"', idCapitulo, '"'+correcao.paginaNome+'"', '"'+correcao.hashOldPagina+'"')
-    salvaArquivo(informacao + " --- " + correcao.manga + ' - vol: ' + correcao.volume + ' cap: ' + correcao.capitulo + " --- 2 - " + sql)
+    sql = correctionMd5Image.format(table) % ('"'+correction.hashPage+'"', idChapter, '"'+correction.pageName+'"', '"'+correction.hashOldPage+'"')
+    saveFile(information + " --- " + correction.manga + ' - vol: ' + correction.volume + ' cap: ' + correction.chapter + " --- 2 - " + sql)
 
 
-def updatePagina(correcao):
-    with conection() as conexao:
+def updatePage(correction):
+    with conection() as connection:
 
-        arquivo = False
-        tabela = correcao.tabela.replace(" ", "_")
+        file = False
+        table = correction.table.replace(" ", "_")
         try:
-            cursor = conexao.cursor(buffered=True)
-            cursor.execute(tabelaExist % (NOME_DB, tabela))
+            cursor = connection.cursor(buffered=True)
+            cursor.execute(tableExists % (BD_NAME, table))
 
             if cursor.rowcount <= 0:
-                arquivo = True
+                file = True
         except ProgrammingError as e:
             print(colored(f'Erro na verificação da tabela: {e.msg}', 'red', attrs=['reverse', 'blink']))
             return
 
-        if arquivo:
-            geraSqlArquivo(tabela, correcao, "!000", " - não encontrado tabela")
+        if file:
+            generateSqlFile(table, correction, "!000", " - não encontrado tabela")
         else:
-            idCapitulo = 0
+            idChapter = 0
             try:
-                args = (correcao.manga, correcao.volume, correcao.capitulo, correcao.language, correcao.isExtra)
-                cursor = conexao.cursor(buffered=True)
-                sql = selectCapitulo.format(tabela)
+                args = (correction.manga, correction.volume, correction.chapter, correction.language, correction.isExtra)
+                cursor = connection.cursor(buffered=True)
+                sql = selectChapter.format(table)
                 cursor.execute(sql, args)
 
                 if cursor.rowcount <= 0:
-                    geraSqlArquivo(tabela, correcao, "$000", " - não encontrado capitulo")
+                    generateSqlFile(table, correction, "$000", " - não encontrado capitulo")
                     return
                 else:
                     row = cursor.next()
-                    idCapitulo = row[0]
+                    idChapter = row[0]
 
             except ProgrammingError as e:
                 print(colored(f'Erro na obtenção do capitulo: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
             try:
-                cursor = conexao.cursor()
-                args = (correcao.hashPagina, idCapitulo, correcao.paginaNome, correcao.hashOldPagina)
-                sql = correcaoMd5Image.format(tabela)
+                cursor = connection.cursor()
+                args = (correction.hashPage, idChapter, correction.pageName, correction.hashOldPage)
+                sql = correctionMd5Image.format(table)
                 cursor.execute(sql, args)
-                conexao.commit()
+                connection.commit()
                 if cursor.rowcount <= 0:
-                    geraSqlArquivo(tabela, correcao, idCapitulo, " - nenhum registro atualizado no update")
+                    generateSqlFile(table, correction, idChapter, " - nenhum registro atualizado no update")
                 else:
-                    listaCorrecao(correcao.language + ' - ' + correcao.manga + ' - vol: ' + correcao.volume + ' cap: ' + correcao.capitulo)
+                    listCorrection(correction.language + ' - ' + correction.manga + ' - vol: ' + correction.volume + ' cap: ' + correction.chapter)
             except ProgrammingError as e:
                 print(colored(f'Erro ao realizar o update do md5: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
                     
-class Correcao:
-    def __init__(self, tabela, language, caminho, isExtra):
+class Correction:
+    def __init__(self, table, language, directory, isExtra):
         pass
 
         # Caminhos temporários
         self.language = language
-        self.caminho = ''.join(caminho + "/").replace("//", "/")
-        self.tabela = tabela
+        self.directory = ''.join(directory + "/").replace("//", "/")
+        self.table = table
         self.isExtra = isExtra
 
-    def criaClasseCorrecaoPagina(self, diretorio):
-        pasta = os.path.basename(diretorio)  # Pasta que está
-        pasta = pasta.lower()
+    def generateClassCorrectionPage(self, directory):
+        folder = os.path.basename(directory)  # Pasta que está
+        folder = folder.lower()
 
         volume = '0'
-        capitulo = '0'
-        if ("capítulo" in pasta) or ("capitulo" in pasta) or (("extra" in pasta) and (pasta.rindex("volume") < pasta.rindex("extra"))):
-            if "capítulo" in pasta:
-                volume = pasta[pasta.rindex("volume"):pasta.rindex("capítulo")]
+        chapter = '0'
+        if ("capítulo" in folder) or ("capitulo" in folder) or (("extra" in folder) and (folder.rindex("volume") < folder.rindex("extra"))):
+            if "capítulo" in folder:
+                volume = folder[folder.rindex("volume"):folder.rindex("capítulo")]
                 volume = volume.replace("volume", "").replace("-", "").strip()
 
-                capitulo = pasta[pasta.rindex("capítulo"):]
-                capitulo = capitulo.replace("capítulo", "").strip()
-            elif "capitulo" in pasta:
-                volume = pasta[pasta.rindex("volume"):pasta.rindex("capitulo")]
+                chapter = folder[folder.rindex("capítulo"):]
+                chapter = chapter.replace("capítulo", "").strip()
+            elif "capitulo" in folder:
+                volume = folder[folder.rindex("volume"):folder.rindex("capitulo")]
                 volume = volume.replace("volume", "").replace("-", "").strip()
 
-                capitulo = pasta[pasta.rindex("capitulo"):]
-                capitulo = capitulo.replace("capitulo", "").strip()
-            elif "extra" in pasta:
-                volume = pasta[pasta.rindex("volume"):pasta.rindex("extra")]
+                chapter = folder[folder.rindex("capitulo"):]
+                chapter = chapter.replace("capitulo", "").strip()
+            elif "extra" in folder:
+                volume = folder[folder.rindex("volume"):folder.rindex("extra")]
                 volume = volume.replace("volume", "").replace("-", "").strip()
 
-                capitulo = pasta[pasta.rindex("extra"):]
-                capitulo = capitulo.replace("extra", "").strip()
+                chapter = folder[folder.rindex("extra"):]
+                chapter = chapter.replace("extra", "").strip()
 
             volume = re.sub('\D', '', volume)
-            capitulo = re.sub('\D', '', capitulo)
+            chapter = re.sub('\D', '', chapter)
 
             if volume == "":
                 volume = '0'
 
-            if capitulo == "":
-                capitulo = '0'
+            if chapter == "":
+                chapter = '0'
 
-        obj = CorrecaoPagina(self.tabela, extraiNomeDiretorio(diretorio), volume, capitulo)
+        obj = CorrectionPage(self.table, getDirectoryName(directory), volume, chapter)
         obj.language = self.language
         obj.isExtra = self.isExtra
 
         return obj
 
-    def corrigeMD5(self):
-        paginas = []
+    def fixMD5(self):
+        pages = []
         print(colored("Inicio da correção dos MD5...", 'green', attrs=['reverse', 'blink']))
-        for diretorio, subpastas, arquivos in os.walk(self.caminho):
+        for directory, subFolder, files in os.walk(self.directory):
             # Ignora as pastas temporárias da busca
-            subpastas[:] = [sub for sub in subpastas if sub not in ['tmp']]
+            subFolder[:] = [sub for sub in subFolder if sub not in ['tmp']]
             # Ignora as pastas de capa
-            subpastas[:] = [sub for sub in subpastas if "capa" not in sub.lower()]
+            subFolder[:] = [sub for sub in subFolder if "capa" not in sub.lower()]
 
-            if len(arquivos) <= 0:
+            if len(files) <= 0:
                 continue
 
-            numeroPagina = 0
-            for arquivo in arquivos:
-                if arquivo.lower().endswith(('.png', '.jpg', '.jpeg')):
-                    numeroPagina += 1
-                    pagina = self.criaClasseCorrecaoPagina(diretorio)
+            pageNumber = 0
+            for file in files:
+                if file.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    pageNumber += 1
+                    page = self.generateClassCorrectionPage(directory)
                     md5hash = hashlib.md5()
-                    with open(os.path.join(diretorio, arquivo),'rb') as f:
+                    with open(os.path.join(directory, file),'rb') as f:
                         line = f.read()
                         md5hash.update(line)
-                    pagina.hashPagina = md5hash.hexdigest()
+                    page.hashPage = md5hash.hexdigest()
 
                     try:
-                        md5hashOld = hashlib.md5(Image.open(os.path.join(diretorio, arquivo)).tobytes())
-                        pagina.hashOldPagina = md5hashOld.hexdigest()
+                        md5hashOld = hashlib.md5(Image.open(os.path.join(directory, file)).tobytes())
+                        page.hashOldPage = md5hashOld.hexdigest()
                     except ProgrammingError as e:
                         print(colored(f'Erro ao carregar hash antigo: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
-                    pagina.paginaNome = arquivo
-                    paginas.append(pagina)
-                    print(os.path.join(diretorio, arquivo))
+                    page.pageName = file
+                    pages.append(page)
+                    print(os.path.join(directory, file))
 
         print(colored("Atualizando as paginas...", 'green', attrs=['reverse', 'blink']))
-        for pagina in paginas:
-            print(colored("Atualizando MD5: " + pagina.manga + " - vol: " + pagina.volume + " cap: " + pagina.capitulo + " - " + pagina.paginaNome, 'green', attrs=['reverse', 'blink']))
-            updatePagina(pagina)
-        print(colored("Concluido. " + self.caminho, 'green', attrs=['reverse', 'blink']))
+        for page in pages:
+            print(colored("Atualizando MD5: " + page.manga + " - vol: " + page.volume + " cap: " + page.chapter + " - " + page.pageName, 'green', attrs=['reverse', 'blink']))
+            updatePage(page)
+        print(colored("Concluido. " + self.directory, 'green', attrs=['reverse', 'blink']))
 
             
 if __name__ == '__main__':
-    correcao = Correcao(None, "ja", "G:/reprocessando/aa obter pelo nome", False)
-    correcao.corrigeMD5()
+    correction = Correction(None, "ja", "G:/reprocessando/aa obter pelo nome", False)
+    correction.fixMD5()
 
    

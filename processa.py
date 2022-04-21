@@ -6,9 +6,9 @@ import hashlib
 from segmentacao import TextSegmenation
 from detecao import TextDetection
 from ocr import TextOcr
-from classes import PrintLog, Pagina, Capitulo
+from classes import PrintLog, Page, Chapter
 from termcolor import colored
-from banco.bdUtil import gravarDados
+from banco.bdUtil import saveData
 from furigana import RemoveFurigana
 from util import printLog
 import re
@@ -17,77 +17,77 @@ import globals
 import shutil
 
 
-def extraiNomeDiretorio(diretorio):
-    pasta = os.path.basename(diretorio)  # Obtem o nome da pasta
+def getDirectoryName(directory):
+    folder = os.path.basename(directory)  # Obtem o name da folder
 
-    if (pasta.lower() == 'c:/') or (pasta.lower() == 'c:\\') or ("$recycle.bin" in pasta.lower()):
+    if (folder.lower() == 'c:/') or (folder.lower() == 'c:\\') or ("$recycle.bin" in folder.lower()):
         return ""
 
-    if ("[JPN]" in pasta.upper()) or ("[JAP]" in pasta.upper()) or ("[JNP]" in pasta.upper()):
-        pasta = pasta.replace("[JPN]", "").replace("[JAP]", "").replace("[JNP]", "")
-    elif "[" in pasta:
-        scan = pasta[pasta.index("["):pasta.index("]")]
-        pasta = pasta.replace(scan, "").replace("[", "").replace("]", "")
+    if ("[JPN]" in folder.upper()) or ("[JAP]" in folder.upper()) or ("[JNP]" in folder.upper()):
+        folder = folder.replace("[JPN]", "").replace("[JAP]", "").replace("[JNP]", "")
+    elif "[" in folder:
+        scan = folder[folder.index("["):folder.index("]")]
+        folder = folder.replace(scan, "").replace("[", "").replace("]", "")
 
-    pasta = pasta.replace(" - ", " ")
+    folder = folder.replace(" - ", " ")
 
-    if ("volume" in pasta.lower()):
-        pasta = pasta[:pasta.lower().rindex("volume")]
-    elif ("capítulo" in pasta.lower()):
-        pasta = pasta[:pasta.lower().rindex("capítulo")]
-    elif ("capitulo" in pasta.lower()):
-        pasta = pasta[:pasta.lower().rindex("capitulo")]
+    if ("volume" in folder.lower()):
+        folder = folder[:folder.lower().rindex("volume")]
+    elif ("capítulo" in folder.lower()):
+        folder = folder[:folder.lower().rindex("capítulo")]
+    elif ("capitulo" in folder.lower()):
+        folder = folder[:folder.lower().rindex("capitulo")]
 
-    return pasta.replace("  ", " ").strip()
+    return folder.replace("  ", " ").strip()
 
 
-def extraiInformacoesDiretorio(diretorio, mangaNome, language="PT"):
-    pasta = os.path.basename(diretorio)  # Pasta que está
+def getDirectoryInformation(directory, nameManga, language="PT"):
+    folder = os.path.basename(directory)  # Pasta que está
 
     scan = ""
     isScan = False
-    if ("[" in pasta):
-        if ("[JPN]" not in pasta.upper()) and ("[JNP]" not in pasta.upper()) and ("[JAP]" not in pasta.upper()):
-            scan = pasta[pasta.index("["):pasta.index("]")]
+    if ("[" in folder):
+        if ("[JPN]" not in folder.upper()) and ("[JNP]" not in folder.upper()) and ("[JAP]" not in folder.upper()):
+            scan = folder[folder.index("["):folder.index("]")]
             scan = scan.replace("[", "").replace("]", "").strip()
             isScan = bool(scan)  # Caso a scan seja vazia será falso
 
-    pasta = pasta.lower()
+    folder = folder.lower()
 
     volume = '0'
-    capitulo = '0'
+    chapter = '0'
     isExtra = False
-    if ("volume" in pasta) and (("capítulo" in pasta) or ("capitulo" in pasta) or (("extra" in pasta) and (pasta.rindex("volume") < pasta.rindex("extra")))):
-        if "capítulo" in pasta:
-            volume = pasta[pasta.rindex("volume"):pasta.rindex("capítulo")]
+    if ("volume" in folder) and (("capítulo" in folder) or ("capitulo" in folder) or (("extra" in folder) and (folder.rindex("volume") < folder.rindex("extra")))):
+        if "capítulo" in folder:
+            volume = folder[folder.rindex("volume"):folder.rindex("capítulo")]
             volume = volume.replace("volume", "").replace("-", "").strip()
 
-            capitulo = pasta[pasta.rindex("capítulo"):]
-            capitulo = capitulo.replace("capítulo", "").strip()
-        elif "capitulo" in pasta:
-            volume = pasta[pasta.rindex("volume"):pasta.rindex("capitulo")]
+            chapter = folder[folder.rindex("capítulo"):]
+            chapter = chapter.replace("capítulo", "").strip()
+        elif "capitulo" in folder:
+            volume = folder[folder.rindex("volume"):folder.rindex("capitulo")]
             volume = volume.replace("volume", "").replace("-", "").strip()
 
-            capitulo = pasta[pasta.rindex("capitulo"):]
-            capitulo = capitulo.replace("capitulo", "").strip()
-        elif "extra" in pasta:
-            volume = pasta[pasta.rindex("volume"):pasta.rindex("extra")]
+            chapter = folder[folder.rindex("capitulo"):]
+            chapter = chapter.replace("capitulo", "").strip()
+        elif "extra" in folder:
+            volume = folder[folder.rindex("volume"):folder.rindex("extra")]
             volume = volume.replace("volume", "").replace("-", "").strip()
 
-            capitulo = pasta[pasta.rindex("extra"):]
-            capitulo = capitulo.replace("extra", "").strip()
+            chapter = folder[folder.rindex("extra"):]
+            chapter = chapter.replace("extra", "").strip()
             isExtra = True
 
         volume = re.sub(r'[^0-9.]', '', volume)
-        capitulo = re.sub(r'[^0-9.]', '', capitulo)
+        chapter = re.sub(r'[^0-9.]', '', chapter)
 
         if volume == "":
             volume = '0'
 
-        if capitulo == "":
-            capitulo = '0'
+        if chapter == "":
+            chapter = '0'
 
-    obj = Capitulo(mangaNome, volume, capitulo, language)
+    obj = Chapter(nameManga, volume, chapter, language)
     obj.scan = scan
     obj.isScan = isScan
     obj.isExtra = isExtra
@@ -95,201 +95,201 @@ def extraiInformacoesDiretorio(diretorio, mangaNome, language="PT"):
     return obj
 
 
-def moveArquivosDiretorios(operacao, diretorioOrigem, diretorioDestino, nomePasta):
+def moveFilesDirectories(operation, diretorioOrigem, diretorioDestino, folderName):
     volume = "0"
-    capitulo = "0"
+    chapter = "0"
     i = 0
-    if not operacao.isTeste:
-        for diretorio, subpastas, arquivos in os.walk(diretorioOrigem):
-            operacao.window.write_event_value('-THREAD_PROGRESSBAR_MAX-', len(subpastas))
+    if not operation.isTest:
+        for directory, subFolder, files in os.walk(diretorioOrigem):
+            operation.window.write_event_value('-THREAD_PROGRESSBAR_MAX-', len(subFolder))
             break
 
-    for diretorio, subpastas, arquivos in os.walk(diretorioOrigem):
-        if len(arquivos) == 0:
+    for directory, subFolder, files in os.walk(diretorioOrigem):
+        if len(files) == 0:
             continue
 
         i += 1
-        if not operacao.isTeste:
-            operacao.window.write_event_value('-THREAD_PROGRESSBAR_UPDATE-', i)
+        if not operation.isTest:
+            operation.window.write_event_value('-THREAD_PROGRESSBAR_UPDATE-', i)
 
-        for arquivo in arquivos:
-            nome = os.path.basename(arquivo).lower()
+        for file in files:
+            name = os.path.basename(file).lower()
 
             try:
-                if '_v' in nome:
-                    volume = nome[nome.index('_v') + 1:]
+                if '_v' in name:
+                    volume = name[name.index('_v') + 1:]
                     volume = volume[:volume.index('_')].replace("_", "")
-                elif '-v' in nome:
-                    volume = nome[nome.index('-v') + 1:]
+                elif '-v' in name:
+                    volume = name[name.index('-v') + 1:]
                     volume = volume[:volume.index('-')].replace("-", "")
-                elif '(v' in nome:
-                    volume = nome[nome.index('(v') + 1:]
+                elif '(v' in name:
+                    volume = name[name.index('(v') + 1:]
                     volume = volume[:volume.index(')')].replace("(", "").replace(")", "")
 
-                if ('_ch' in nome) or ('_c' in nome):
-                    capitulo = nome[nome.index('_c') + 1:]
-                    capitulo = capitulo[:capitulo.index('_')].replace("_", "")
-                elif ('-ch' in nome) or ('-c' in nome):
-                    capitulo = nome[nome.index('-c') + 1:]
-                    capitulo = capitulo[:capitulo.index('-')].replace("-", "")
-                elif ('- c' in nome):
-                    capitulo = nome[nome.index('- c') + 1:]
-                    capitulo = capitulo[:capitulo.index('(')].replace("-", "")
+                if ('_ch' in name) or ('_c' in name):
+                    chapter = name[name.index('_c') + 1:]
+                    chapter = chapter[:chapter.index('_')].replace("_", "")
+                elif ('-ch' in name) or ('-c' in name):
+                    chapter = name[name.index('-c') + 1:]
+                    chapter = chapter[:chapter.index('-')].replace("-", "")
+                elif ('- c' in name):
+                    chapter = name[name.index('- c') + 1:]
+                    chapter = chapter[:chapter.index('(')].replace("-", "")
 
                 volume = re.sub(r'[^0-9]', '', volume)
-                capitulo = re.sub(r'[^0-9]', '', capitulo)
-                pasta = diretorioDestino + '/' + (nomePasta + ' - Volume ' + volume + ' Capitulo ' +  capitulo)
-                pasta = pasta.strip()
+                chapter = re.sub(r'[^0-9]', '', chapter)
+                folder = diretorioDestino + '/' + (folderName + ' - Volume ' + volume + ' Capitulo ' +  chapter)
+                folder = folder.strip()
             except Exception as e:
                 print(e)
-                pasta = diretorioDestino + "/naoreconhecidos/"
+                folder = diretorioDestino + "/naoreconhecidos/"
 
-            if not os.path.exists(pasta):
-                os.makedirs(pasta)
+            if not os.path.exists(folder):
+                os.makedirs(folder)
 
-            arquivoOrigem = os.path.join(diretorio, arquivo)
-            arquivoDestino = os.path.join(pasta).strip()
+            fromFile = os.path.join(directory, file)
+            toFile = os.path.join(folder).strip()
 
-            shutil.copy2(arquivoOrigem, arquivoDestino)
+            shutil.copy2(fromFile, toFile)
 
-            if not operacao.isTeste:
-                operacao.window.write_event_value('-THREAD_LOG-', PrintLog("Copiando arquivo " + arquivo + " para: " + arquivoDestino))
+            if not operation.isTest:
+                operation.window.write_event_value('-THREAD_LOG-', PrintLog("Copiando file " + file + " para: " + toFile))
             else:
-                printLog(PrintLog("Copiando arquivo " + arquivo + " para: " + arquivoDestino, logMemo=operacao.logMemo))
+                printLog(PrintLog("Copiando file " + file + " para: " + toFile, logMemo=operation.logMemo))
 
-            if globals.CANCELAR_OPERACAO:
+            if globals.CANCEL_OPERATION:
                 break
 
-        if globals.CANCELAR_OPERACAO:
+        if globals.CANCEL_OPERATION:
             break
 
 
 class ImageProcess:
-    def __init__(self, operacao):
+    def __init__(self, operation):
         pass
 
         # Caminhos temporários
-        self.operacao = operacao
-        self.language = operacao.linguagem
-        self.mangaNome = operacao.mangaNome
-        self.folder = ''.join(operacao.caminho + "/").replace("//", "/")
+        self.operation = operation
+        self.language = operation.language
+        self.nameManga = operation.nameManga
+        self.folder = ''.join(operation.directory + "/").replace("//", "/")
         self.tempFolder = self.folder + "tmp/"
         self.textOnlyFolder = self.tempFolder+"textOnly/"
         self.inpaintedFolder = self.tempFolder+"inpainted/"
         self.furiganaFolder  = self.tempFolder+"furigana/"
         # self.transalatedFolder=self.tempFolder+"translated/"
 
-    def limpaDiretorios(self):
+    def cleanDirectories(self):
         for filePath in [self.textOnlyFolder, self.inpaintedFolder, self.furiganaFolder]:
             if os.path.exists(filePath):
                 shutil.rmtree(filePath)
             os.makedirs(filePath)
 
-    def criaClassePagina(self, diretorio, arquivo, numero):
-        pagina = Pagina(arquivo, numero)
-        pagina.arquivo = os.path.join(diretorio, arquivo)
+    def createClassPage(self, directory, file, number):
+        page = Page(file, number)
+        page.file = os.path.join(directory, file)
         md5hash = hashlib.md5()
-        with open(os.path.join(diretorio, arquivo),'rb') as f:
+        with open(os.path.join(directory, file),'rb') as f:
           line = f.read()
           md5hash.update(line)
-        pagina.hashPagina = md5hash.hexdigest()
-        return pagina
+        page.hashPage = md5hash.hexdigest()
+        return page
 
-    def criaClasseCapitulo(self, diretorio, arquivo):
-        capitulo = None
-        if self.operacao.getInformacaoPasta:
-            capitulo = extraiInformacoesDiretorio(diretorio, self.mangaNome, self.language)
+    def createClassChapter(self, directory, file):
+        chapter = None
+        if self.operation.getFolderInformation:
+            chapter = getDirectoryInformation(directory, self.nameManga, self.language)
         else:
-            capitulo = Capitulo(self.mangaNome, self.operacao.volume, self.operacao.capitulo, self.language)
-            capitulo.scan = self.operacao.scan
-            capitulo.isScan = bool(capitulo.scan)
+            chapter = Chapter(self.nameManga, self.operation.volume, self.operation.chapter, self.language)
+            chapter.scan = self.operation.scan
+            chapter.isScan = bool(chapter.scan)
         
-        return capitulo
+        return chapter
 
-    def processaImagens(self):
-        segmentacao = TextSegmenation(self.operacao)
-        deteccao = TextDetection(0.025)
-        ocr = TextOcr(self.operacao)
-        furigana = RemoveFurigana(self.operacao)
+    def processImages(self):
+        segmentation = TextSegmenation(self.operation)
+        detection = TextDetection(0.025)
+        ocr = TextOcr(self.operation)
+        furigana = RemoveFurigana(self.operation)
 
         i = 0
-        if not self.operacao.isTeste:
-            self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog("Iniciado o processamento...."))
-            self.operacao.window.write_event_value('-THREAD_PROGRESSBAR_MAX-', len([f for f in os.listdir(self.folder) if "capa" not in f.lower() and f not in ['tmp']]))
-        elif self.operacao.isSilent:
-            printLog(PrintLog("Iniciado o processamento....", caminho=self.operacao.caminhoAplicacao, isSilent=self.operacao.isSilent))
+        if not self.operation.isTest:
+            self.operation.window.write_event_value('-THREAD_LOG-', PrintLog("Iniciado o processamento...."))
+            self.operation.window.write_event_value('-THREAD_PROGRESSBAR_MAX-', len([f for f in os.listdir(self.folder) if "capa" not in f.lower() and f not in ['tmp']]))
+        elif self.operation.isSilent:
+            printLog(PrintLog("Iniciado o processamento....", directory=self.operation.applicationPath, isSilent=self.operation.isSilent))
         else:
             print("Iniciado o processamento....")
 
 
-        IMAGENS_EXTENSOES = ('.png', '.jpg', '.jpeg')
-        for diretorio, subpastas, arquivos in os.walk(self.folder):
+        images_extensions = ('.png', '.jpg', '.jpeg')
+        for directory, subFolder, files in os.walk(self.folder):
             # Ignora as pastas temporárias da busca
-            subpastas[:] = [sub for sub in subpastas if sub not in ['tmp']]
+            subFolder[:] = [sub for sub in subFolder if sub not in ['tmp']]
             # Ignora as pastas de capa
-            subpastas[:] = [sub for sub in subpastas if "capa" not in sub.lower()]
+            subFolder[:] = [sub for sub in subFolder if "capa" not in sub.lower()]
 
-            for arquivo in arquivos:
-                if arquivo.lower().endswith(IMAGENS_EXTENSOES):
-                    os.rename(os.path.join(diretorio, arquivo), os.path.join(diretorio, unidecode(arquivo)))
+            for file in files:
+                if file.lower().endswith(images_extensions):
+                    os.rename(os.path.join(directory, file), os.path.join(directory, unidecode(file)))
 
-        for diretorio, subpastas, arquivos in os.walk(self.folder):
+        for directory, subFolder, files in os.walk(self.folder):
             # Ignora as pastas temporárias da busca
-            subpastas[:] = [sub for sub in subpastas if sub not in ['tmp']]
+            subFolder[:] = [sub for sub in subFolder if sub not in ['tmp']]
             # Ignora as pastas de capa
-            subpastas[:] = [sub for sub in subpastas if "capa" not in sub.lower()]
+            subFolder[:] = [sub for sub in subFolder if "capa" not in sub.lower()]
 
-            # Faz a limpeza da pasta temporaria para que arquivos com o mesmo nome não impactem
-            self.limpaDiretorios()
-            if self.operacao.getNomePasta:
-                self.mangaNome = extraiNomeDiretorio(diretorio)
-                if not self.operacao.isTeste:
-                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog("Nome obtido: " + self.mangaNome, 'yellow'))
+            # Faz a limpeza da folder temporaria para que files com o mesmo name não impactem
+            self.cleanDirectories()
+            if self.operation.getNameFolder:
+                self.nameManga = getDirectoryName(directory)
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog("Nome obtido: " + self.nameManga, 'yellow'))
                 else:
-                    print(colored("Nome obtido: " + self.mangaNome, 'yellow', attrs=['reverse', 'blink']))
+                    print(colored("Nome obtido: " + self.nameManga, 'yellow', attrs=['reverse', 'blink']))
 
-            if len(arquivos) <= 0:
+            if len(files) <= 0:
                 continue
 
             i += 1
-            numeroPagina = 0
-            capitulo = self.criaClasseCapitulo(diretorio, arquivos[0])
-            for arquivo in arquivos:
-                if arquivo.lower().endswith(IMAGENS_EXTENSOES):
-                    numeroPagina += 1
+            pageNumber = 0
+            chapter = self.createClassChapter(directory, files[0])
+            for file in files:
+                if file.lower().endswith(images_extensions):
+                    pageNumber += 1
 
-                    log = os.path.join(diretorio, arquivo)
+                    log = os.path.join(directory, file)
                     # Caminho completo
-                    if not self.operacao.isTeste:
-                        self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(log, 'green'))
-                    elif self.operacao.isSilent:
-                        printLog(PrintLog(log, 'green', caminho=self.operacao.caminhoAplicacao, isSilent=self.operacao.isSilent))
+                    if not self.operation.isTest:
+                        self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(log, 'green'))
+                    elif self.operation.isSilent:
+                        printLog(PrintLog(log, 'green', directory=self.operation.applicationPath, isSilent=self.operation.isSilent))
                     else:
                         print(colored(log, 'green', attrs=['reverse', 'blink']))
 
-                    pagina = self.criaClassePagina(diretorio, arquivo, numeroPagina)
+                    page = self.createClassPage(directory, file, pageNumber)
 
-                    segmentacao.segmentPage(os.path.join(diretorio, arquivo), self.inpaintedFolder, self.textOnlyFolder)
+                    segmentation.segmentPage(os.path.join(directory, file), self.inpaintedFolder, self.textOnlyFolder)
 
-                    if self.operacao.furigana:
-                        imgGray, imgClean, imgSegment = segmentacao.segmentFurigana(os.path.join(self.textOnlyFolder,arquivo), self.furiganaFolder)
-                        furigana.removeFurigana(os.path.join(self.textOnlyFolder,arquivo), imgGray, imgClean, imgSegment, self.textOnlyFolder, self.furiganaFolder)
+                    if self.operation.furigana:
+                        imgGray, imgClean, imgSegment = segmentation.segmentFurigana(os.path.join(self.textOnlyFolder,file), self.furiganaFolder)
+                        furigana.removeFurigana(os.path.join(self.textOnlyFolder,file), imgGray, imgClean, imgSegment, self.textOnlyFolder, self.furiganaFolder)
 
-                    coordenadas = deteccao.textDetect(os.path.join(diretorio, arquivo), self.textOnlyFolder)
-                    nomeImgNotProcess = capitulo.linguagem.upper() + '_No-' + re.sub(r'[^a-zA-Z0-9]', '',capitulo.nome).replace("_", "").lower().strip() + '_Vol-' + capitulo.volume + '_Cap-' + capitulo.capitulo + '_Pag-' + str(numeroPagina)
-                    pagina.textos = ocr.getTextFromImg(os.path.join(diretorio, arquivo), coordenadas, self.textOnlyFolder, self.furiganaFolder, nomeImgNotProcess)
-                    pagina.numeroPagina = numeroPagina
-                    capitulo.addPagina(pagina)
+                    coordinates = detection.textDetect(os.path.join(directory, file), self.textOnlyFolder)
+                    nomeImgNotProcess = chapter.language.upper() + '_No-' + re.sub(r'[^a-zA-Z0-9]', '',chapter.name).replace("_", "").lower().strip() + '_Vol-' + chapter.volume + '_Cap-' + chapter.chapter + '_Pag-' + str(pageNumber)
+                    page.texts = ocr.getTextFromImg(os.path.join(directory, file), coordinates, self.textOnlyFolder, self.furiganaFolder, nomeImgNotProcess)
+                    page.number = pageNumber
+                    chapter.addPagina(page)
 
-                if globals.CANCELAR_OPERACAO:
+                if globals.CANCEL_OPERATION:
                     break
 
-            if globals.CANCELAR_OPERACAO:
+            if globals.CANCEL_OPERATION:
                 break
 
-            if len(capitulo.paginas) > 0:
-                gravarDados(self.operacao, capitulo)
+            if len(chapter.pages) > 0:
+                saveData(self.operation, chapter)
 
-            if not self.operacao.isTeste:
-                self.operacao.window.write_event_value('-THREAD_PROGRESSBAR_UPDATE-', i)
+            if not self.operation.isTest:
+                self.operation.window.write_event_value('-THREAD_PROGRESSBAR_UPDATE-', i)
 

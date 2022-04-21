@@ -8,27 +8,27 @@ import pickle
 import cv2
 import re
 import subprocess
-from classes import Texto, PrintLog
+from classes import Text, PrintLog
 from PIL import Image
 import pytesseract
 from defaults import FOLDER_SAVE_IMAGE_NOT_LOCATED_TEXT
 
 
 class TextOcr():
-    def __init__(self, operacao):
-        self.operacao = operacao
+    def __init__(self, operation):
+        self.operation = operation
         self.service = None
-        self.ocrType = operacao.ocrType
-        self.language = operacao.linguagem
-        self.tesseractLocation = ''.join(operacao.pastaTesseract + '/tesseract.exe').replace('//', '/')
+        self.ocrType = operation.ocrType
+        self.language = operation.language
+        self.tesseractLocation = ''.join(operation.tesseractFolder + '/tesseract.exe').replace('//', '/')
         self.tesseractConfig = None
 
         if (self.language == 'ja'):
-            if (self.operacao.textoVertical is None):
+            if (self.operation.verticalText is None):
                 self.tesseractConfig = r' -l jpn+jpn_vert '
-            elif (self.operacao.textoVertical):
+            elif (self.operation.verticalText):
                 self.tesseractConfig = r' -l jpn_vert '
-            elif (not self.operacao.textoVertical):
+            elif (not self.operation.verticalText):
                 self.tesseractConfig = r' -l jpn '
         elif (self.language == 'en'):
             self.tesseractConfig = r' -l eng '
@@ -161,7 +161,7 @@ class TextOcr():
 
     def getTextFromImg(self, imgPath, rectList, textOnlyFolder, furiganaFolder, nameIfNotProcess = ""):
         fileName = os.path.basename(imgPath)
-        if self.operacao.furigana:
+        if self.operation.furigana:
             folder = furiganaFolder
         else:
             folder = textOnlyFolder
@@ -170,9 +170,9 @@ class TextOcr():
 
         img = cv2.imread(folder+fileName)
         imgWrite = cv2.imread(folder+fileName)
-        texto = []
+        texts = []
         rectP, rect = rectList
-        sequencia = 0
+        sequence = 0
         for x1, y1, x2, y2 in rectP:
             # Cropping the text block for giving input to OCR
             cropped = img[y1: y2, x1: x2]
@@ -181,15 +181,15 @@ class TextOcr():
 
             if text.strip() != "":
                 log = "  • " + text
-                if not self.operacao.isTeste:
-                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(log)) 
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(log)) 
                 else:
                     print(log)
 
-                texto.append(Texto(text, sequencia, x1, y1, x2, y2))
-                sequencia += 1
+                texts.append(Text(text, sequence, x1, y1, x2, y2))
+                sequence += 1
                 cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 255, 0))
-            elif self.operacao.furigana:
+            elif self.operation.furigana:
                 folder = textOnlyFolder
                 img2 = cv2.imread(folder+fileName)
                 # Cropping the text block for giving input to OCR
@@ -198,23 +198,23 @@ class TextOcr():
 
                 if text.strip() != "":
                     log = "  • " + text
-                    if not self.operacao.isTeste:
-                        self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(log)) 
+                    if not self.operation.isTest:
+                        self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(log)) 
                     else:
                         print(log)
 
-                    texto.append(Texto(text, sequencia, x1, y1, x2, y2))
-                    sequencia += 1
+                    texts.append(Text(text, sequence, x1, y1, x2, y2))
+                    sequence += 1
                     cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 255, 0))
                 else:
-                    cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 0, 255)) # Caso não conseguiu identificar o texto pinta de vermelho
+                    cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 0, 255)) # Caso não conseguiu identificar o text pinta de vermelho
                     if saveImgNotProcess:
-                        self.saveNotProcess(cropped, nameIfNotProcess + '_Seq-' + str(sequencia) + '_Pos-' + str(x1) + '-' + str(y1) + '-' + str(x2) + '-' + str(y2) + '_')
+                        self.saveNotProcess(cropped, nameIfNotProcess + '_Seq-' + str(sequence) + '_Pos-' + str(x1) + '-' + str(y1) + '-' + str(x2) + '-' + str(y2) + '_')
 
             else:
-                cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 0, 255)) # Caso não conseguiu identificar o texto pinta de vermelho
+                cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 0, 255)) # Caso não conseguiu identificar o text pinta de vermelho
                 if saveImgNotProcess:
-                    self.saveNotProcess(cropped, nameIfNotProcess + '_Seq-' + str(sequencia) + '_Pos-' + str(x1) + '-' + str(y1) + '-' + str(x2) + '-' + str(y2) + '_')
+                    self.saveNotProcess(cropped, nameIfNotProcess + '_Seq-' + str(sequence) + '_Pos-' + str(x1) + '-' + str(y1) + '-' + str(x2) + '-' + str(y2) + '_')
                       
         cv2.imwrite(folder+fileName, imgWrite)
-        return texto
+        return texts

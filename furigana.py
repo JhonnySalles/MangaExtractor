@@ -8,9 +8,9 @@ import defaults
 
 
 class RemoveFurigana():
-    def __init__(self, operacao):
+    def __init__(self, operation):
         pass
-        self.operacao = operacao
+        self.operation = operation
 
     def binary_mask(self, mask):
         return np.array(mask != 0, 'B')
