@@ -11,9 +11,9 @@ import cv2
 import tensorflow as tf
 
 import defaults
-import limpeza as clean
+import cleaning as clean
 import util
-import alisamento as als
+import smoothing as smt
 import scipy.ndimage
 import math
 import tensorflow as tf
@@ -22,10 +22,10 @@ from furigana import RemoveFurigana
 
 
 class TextSegmenation():
-    def __init__(self, operacao):
+    def __init__(self, operation):
         pass
-        self.operacao = operacao
-        print("\n" + "Números de GPUs disponíveis: " + str(len(tf.config.list_physical_devices('GPU'))))
+        self.operation = operation
+        print("\n" + "Numbers of GPUs available: " + str(len(tf.config.list_physical_devices('GPU'))))
         # tf.reset_default_graph
         #core.load_model(defaults.SNETPATH, '0.1.0')
         #core.load_model(defaults.CNETPATH, '0.1.0')
@@ -103,8 +103,8 @@ class TextSegmenation():
         cleaned = cv2.bitwise_not(final_mask * binary)
         text_only = self.cleaned2segmented(cleaned, average_size)
 
-        if self.operacao.furigana:
-            furigana = RemoveFurigana(self.operacao)
+        if self.operation.furigana:
+            furigana = RemoveFurigana(self.operation)
             furigana_mask = furigana.estimate_furigana(cleaned, text_only)
             furigana_mask = np.array(furigana_mask == 0, 'B')
             cleaned = cv2.bitwise_not(cleaned)*furigana_mask
@@ -128,7 +128,7 @@ class TextSegmenation():
         horizontal_smoothing_threshold = defaults.HORIZONTAL_SMOOTHING_MULTIPLIER*average_size
         (h, w) = cleaned.shape[:2]
 
-        run_length_smoothed = als.RLSO(cv2.bitwise_not(cleaned), vertical_smoothing_threshold, horizontal_smoothing_threshold)
+        run_length_smoothed = smt.RLSO(cv2.bitwise_not(cleaned), vertical_smoothing_threshold, horizontal_smoothing_threshold)
         components = util.get_connected_components(run_length_smoothed)
         text = np.zeros((h, w), np.uint8)
         #return text
@@ -151,7 +151,7 @@ class TextSegmenation():
     def filter_text_like_areas(self, img, segmentation, average_size):
         # see if a given rectangular area (2d slice) is very text like
         # First step is to estimate furigana like elements so they can be masked
-        furigana = RemoveFurigana(self.operacao)
+        furigana = RemoveFurigana(self.operation)
         furigana_areas = furigana.estimate_furigana(img, segmentation)
         furigana_mask = np.array(furigana_areas == 0, 'B')
 
@@ -175,7 +175,7 @@ class TextSegmenation():
         return (text_like_areas, nontext_like_areas)
 
     def text_like_histogram(self, img, area, average_size):
-        if not self.operacao.filtroAdicional:
+        if not self.operation.furiganaFilter:
             return True
         (x, y, w, h) = self.dimensions_2d_slice(area)
         x_subimage = np.copy(img)

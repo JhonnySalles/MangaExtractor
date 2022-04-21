@@ -1,6 +1,6 @@
-from banco.bdUtil import BdUtil, testaConexao
-from classes import Operacao, PrintLog, Config
-from processa import ImageProcess, extraiNomeDiretorio, extraiInformacoesDiretorio, moveArquivosDiretorios
+from banco.bdUtil import BdUtil, testConnection
+from classes import Operation, PrintLog, Config
+from process import ImageProcess, getDirectoryName, getDirectoryInformation, moveFilesDirectories
 from datetime import datetime
 import os
 import threading
@@ -16,223 +16,223 @@ sys.path.append("./banco/")
 
 
 # Simular um teste sem abrir a janela
-isTeste = False
+ISTEST = False
 
 ###################################################
 def teste():
-    OPERACAO = Operacao("kami nomi",  "The World God Only Knows", r"F:/Manga/Teste", "pt")
-    OPERACAO.ocrType = 'tesseract'
-    OPERACAO.isTeste = isTeste
-    OPERACAO.furigana = False
-    OPERACAO.textoVertical = False
+    OPERATION = Operation("kami nomi",  "The World God Only Knows", r"F:/Manga/Teste", "pt")
+    OPERATION.ocrType = 'tesseract'
+    OPERATION.isTest = ISTEST
+    OPERATION.furigana = False
+    OPERATION.verticalText = False
 
-    db = BdUtil(OPERACAO)
-    OPERACAO.base = db.criaTabela(OPERACAO.base)
+    db = BdUtil(OPERATION)
+    OPERATION.base = db.createTable(OPERATION.base)
 
-    processa = ImageProcess(OPERACAO)
-    processa.processaImagens()
+    process = ImageProcess(OPERATION)
+    process.processImages()
 
 
 #################################################
 sg.theme('Black')   # Cores
-headings = ['Operação', 'Base', 'Manga', 'Caminho', 'Furigana?', 'Idioma', '']
-listaOperacoes = []
+headings = ['Operação', 'Base', 'Manga', 'Caminho', 'Furigana', 'Idioma', '']
+listOperations = []
 # Layout
 
-tabOperacao = [[sg.Multiline(size=(80, 11), key='-OUTPUT-')],
-               [sg.Button('Processar', key='-BTN_PROCESSAR-', size=(30, 1), use_ttk_buttons=True, disabled_button_color=('white', 'black')), sg.Text('', size=(7, 1)), sg.Button('Cancelar', key='-BTN_CANCELAR-', size=(30, 1), use_ttk_buttons=True, disabled_button_color=('white', 'black'))]]
+tabOperation = [[sg.Multiline(size=(80, 11), key='-OUTPUT-')],
+               [sg.Button('Processar', key='-BTN_PROCESS-', size=(30, 1), use_ttk_buttons=True, disabled_button_color=('white', 'black')), sg.Text('', size=(7, 1)), sg.Button('Cancelar', key='-BTN_CANCEL-', size=(30, 1), use_ttk_buttons=True, disabled_button_color=('white', 'black'))]]
 
-tabLista = [[sg.Table(listaOperacoes, headings=headings, justification='left', key='-TABLE-', display_row_numbers=False, enable_events=True, auto_size_columns=False, col_widths=[0, 10, 19, 20, 7, 5, 2], size=(80, 10))],
-            [sg.Button('Inserir', size=(20, 1), key='-BTN_INSERIR-', use_ttk_buttons=True, disabled_button_color=('white', 'black')), sg.Text('', size=(2, 1)), sg.Button('Remover', key='-BTN_REMOVER-', size=(20, 1), use_ttk_buttons=True, disabled_button_color=('white', 'black')), sg.Text('', size=(2, 1)), sg.Button('Processar Lista', key='-BTN_PROCESSAR_LISTA-', size=(20, 1), use_ttk_buttons=True, disabled_button_color=('white', 'black'))]]
+tabLista = [[sg.Table(listOperations, headings=headings, justification='left', key='-TABLE-', display_row_numbers=False, enable_events=True, auto_size_columns=False, col_widths=[0, 10, 19, 20, 7, 5, 2], size=(80, 10))],
+            [sg.Button('Inserir', size=(20, 1), key='-BTN_INSERT-', use_ttk_buttons=True, disabled_button_color=('white', 'black')), sg.Text('', size=(2, 1)), sg.Button('Remover', key='-BTN_REMOVE-', size=(20, 1), use_ttk_buttons=True, disabled_button_color=('white', 'black')), sg.Text('', size=(2, 1)), sg.Button('Processar Lista', key='-BTN_PROCESS_LIST-', size=(20, 1), use_ttk_buttons=True, disabled_button_color=('white', 'black'))]]
 
-tabMoverImagens = [[sg.Text('Nome da pasta', size=(15, 1)), sg.Input(key='-NOME_PASTA-', default_text='Manga')],
-                   [sg.Text('Caminho Origem', size=(15, 1)), sg.Input(key='-CAMINHO_ORIGEM-', default_text='C:/'), sg.FolderBrowse('Selecionar pasta')],
-                   [sg.Text('Caminho Destino', size=(15, 1)), sg.Input(key='-CAMINHO_DESTINO-', default_text='C:/'), sg.FolderBrowse('Selecionar pasta')],
-                   [sg.Button('Copiar os arquivos', size=(20, 1), key='-BTN_COPIAR_ARQUIVOS-', use_ttk_buttons=True, disabled_button_color=('white', 'black'))]]
+tabMoverImagens = [[sg.Text('Nome da pasta', size=(15, 1)), sg.Input(key='-FOLDER_NAME-', default_text='Manga')],
+                   [sg.Text('Caminho Origem', size=(15, 1)), sg.Input(key='-FROM_PATH-', default_text='C:/'), sg.FolderBrowse('Selecionar pasta')],
+                   [sg.Text('Caminho Destino', size=(15, 1)), sg.Input(key='-TO_PATH-', default_text='C:/'), sg.FolderBrowse('Selecionar pasta')],
+                   [sg.Button('Copiar os arquivos', size=(20, 1), key='-BTN_COPY_FILES-', use_ttk_buttons=True, disabled_button_color=('white', 'black'))]]
 
-layout = [[sg.Text('Caminho', text_color='orangered', size=(15, 1)), sg.Input(key='-CAMINHO-', enable_events=True, default_text='C:/'), sg.FolderBrowse('Selecionar pasta')],
+layout = [[sg.Text('Caminho', text_color='orangered', size=(15, 1)), sg.Input(key='-DIRECTORY-', enable_events=True, default_text='C:/'), sg.FolderBrowse('Selecionar pasta')],
           [sg.Text('Nome Manga', text_color='cornflowerblue', size=(15, 1)), sg.Input(key='-MANGA-', enable_events=True)],
           [sg.Text('Volume', size=(15, 1)), sg.InputText(key='-VOLUME-')],
-          [sg.Text('Capitulo', size=(15, 1)), sg.InputText(key='-CAPITULO-')],
+          [sg.Text('Chapter', size=(15, 1)), sg.InputText(key='-CHAPTER-')],
           [sg.Text('Scan', size=(15, 1)), sg.InputText(key='-SCAN-')],
           [sg.Text('Base', text_color='orangered', size=(15, 1)), sg.InputText(key='-BASE-')],
           [sg.Text('Caminho Tesseract', text_color='cornflowerblue', size=(15, 1)), sg.Input(key='-TESSERACT_LOCATE-', default_text='C:/Program Files/Tesseract-OCR'), sg.FolderBrowse('Selecionar pasta')],
-          [sg.Text('Linguagem', size=(15, 1)), sg.Combo(['Português', 'Japonês', 'Inglês', 'Japonês (vertical)', 'Japonês (horizontal)'], default_value='Japonês', key='-LINGUAGEM-', size=(15, 1), enable_events=True)],
+          [sg.Text('Linguagem', size=(15, 1)), sg.Combo(['Português', 'Japonês', 'Inglês', 'Japonês (vertical)', 'Japonês (horizontal)'], default_value='Japonês', key='-LANGUAGE-', size=(15, 1), enable_events=True)],
           [sg.Text('Recurso OCR', size=(15, 1)), sg.Combo(['WinOCR', 'Tesseract'], default_value='Tesseract', key='-OCRTYPE-', size=(15, 1))],
-          [sg.Checkbox('Carregar Informações da pasta?', default=True, key="-GET_INFORMACAO-", size=(30, 1)), sg.Checkbox('Limpar furigana?', default=False, key="-FURIGANA-")],
-          [sg.Checkbox('Obter o nome do manga da pasta?', default=True, key="-GET_NOME-", size=(30, 1)), sg.Checkbox('Filtro adicional para limpar o furigana?', default=False, key="-FILTRO_ADICIONAL_FURIGANA-")],
-          [sg.TabGroup([[sg.Tab('Operação', tabOperacao), sg.Tab('Lista operações', tabLista), sg.Tab('Montar estrutura de arquivos', tabMoverImagens)]])],
+          [sg.Checkbox('Carregar Informações da pasta?', default=True, key="-GET_INFORMATION-", size=(30, 1)), sg.Checkbox('Limpar furigana?', default=False, key="-FURIGANA-")],
+          [sg.Checkbox('Obter o nome do manga da pasta?', default=True, key="-GET_NAME-", size=(30, 1)), sg.Checkbox('Filtro adicional para limpar o furigana?', default=False, key="-ADDITIONAL_FILTER_FURIGANA-")],
+          [sg.TabGroup([[sg.Tab('Operação', tabOperation), sg.Tab('Lista operações', tabLista), sg.Tab('Montar estrutura de arquivos', tabMoverImagens)]])],
           [sg.ProgressBar(100, orientation='h', size=(45, 5), key='-PROGRESSBAR-')]]
 
 # Create the Window
 window = sg.Window('Manga Text Extractor', layout)
 PROGRESS = window['-PROGRESSBAR-']
 LOGMEMO = window['-OUTPUT-']
-OPERACAO = None
+OPERATION = None
 SELECTED_ROW = None
 
-def validaCampos(values):
+def validateFields(values):
     if values['-OCRTYPE-'].lower() == 'tesseract':
         file = ''.join(values['-TESSERACT_LOCATE-'].strip()).replace('\\', '/').replace('//', '/').replace('tesseract.exe', '')
         if (values['-TESSERACT_LOCATE-'].strip() == '') or (not os.path.isfile(file + '/tesseract.exe')):
-            aviso('Tesseract não encontrado, favor verificar o caminho informado!')
+            alert('Tesseract não encontrado, favor verificar o diretório informado!')
             return False
 
-    if (values['-CAMINHO-'].strip() == ''):
-        aviso('Favor informar um caminho de origem!')
+    if (values['-DIRECTORY-'].strip() == ''):
+        alert('Favor informar um diretório de origem!')
         return False
-    elif not os.path.exists(''.join(values['-CAMINHO-']).replace('\\', '/').replace('//', '/')):
-        aviso('Caminho informado não encontrado!')
+    elif not os.path.exists(''.join(values['-DIRECTORY-']).replace('\\', '/').replace('//', '/')):
+        alert('Caminho informado não encontrado!')
         return False
 
-    if (values['-MANGA-'].strip() == '') and ((not values['-GET_NOME-']) or (values['-GET_INFORMACAO-'])):
-        aviso('Favor informar um nome!')
+    if (values['-MANGA-'].strip() == '') and ((not values['-GET_NAME-']) or (values['-GET_INFORMATION-'])):
+        alert('Favor informar um nome!')
         return False
 
     if (values['-BASE-'].strip() == ''):
-        aviso('Favor informar uma base!')
+        alert('Favor informar uma base!')
         return False
 
-    saveConfig(Config(values['-CAMINHO-'], values['-MANGA-'], values['-VOLUME-'], values['-CAPITULO-'], values['-SCAN-'], values['-BASE-'], values['-LINGUAGEM-'],  
-            values['-OCRTYPE-'], values['-GET_INFORMACAO-'], values['-GET_NOME-'], values['-FURIGANA-'], values['-FILTRO_ADICIONAL_FURIGANA-']))
+    saveConfig(Config(values['-DIRECTORY-'], values['-MANGA-'], values['-VOLUME-'], values['-CHAPTER-'], values['-SCAN-'], values['-BASE-'], values['-LANGUAGE-'],  
+            values['-OCRTYPE-'], values['-GET_INFORMATION-'], values['-GET_NAME-'], values['-FURIGANA-'], values['-ADDITIONAL_FILTER_FURIGANA-']))
     return True
 
 
 def enableButtons():
-    window['-BTN_PROCESSAR-'].Update(disabled=False)
-    window['-BTN_CANCELAR-'].Update(disabled=False)
-    window['-BTN_PROCESSAR_LISTA-'].Update(disabled=False)
-    window['-BTN_INSERIR-'].Update(disabled=False)
-    window['-BTN_REMOVER-'].Update(disabled=False)
-    window['-BTN_PROCESSAR-'].Update(text='Processar')
-    window['-BTN_PROCESSAR_LISTA-'].Update(text='Processar Lista')
-    window['-BTN_COPIAR_ARQUIVOS-'].Update(text='Copiar os arquivos')
+    window['-BTN_PROCESS-'].Update(disabled=False)
+    window['-BTN_CANCEL-'].Update(disabled=False)
+    window['-BTN_PROCESS_LIST-'].Update(disabled=False)
+    window['-BTN_INSERT-'].Update(disabled=False)
+    window['-BTN_REMOVE-'].Update(disabled=False)
+    window['-BTN_PROCESS-'].Update(text='Processar')
+    window['-BTN_PROCESS_LIST-'].Update(text='Processar Lista')
+    window['-BTN_COPY_FILES-'].Update(text='Copiar os arquivos')
 
 
-def disableButtons(operacao):
-    window['-BTN_CANCELAR-'].Update(disabled=True)
-    window['-BTN_INSERIR-'].Update(disabled=True)
-    window['-BTN_REMOVER-'].Update(disabled=True)
+def disableButtons(operation):
+    window['-BTN_CANCEL-'].Update(disabled=True)
+    window['-BTN_INSERT-'].Update(disabled=True)
+    window['-BTN_REMOVE-'].Update(disabled=True)
 
-    if operacao.upper() == 'COPIA ARQUIVOS':
-        window['-BTN_COPIAR_ARQUIVOS-'].Update(text='Parar processamento')
-        window['-BTN_PROCESSAR-'].Update(disabled=True)
-        window['-BTN_PROCESSAR_LISTA-'].Update(disabled=True)
-    elif operacao.upper() == 'OPERAÇÃO':
-        window['-BTN_PROCESSAR-'].Update(text='Parar processamento')
-        window['-BTN_PROCESSAR_LISTA-'].Update(disabled=True)
-    elif operacao.upper() == 'LISTA':
-        window['-BTN_PROCESSAR-'].Update(disabled=True)
-        window['-BTN_PROCESSAR_LISTA-'].Update(text='Parar processamento')
+    if operation.upper() == 'COPIA ARQUIVOS':
+        window['-BTN_COPY_FILES-'].Update(text='Parar processamento')
+        window['-BTN_PROCESS-'].Update(disabled=True)
+        window['-BTN_PROCESS_LIST-'].Update(disabled=True)
+    elif operation.upper() == 'OPERAÇÃO':
+        window['-BTN_PROCESS-'].Update(text='Parar processamento')
+        window['-BTN_PROCESS_LIST-'].Update(disabled=True)
+    elif operation.upper() == 'LISTA':
+        window['-BTN_PROCESS-'].Update(disabled=True)
+        window['-BTN_PROCESS_LIST-'].Update(text='Parar processamento')
 
 
-def limpaCampos():
-    window['-CAMINHO-'].Update('C:/')
+def cleanFields():
+    window['-DIRECTORY-'].Update('C:/')
     window['-MANGA-'].Update('')
     window['-VOLUME-'].Update('')
-    window['-CAPITULO-'].Update('')
+    window['-CHAPTER-'].Update('')
     window['-SCAN-'].Update('')
     window['-BASE-'].Update('')
-    window['-GET_INFORMACAO-'].Update(True)
-    window['-GET_NOME-'].Update(True)
+    window['-GET_INFORMATION-'].Update(True)
+    window['-GET_NAME-'].Update(True)
     window['-FURIGANA-'].Update(False)
-    window['-FILTRO_ADICIONAL_FURIGANA-'].Update(False)
+    window['-ADDITIONAL_FILTER_FURIGANA-'].Update(False)
 
 
-def aviso(text):
+def alert(text):
     sg.Popup(text, title='Aviso')
 
 
-def carrega(values):
+def load(values):
     vertical = None
-    linguagem = ""
-    if (values['-LINGUAGEM-'] == 'Japonês'):
-        linguagem = "ja"
-    elif (values['-LINGUAGEM-'] == 'Inglês'):
-        linguagem = "en"
-    elif (values['-LINGUAGEM-'] == 'Japonês (horizontal)'):
-        linguagem = "ja"
+    language = ""
+    if (values['-LANGUAGE-'] == 'Japonês'):
+        language = "ja"
+    elif (values['-LANGUAGE-'] == 'Inglês'):
+        language = "en"
+    elif (values['-LANGUAGE-'] == 'Japonês (horizontal)'):
+        language = "ja"
         vertical = False
-    elif (values['-LINGUAGEM-'] == 'Japonês (vertical)'):
-        linguagem = "ja"
+    elif (values['-LANGUAGE-'] == 'Japonês (vertical)'):
+        language = "ja"
         vertical = True
     else:
-        linguagem = "pt"
+        language = "pt"
 
-    global OPERACAO # Usa a variavel global
-    OPERACAO = Operacao(values['-BASE-'], values['-MANGA-'], values['-CAMINHO-'], linguagem, window)
+    global OPERATION # Usa a variavel global
+    OPERATION = Operation(values['-BASE-'], values['-MANGA-'], values['-DIRECTORY-'], language, window)
 
-    OPERACAO.volume = values['-VOLUME-']
-    OPERACAO.capitulo = values['-CAPITULO-']
-    OPERACAO.scan = values['-SCAN-']
-    OPERACAO.getNomePasta = values['-GET_NOME-']
-    OPERACAO.getInformacaoPasta = values['-GET_INFORMACAO-']
-    OPERACAO.ocrType = values['-OCRTYPE-'].lower()
-    OPERACAO.pastaTesseract = ''.join(values['-TESSERACT_LOCATE-'].strip()).replace('\\', '/').replace('//', '/').replace('tesseract.exe', '')
-    OPERACAO.textoVertical = vertical
-    OPERACAO.furigana = False if linguagem != "ja" else values['-FURIGANA-']
-    OPERACAO.filtroAdicional = False if linguagem != "ja" else values['-FILTRO_ADICIONAL_FURIGANA-']
-    return OPERACAO
-
-
-def processar(operacao):
-    db = BdUtil(operacao)
-    operacao.base = db.criaTabela(operacao.base)
-
-    processa = ImageProcess(operacao)
-    processa.processaImagens()
+    OPERATION.volume = values['-VOLUME-']
+    OPERATION.chapter = values['-CHAPTER-']
+    OPERATION.scan = values['-SCAN-']
+    OPERATION.getNameFolder = values['-GET_NAME-']
+    OPERATION.getFolderInformation = values['-GET_INFORMATION-']
+    OPERATION.ocrType = values['-OCRTYPE-'].lower()
+    OPERATION.tesseractFolder = ''.join(values['-TESSERACT_LOCATE-'].strip()).replace('\\', '/').replace('//', '/').replace('tesseract.exe', '')
+    OPERATION.verticalText = vertical
+    OPERATION.furigana = False if language != "ja" else values['-FURIGANA-']
+    OPERATION.furiganaFilter = False if language != "ja" else values['-ADDITIONAL_FILTER_FURIGANA-']
+    return OPERATION
 
 
-def thread_process(operacao, window):
-    globals.CANCELAR_OPERACAO = False
+def process(operation):
+    db = BdUtil(operation)
+    operation.base = db.createTable(operation.base)
+
+    process = ImageProcess(operation)
+    process.processImages()
+
+
+def thread_process(operation, window):
+    globals.CANCEL_OPERATION = False
     try:
-        processar(operacao)
-        window.write_event_value('-THREAD_END-', 'Processamento concluído com sucesso. \nManga: ' + operacao.mangaNome)
+        process(operation)
+        window.write_event_value('-THREAD_END-', 'Processamento concluído com sucesso. \nManga: ' + operation.nameManga)
     except Exception as e:
         print(e)
         window.write_event_value('-THREAD_ERROR-', str(e))
 
 
-def thread_list_process(listaOperacao, window):
-    globals.CANCELAR_OPERACAO = False
+def thread_list_process(operationList, window):
+    globals.CANCEL_OPERATION = False
     mangas = ''
 
-    if not isTeste:
-        window.write_event_value('-THREAD_LOG-', PrintLog("Iniciando a lista de operações com " + str(len(listaOperacao)) + " operações...", 'magenta'))
+    if not ISTEST:
+        window.write_event_value('-THREAD_LOG-', PrintLog("Iniciando a lista de operações com " + str(len(operationList)) + " operações...", 'magenta'))
     else:
-        print(colored("Iniciando a lista de operações com " + str(len(listaOperacao)) + " operações...", 'magenta', attrs=['reverse', 'blink']))
+        print(colored("Iniciando a lista de operações com " + str(len(operationList)) + " operações...", 'magenta', attrs=['reverse', 'blink']))
 
     try:
-        for item in listaOperacao:
-            global OPERACAO # Usa a variavel global
-            OPERACAO = item[0]
-            inicioManga = datetime.now()
-            if not isTeste:
-                window.write_event_value('-THREAD_LOG-', PrintLog("Inicio do processo do manga " + OPERACAO.mangaNome + " da lista de operações.", 'magenta'))
-                window.write_event_value('-THREAD_LOG-', PrintLog('Inicio do processo: ' + inicioManga.strftime("%H:%M:%S"), 'magenta'))
+        for item in operationList:
+            global OPERATION # Usa a variavel global
+            OPERATION = item[0]
+            initialMangaTime = datetime.now()
+            if not ISTEST:
+                window.write_event_value('-THREAD_LOG-', PrintLog("Inicio do processo do manga " + OPERATION.nameManga + " da lista de operações.", 'magenta'))
+                window.write_event_value('-THREAD_LOG-', PrintLog('Inicio do processo: ' + initialMangaTime.strftime("%H:%M:%S"), 'magenta'))
             else:
-                print(colored("Inicio do processo do manga " + OPERACAO.mangaNome + " da lista de operações.", 'magenta', attrs=['reverse', 'blink']))
-                print(colored('Inicio do processo: ' + inicioManga.strftime("%H:%M:%S"), 'yellow', attrs=['reverse', 'blink']))
+                print(colored("Inicio do processo do manga " + OPERATION.nameManga + " da lista de operações.", 'magenta', attrs=['reverse', 'blink']))
+                print(colored('Inicio do processo: ' + initialMangaTime.strftime("%H:%M:%S"), 'yellow', attrs=['reverse', 'blink']))
 
-            processar(OPERACAO)
+            process(OPERATION)
 
-            if not globals.CANCELAR_OPERACAO:
-                mangas += OPERACAO.mangaNome + ', '
+            if not globals.CANCEL_OPERATION:
+                mangas += OPERATION.nameManga + ', '
                 item[-1] = 'X'
-                intervaloManga = datetime.now() - inicioManga
-                if not isTeste:
-                    window.write_event_value('-THREAD_LOG-', PrintLog("Manga processado com exito.... " + OPERACAO.mangaNome, 'magenta'))
+                intervalManga = datetime.now() - initialMangaTime
+                if not ISTEST:
+                    window.write_event_value('-THREAD_LOG-', PrintLog("Manga processado com exito.... " + OPERATION.nameManga, 'magenta'))
                     window.write_event_value('-THREAD_LOG-', PrintLog('Fim do processo: ' + datetime.now().strftime("%H:%M:%S"), 'yellow'))
-                    window.write_event_value('-THREAD_LOG-', PrintLog('Tempo decorrido: ' + str(intervaloManga), 'yellow'))
+                    window.write_event_value('-THREAD_LOG-', PrintLog('Tempo decorrido: ' + str(intervalManga), 'yellow'))
                     window.write_event_value('-THREAD_LOG-', PrintLog(100*'-'))
-                    window.write_event_value('-THREAD_LIST_UPDATE-', listaOperacao)
+                    window.write_event_value('-THREAD_LIST_UPDATE-', operationList)
                 else:
-                    print(colored("Manga processado com exito.... " + OPERACAO.mangaNome, 'magenta', attrs=['reverse', 'blink']))
+                    print(colored("Manga processado com exito.... " + OPERATION.nameManga, 'magenta', attrs=['reverse', 'blink']))
                     print(colored('Fim do processo: ' + datetime.now().strftime("%H:%M:%S"), 'yellow', attrs=['reverse', 'blink']))
-                    print(colored('Tempo decorrido: ' + str(intervaloManga), 'yellow', attrs=['reverse', 'blink']))
+                    print(colored('Tempo decorrido: ' + str(intervalManga), 'yellow', attrs=['reverse', 'blink']))
                     print(100*'-')
         
-        if not globals.CANCELAR_OPERACAO:    
+        if not globals.CANCEL_OPERATION:    
             mangas = mangas[:mangas.rindex(", ")]
 
         window.write_event_value('-THREAD_END-', 'Processamento da lista concluído com sucesso. \nMangas processados: ' + mangas) 
@@ -241,138 +241,138 @@ def thread_list_process(listaOperacao, window):
         window.write_event_value('-THREAD_ERROR-', str(e)) 
 
 
-def thread_copy_file(operacao, origem, destino, nomePasta):
-    globals.CANCELAR_OPERACAO = False
+def thread_copy_file(operation, fromFolder, toFolder, folderName):
+    globals.CANCEL_OPERATION = False
     try:
-        if not operacao.isTeste:
-            operacao.window.write_event_value('-THREAD_LOG-', PrintLog("Iniciando a cópia dos arquivos de " + origem + " para " + destino, 'yellow'))
+        if not operation.isTest:
+            operation.window.write_event_value('-THREAD_LOG-', PrintLog("Iniciando a cópia dos arquivos de " + fromFolder + " para " + toFolder, 'yellow'))
         else:
-            printLog(PrintLog("Iniciando a cópia dos arquivos de " + origem + " para " + destino, 'yellow'))
+            printLog(PrintLog("Iniciando a cópia dos arquivos de " + fromFolder + " para " + toFolder, 'yellow'))
 
-        moveArquivosDiretorios(operacao, origem, destino, nomePasta)
-        window.write_event_value('-THREAD_END-', ('Montagem da estrutura e cópia dos arquivos concluído com sucesso.\n' + nomePasta))
+        moveFilesDirectories(operation, fromFolder, toFolder, folderName)
+        window.write_event_value('-THREAD_END-', ('Montagem da estrutura e cópia dos arquivos concluído com sucesso.\n' + folderName))
     except Exception as e:
         print(e)
         window.write_event_value('-THREAD_ERROR-', str(e))
 
 
-def eventoManga(values):
+def eventManga(values):
     window['-BASE-'].Update(unidecode(values['-MANGA-'].strip()))
 
 
-def eventoCaminho(values):
-    caminho = values["-CAMINHO-"]
+def eventDirectory(values):
+    directory = values["-DIRECTORY-"]
 
-    if (os.path.exists(caminho)):
-        config = readConfig(caminho)
+    if (os.path.exists(directory)):
+        config = readConfig(directory)
 
-        if config is not None and caminho == config.directory:            
+        if config is not None and directory == config.directory:            
             window['-MANGA-'].Update(config.manga)
             window['-VOLUME-'].Update(config.volume)
-            window['-CAPITULO-'].Update(config.chapter)
+            window['-CHAPTER-'].Update(config.chapter)
             window['-SCAN-'].Update(config.scan)
             window['-BASE-'].Update(config.base)
-            window['-LINGUAGEM-'].Update(config.language)
+            window['-LANGUAGE-'].Update(config.language)
             window['-OCRTYPE-'].Update(config.ocr)
-            window['-GET_INFORMACAO-'].Update(config.isReadInformationFolder)
-            window['-GET_NOME-'].Update(config.isMangaNameFolder)
+            window['-GET_INFORMATION-'].Update(config.getFolderInformation)
+            window['-GET_NAME-'].Update(config.getNameFolder)
             window['-FURIGANA-'].Update(config.isCleanFurigana)
-            window['-FILTRO_ADICIONAL_FURIGANA-'].Update(config.isFuriganaFilter)
+            window['-ADDITIONAL_FILTER_FURIGANA-'].Update(config.isFuriganaFilter)
         else:
             manga = values["-MANGA-"]
-            pasta = ""
+            folder = ""
 
-            for diretorio, subpastas, arquivos in os.walk(caminho):
-                subpastas[:] = [sub for sub in subpastas if sub not in ['tmp']]
-                subpastas[:] = [sub for sub in subpastas if "capa" not in sub.lower()]
+            for _, subFolder, _ in os.walk(directory):
+                subFolder[:] = [sub for sub in subFolder if sub not in ['tmp']]
+                subFolder[:] = [sub for sub in subFolder if "capa" not in sub.lower()]
 
-                if len(subpastas) < 1:
+                if len(subFolder) < 1:
                     return
                     
-                pasta = subpastas[0]
-                manga = extraiNomeDiretorio(pasta)
-                capitulo = extraiInformacoesDiretorio(pasta, manga)
+                folder = subFolder[0]
+                manga = getDirectoryName(folder)
+                chapter = getDirectoryInformation(folder, manga)
                 break
 
             window['-MANGA-'].Update(manga)
-            window['-VOLUME-'].Update(capitulo.volume)
-            window['-CAPITULO-'].Update(capitulo.capitulo)
-            window['-SCAN-'].Update(capitulo.scan)
+            window['-VOLUME-'].Update(chapter.volume)
+            window['-CHAPTER-'].Update(chapter.chapter)
+            window['-SCAN-'].Update(chapter.scan)
             window['-BASE-'].Update(unidecode(manga.replace("-", " "))[:40].strip())
 
 
 def main():
-    if isTeste:
+    if ISTEST:
         teste()
     else:
-        global OPERACAO
+        global OPERATION
         MaxProgress = 1
-        inicio = datetime.now()
+        initialTime = datetime.now()
         while True:
             event, values = window.read()
-            if event == sg.WIN_CLOSED or event == '-BTN_CANCELAR-':
+            if event == sg.WIN_CLOSED or event == '-BTN_CANCEL-':
                 break
-            elif event == '-CAMINHO-':
-                eventoCaminho(values)
+            elif event == '-DIRECTORY-':
+                eventDirectory(values)
             elif event == '-MANGA-':
-                eventoManga(values)
+                eventManga(values)
             elif event == '-TABLE-':
                 SELECTED_ROW = values['-TABLE-'][0]
-            elif event == '-LINGUAGEM-':
-                if "japonês" not in values['-LINGUAGEM-'].lower():
+            elif event == '-LANGUAGE-':
+                if "japonês" not in values['-LANGUAGE-'].lower():
                    window['-FURIGANA-'].update(value=False, disabled=True)
-                   window['-FILTRO_ADICIONAL_FURIGANA-'].update(value=False, disabled=True)
+                   window['-ADDITIONAL_FILTER_FURIGANA-'].update(value=False, disabled=True)
                 else:
                     window['-FURIGANA-'].update(disabled=False)  
-                    window['-FILTRO_ADICIONAL_FURIGANA-'].update(disabled=False)  
-            elif event == '-BTN_INSERIR-':
-                if validaCampos(values):
-                    itemFila = carrega(values)
-                    listaOperacoes.append([itemFila, itemFila.base, itemFila.mangaNome, itemFila.caminho, itemFila.furigana, itemFila.linguagem, ' - '])
-                    window['-TABLE-'].update(values=listaOperacoes)
-                    limpaCampos()
-            elif event == '-BTN_REMOVER-':
-                if len(listaOperacoes) > 0:
+                    window['-ADDITIONAL_FILTER_FURIGANA-'].update(disabled=False)  
+            elif event == '-BTN_INSERT-':
+                if validateFields(values):
+                    operation = load(values)
+                    listOperations.append([operation, operation.base, operation.nameManga, operation.directory, operation.furigana, operation.language, ' - '])
+                    window['-TABLE-'].update(values=listOperations)
+                    cleanFields()
+            elif event == '-BTN_REMOVE-':
+                if len(listOperations) > 0:
                     if (SELECTED_ROW is not None):
-                        listaOperacoes.pop(SELECTED_ROW)
+                        listOperations.pop(SELECTED_ROW)
                     else:
-                        listaOperacoes.pop()
-                    window['-TABLE-'].update(values=listaOperacoes)
+                        listOperations.pop()
+                    window['-TABLE-'].update(values=listOperations)
                 SELECTED_ROW = None
-            elif ((event == '-BTN_PROCESSAR-') or (event == '-BTN_PROCESSAR_LISTA-') or (event == '-BTN_COPIAR_ARQUIVOS-')) and (window[event].get_text() == 'Parar processamento'):
-                globals.CANCELAR_OPERACAO = True
-            elif (event == '-BTN_PROCESSAR-') or (event == '-BTN_PROCESSAR_LISTA-') or (event == '-BTN_COPIAR_ARQUIVOS-'):
-                if not testaConexao():
-                    aviso('Não foi possível conectar ao banco de dados')
+            elif ((event == '-BTN_PROCESS-') or (event == '-BTN_PROCESS_LIST-') or (event == '-BTN_COPY_FILES-')) and (window[event].get_text() == 'Parar processamento'):
+                globals.CANCEL_OPERATION = True
+            elif (event == '-BTN_PROCESS-') or (event == '-BTN_PROCESS_LIST-') or (event == '-BTN_COPY_FILES-'):
+                if not testConnection():
+                    alert('Não foi possível conectar ao banco de dados')
 
-                if event == '-BTN_COPIAR_ARQUIVOS-':
+                if event == '-BTN_COPY_FILES-':
                     disableButtons("COPIA ARQUIVOS")
-                    OPERACAO = Operacao(None, "", "", "", window)
-                    OPERACAO.logMemo = LOGMEMO
-                    OPERACAO.caminho = values['-CAMINHO_DESTINO-']
-                    threading.Thread(target=thread_copy_file,args=(OPERACAO, values['-CAMINHO_ORIGEM-'], values['-CAMINHO_DESTINO-'], values['-NOME_PASTA-']),daemon=True).start()
-                elif (event == '-BTN_PROCESSAR_LISTA-'):
-                    if len(listaOperacoes) == 0:
-                        aviso('Nenhuma operação na lista.')
+                    OPERATION = Operation(None, "", "", "", window)
+                    OPERATION.logMemo = LOGMEMO
+                    OPERATION.directory = values['-TO_PATH-']
+                    threading.Thread(target=thread_copy_file,args=(OPERATION, values['-FROM_PATH-'], values['-TO_PATH-'], values['-FOLDER_NAME-']),daemon=True).start()
+                elif (event == '-BTN_PROCESS_LIST-'):
+                    if len(listOperations) == 0:
+                        alert('Nenhuma operação na lista.')
                     else:
                         disableButtons("LISTA")
-                        inicio = datetime.now()
+                        initialTime = datetime.now()
                         LOGMEMO.Update('')
-                        printLog(PrintLog('Inicio do processo: ' + inicio.strftime("%H:%M:%S"), 'yellow', logMemo=LOGMEMO, caminho=os.path.abspath('')))
-                        threading.Thread(target=thread_list_process,args=(listaOperacoes, window),daemon=True).start()
-                elif validaCampos(values):
+                        printLog(PrintLog('Inicio do processo: ' + initialTime.strftime("%H:%M:%S"), 'yellow', logMemo=LOGMEMO, directory=os.path.abspath('')))
+                        threading.Thread(target=thread_list_process,args=(listOperations, window),daemon=True).start()
+                elif validateFields(values):
                     disableButtons("OPERAÇÃO")
-                    inicio = datetime.now()
+                    initialTime = datetime.now()
                     LOGMEMO.Update('')
-                    OPERACAO = carrega(values)
-                    printLog(PrintLog('Inicio do processo: ' + inicio.strftime("%H:%M:%S"), 'yellow', logMemo=LOGMEMO, caminho=OPERACAO.caminho))
-                    threading.Thread(target=thread_process,args=(OPERACAO, window),daemon=True).start()
+                    OPERATION = load(values)
+                    printLog(PrintLog('Inicio do processo: ' + initialTime.strftime("%H:%M:%S"), 'yellow', logMemo=LOGMEMO, directory=OPERATION.directory))
+                    threading.Thread(target=thread_process,args=(OPERATION, window),daemon=True).start()
             elif event == '-THREAD_AVISO-':
-                aviso(values[event])
+                alert(values[event])
             elif event == '-THREAD_LOG-':
                 prtLog = values[event]
                 prtLog.logMemo = LOGMEMO
-                prtLog.caminho = OPERACAO.caminho 
+                prtLog.directory = OPERATION.directory 
                 printLog(prtLog)
             elif event == '-THREAD_PROGRESSBAR_UPDATE-':
                 PROGRESS.UpdateBar(values[event], MaxProgress)
@@ -381,20 +381,20 @@ def main():
             elif event == '-THREAD_LIST_UPDATE-':
                 window['-TABLE-'].update(values=values[event])
             elif event == '-THREAD_ERROR-':
-                aviso('Erro no processamento....\n' + values[event])
+                alert('Erro no processamento....\n' + values[event])
                 enableButtons()
             elif event == '-THREAD_END-':
-                if globals.CANCELAR_OPERACAO:
-                    printLog(PrintLog('Operação cancelada...', 'yellow', logMemo=LOGMEMO, caminho=OPERACAO.caminho))
-                    aviso('Processamento parado.')
+                if globals.CANCEL_OPERATION:
+                    printLog(PrintLog('Operação cancelada...', 'yellow', logMemo=LOGMEMO, directory=OPERATION.directory))
+                    alert('Processamento parado.')
                 else:
                     PROGRESS.UpdateBar(MaxProgress, MaxProgress)
-                    intervalo = datetime.now() - inicio
-                    printLog(PrintLog('Fim do processo: ' + datetime.now().strftime("%H:%M:%S"), 'yellow', logMemo=LOGMEMO, caminho=OPERACAO.caminho))
-                    printLog(PrintLog('Tempo decorrido: ' + str(intervalo), 'yellow', logMemo=LOGMEMO, caminho=OPERACAO.caminho))
-                    if OPERACAO.furigana:
-                        printLog(PrintLog('Com limpeza de furigana.', logMemo=LOGMEMO, caminho=OPERACAO.caminho))
-                    aviso(values[event])
+                    interval = datetime.now() - initialTime
+                    printLog(PrintLog('Fim do processo: ' + datetime.now().strftime("%H:%M:%S"), 'yellow', logMemo=LOGMEMO, directory=OPERATION.directory))
+                    printLog(PrintLog('Tempo decorrido: ' + str(interval), 'yellow', logMemo=LOGMEMO, directory=OPERATION.directory))
+                    if OPERATION.furigana:
+                        printLog(PrintLog('Com limpeza de furigana.', logMemo=LOGMEMO, directory=OPERATION.directory))
+                    alert(values[event])
                 enableButtons()
 
         window.close()

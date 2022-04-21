@@ -2,4 +2,4 @@
 ####################
 ##  GLOBAL VAR
 ###################
-CANCELAR_OPERACAO = False
+CANCEL_OPERATION = False

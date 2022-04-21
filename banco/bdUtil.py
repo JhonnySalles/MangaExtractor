@@ -6,7 +6,7 @@ import sys
 sys.path.append("../")
 from classes import PrintLog, Volume
 from util import printLog
-from defaults import NOME_DB, VERSAO_APLICATIVO
+from defaults import BD_NAME, APPLICATION_VERSION
 
 volumes = """
     CREATE TABLE %s_volumes (
@@ -19,7 +19,7 @@ volumes = """
     PRIMARY KEY (id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 """
-capitulos = """
+chapters = """
     CREATE TABLE IF NOT EXISTS %s_capitulos (
         id INT NOT NULL AUTO_INCREMENT,
         id_volume INT(11) DEFAULT NULL,
@@ -37,7 +37,7 @@ capitulos = """
         CONSTRAINT %s_volumes_capitulos_fk FOREIGN KEY (id_volume) REFERENCES %s_volumes (id) ON DELETE CASCADE ON UPDATE CASCADE
     ) CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci; 
 """
-paginas = """
+pages = """
     CREATE TABLE IF NOT EXISTS %s_paginas (
         id INT NOT NULL AUTO_INCREMENT,
         id_capitulo int(11) NOT NULL,
@@ -51,7 +51,7 @@ paginas = """
         CONSTRAINT %s_capitulos_paginas_fk FOREIGN KEY (id_capitulo) REFERENCES %s_capitulos (id) ON DELETE CASCADE ON UPDATE CASCADE
     ) CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
-textos = """
+text = """
     CREATE TABLE IF NOT EXISTS %s_textos (
         id INT NOT NULL AUTO_INCREMENT,
         id_pagina INT(11) NOT NULL,
@@ -78,37 +78,37 @@ updateVolume = """
     WHERE id = %s
 """
 
-selectCapitulo = 'SELECT id FROM {}_capitulos WHERE id_volume = %s AND manga = %s AND volume = %s AND capitulo = %s AND linguagem = %s AND is_extra = %s '
-insertCapitulo = """
+selectChapter = 'SELECT id FROM {}_capitulos WHERE id_volume = %s AND manga = %s AND volume = %s AND capitulo = %s AND linguagem = %s AND is_extra = %s '
+insertChapter = """
     INSERT INTO {}_capitulos (id_volume, manga, volume, capitulo, linguagem, scan, is_extra, is_raw) 
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
 """
-updateCapitulo = """
+updateChapter = """
     UPDATE {}_capitulos SET manga = %s, volume = %s, capitulo = %s, linguagem = %s, scan = %s, is_extra = %s, is_raw = %s, is_processado = 0
     WHERE id = %s
 """
 
-selectPagina = 'SELECT id FROM {}_paginas WHERE id_capitulo = %s AND nome = %s AND hash_pagina = %s '
-insertPagina = """
+selectPage = 'SELECT id FROM {}_paginas WHERE id_capitulo = %s AND nome = %s AND hash_pagina = %s '
+insertPage = """
     INSERT INTO {}_paginas (id_capitulo, nome, numero, hash_pagina) 
     VALUES (%s, %s, %s, %s)
 """
-updatePagina = """
+updatePage = """
     UPDATE {}_paginas SET nome = %s, numero = %s, hash_pagina = %s, is_processado = 0
     WHERE id = %s
 """
 
-selectTexto = 'SELECT id FROM {}_textos WHERE id_pagina = %s AND texto = %s '
-insertTexto = """
+selectText = 'SELECT id FROM {}_textos WHERE id_pagina = %s AND texto = %s '
+insertText = """
     INSERT INTO {}_textos (id_pagina, sequencia, texto, posicao_x1, posicao_y1, posicao_x2, posicao_y2, versaoApp) 
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
 """
-updateTexto = """
+updateText = """
     UPDATE {}_textos SET sequencia = %s, texto = %s, posicao_x1 = %s, posicao_y1 = %s, posicao_x2 = %s, posicao_y2 = %s, versaoApp = %s
     WHERE id = %s
 """
 
-tabelaExist = """
+tableExists = """
     SELECT Table_Name FROM information_schema.tables 
     WHERE table_schema = "%s" 
     AND (Table_Name LIKE "%s_textos")
@@ -117,310 +117,310 @@ tabelaExist = """
 
 
 class BdUtil:
-    def __init__(self, operacao):
-        self.operacao = operacao
-        self.tabela = ''
+    def __init__(self, operation):
+        self.operation = operation
+        self.table = ''
 
 
-    def criaTabela(self, nome=None):
-        with conection() as conexao:
-            if nome == None:
-                raise ValueError("Erro na criação da tabela, tabela não informada.")
+    def createTable(self, name=None):
+        with conection() as connection:
+            if name == None:
+                raise ValueError("Erro na criação da table, table não informada.")
 
-            tabela = nome.replace(" ", "_")
+            table = name.replace(" ", "_")
             try:
-                cursor = conexao.cursor(buffered=True)
-                cursor.execute(tabelaExist % (NOME_DB, tabela))
+                cursor = connection.cursor(buffered=True)
+                cursor.execute(tableExists % (BD_NAME, table))
 
                 if cursor.rowcount > 0:
-                    if not self.operacao.isTeste:
-                        self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Estrutura de tabelas já existente. Tabela: {tabela}', 'red')) 
+                    if not self.operation.isTest:
+                        self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Estrutura de tabelas já existente. Tabela: {table}', 'red')) 
                     else:
-                        print(colored(f'Estrutura de tabelas já existente. Tabela: {tabela}', 'red', attrs=['reverse', 'blink']))
-                    self.tabela = tabela
-                    return tabela
+                        print(colored(f'Estrutura de tabelas já existente. Tabela: {table}', 'red', attrs=['reverse', 'blink']))
+                    self.table = table
+                    return table
             except ProgrammingError as e:
-                if not self.operacao.isTeste:
-                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela volume: {e.msg}', 'red')) 
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da table volume: {e.msg}', 'red')) 
                 else:
-                    print(colored(f'Erro na criação da tabela volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                    print(colored(f'Erro na criação da table volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
             try:
-                cursor = conexao.cursor()
-                cursor.execute(volumes % tabela)
-                conexao.commit()
+                cursor = connection.cursor()
+                cursor.execute(volumes % table)
+                connection.commit()
             except ProgrammingError as e:
-                if not self.operacao.isTeste:
-                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela volume: {e.msg}', 'red')) 
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da table volume: {e.msg}', 'red')) 
                 else:
-                    print(colored(f'Erro na criação da tabela volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                    print(colored(f'Erro na criação da table volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
             try:
-                cursor = conexao.cursor()
-                cursor.execute(capitulos % (tabela, tabela, tabela, tabela))
-                conexao.commit()
+                cursor = connection.cursor()
+                cursor.execute(chapters % (table, table, table, table))
+                connection.commit()
             except ProgrammingError as e:
-                if not self.operacao.isTeste:
-                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela capitulo: {e.msg}', 'red')) 
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da table chapter: {e.msg}', 'red')) 
                 else:
-                    print(colored(f'Erro na criação da tabela capitulo: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                    print(colored(f'Erro na criação da table chapter: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
             try:
-                cursor = conexao.cursor()
-                cursor.execute(paginas % (tabela, tabela, tabela, tabela))
-                conexao.commit()
+                cursor = connection.cursor()
+                cursor.execute(pages % (table, table, table, table))
+                connection.commit()
             except ProgrammingError as e:
-                if not self.operacao.isTeste:
-                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela pagina: {e.msg}', 'red')) 
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da table page: {e.msg}', 'red')) 
                 else:
-                    print(colored(f'Erro na criação da tabela pagina: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                    print(colored(f'Erro na criação da table page: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
             try:
-                cursor = conexao.cursor()
-                cursor.execute(textos % (tabela, tabela, tabela, tabela))
-                conexao.commit()
+                cursor = connection.cursor()
+                cursor.execute(text % (table, table, table, table))
+                connection.commit()
             except ProgrammingError as e:
-                if not self.operacao.isTeste:
-                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela texto: {e.msg}', 'red'))
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da table text: {e.msg}', 'red'))
                 else:
-                    print(colored(f'Erro na criação da tabela texto: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                    print(colored(f'Erro na criação da table text: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
-            self.tabela = tabela
-            return tabela
+            self.table = table
+            return table
 
 
-    def gravaTexto(self, id_pagina=None, texto=None):
-        with conection() as conexao:
-            if (id_pagina is None) or (texto is None):
-                if not self.operacao.isTeste:
-                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar os dados, não informado id.', 'red'))
+    def saveText(self, id_page=None, text=None):
+        with conection() as connection:
+            if (id_page is None) or (text is None):
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar os dados, não informado id.', 'red'))
                 else:
                     print(colored('Erro ao gravar os dados, não informado id.', 'red', attrs=['reverse', 'blink']))
                 return
-            elif texto is None:
-                if not self.operacao.isTeste:
-                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar os dados, dados para inserção vazio.', 'red'))
+            elif text is None:
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar os dados, dados para inserção vazio.', 'red'))
                 else:
                     print(colored('Erro ao gravar os dados, dados para inserção vazio.', 'red', attrs=['reverse', 'blink']))
                 return
             try:
-                args = (id_pagina, texto.texto)
-                cursor = conexao.cursor(buffered=True)
-                sql = selectTexto.format(self.operacao.base)
+                args = (id_page, text.text)
+                cursor = connection.cursor(buffered=True)
+                sql = selectText.format(self.operation.base)
                 cursor.execute(sql, args)
 
                 if cursor.rowcount > 0:
                     try:
-                        args = (texto.sequencia, texto.texto, texto.posX1, texto.posY1,
-                                texto.posX2, texto.posY2, VERSAO_APLICATIVO, cursor.fetchone()[0])
-                        sql = updateTexto.format(self.operacao.base)
+                        args = (text.sequence, text.text, text.posX1, text.posY1,
+                                text.posX2, text.posY2, APPLICATION_VERSION, cursor.fetchone()[0])
+                        sql = updateText.format(self.operation.base)
                         cursor.execute(sql, args)
-                        conexao.commit()
+                        connection.commit()
                     except ProgrammingError as e:
-                        if not self.operacao.isTeste:
-                            self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao atualizar os dados: {e.msg}', 'red'))
+                        if not self.operation.isTest:
+                            self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao atualizar os dados: {e.msg}', 'red'))
                         else:
                             print(colored(f'Erro ao atualizar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
                 else:
                     try:
-                        args = (id_pagina, texto.sequencia, texto.texto, texto.posX1,
-                                texto.posY1, texto.posX2, texto.posY2, VERSAO_APLICATIVO)
-                        sql = insertTexto.format(self.operacao.base)
+                        args = (id_page, text.sequence, text.text, text.posX1,
+                                text.posY1, text.posX2, text.posY2, APPLICATION_VERSION)
+                        sql = insertText.format(self.operation.base)
                         cursor.execute(sql, args)
-                        conexao.commit()
+                        connection.commit()
                     except ProgrammingError as e:
-                        if not self.operacao.isTeste:
-                            self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao gravar os dados: {e.msg}', 'red'))
+                        if not self.operation.isTest:
+                            self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao gravar os dados: {e.msg}', 'red'))
                         else:
                             print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
             except ProgrammingError as e:
-                if not self.operacao.isTeste:
-                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao consultar registro: {e.msg}',  'red'))
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao consultar registro: {e.msg}',  'red'))
                 else:
                     print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
 
-    def gravaPagina(self, id_capitulo=None, pagina=None):
-        with conection() as conexao:
-            if (id_capitulo is None) or (pagina is None):
-                if not self.operacao.isTeste:
-                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar os dados, dados para inserção vazio.', 'red')) 
-                else:
-                    print(colored('Erro ao gravar os dados, dados para inserção vazio.', 'red', attrs=['reverse', 'blink']))
-                return
-
-            try:
-                id = None
-                args = (id_capitulo, pagina.nome, pagina.hashPagina)
-                cursor = conexao.cursor(buffered=True)
-                sql = selectPagina.format(self.operacao.base)
-                cursor.execute(sql, args)
-
-                if cursor.rowcount > 0:
-                    try:
-                        id = cursor.fetchone()[0]
-                        args = (pagina.nome, pagina.numero, pagina.hashPagina, id)
-                        sql = updatePagina.format(self.operacao.base)
-                        cursor.execute(sql, args)
-                        conexao.commit()
-                    except ProgrammingError as e:
-                        if not self.operacao.isTeste:
-                            self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao atualizar os dados: {e.msg}', 'red')) 
-                        else:
-                            print(colored(f'Erro ao atualizar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
-                else:
-                    try:
-                        args = (id_capitulo, pagina.nome, pagina.numero, pagina.hashPagina)
-                        sql = insertPagina.format(self.operacao.base)
-                        cursor.execute(sql, args)
-                        conexao.commit()
-                        id = cursor.lastrowid
-                    except ProgrammingError as e:
-                        if not self.operacao.isTeste:
-                            self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao gravar os dados: {e.msg}', 'red')) 
-                        else:
-                            print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
-
-                for texto in pagina.textos:
-                    self.gravaTexto(id, texto)
-
-            except ProgrammingError as e:
-                if not self.operacao.isTeste:
-                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao consultar registro: {e.msg}',  'red')) 
-                else:
-                    print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
-
-
-    def gravaCapitulo(self, id_volume=None, capitulo=None):
-        with conection() as conexao:
-            if (id_volume is None) or (capitulo is None):
-                if not self.operacao.isTeste:
-                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar os dados, dados para inserção vazio.', 'red')) 
+    def savePage(self, id_chapter=None, page=None):
+        with conection() as connection:
+            if (id_chapter is None) or (page is None):
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar os dados, dados para inserção vazio.', 'red')) 
                 else:
                     print(colored('Erro ao gravar os dados, dados para inserção vazio.', 'red', attrs=['reverse', 'blink']))
                 return
 
             try:
                 id = None
-                args = (id_volume, capitulo.nome, capitulo.volume, capitulo.capitulo, capitulo.linguagem, capitulo.isExtra)
-                cursor = conexao.cursor(buffered=True)
-                sql = selectCapitulo.format(self.operacao.base)
+                args = (id_chapter, page.name, page.hashPage)
+                cursor = connection.cursor(buffered=True)
+                sql = selectPage.format(self.operation.base)
                 cursor.execute(sql, args)
 
                 if cursor.rowcount > 0:
                     try:
                         id = cursor.fetchone()[0]
-                        args = (capitulo.nome, capitulo.volume, capitulo.capitulo, capitulo.linguagem, 
-                                capitulo.scan, capitulo.isExtra, capitulo.isScan, id)
-                        sql = updateCapitulo.format(self.operacao.base)
+                        args = (page.name, page.number, page.hashPage, id)
+                        sql = updatePage.format(self.operation.base)
                         cursor.execute(sql, args)
-                        conexao.commit()
+                        connection.commit()
                     except ProgrammingError as e:
-                        if not self.operacao.isTeste:
-                            self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao atualizar os dados: {e.msg}', 'red')) 
+                        if not self.operation.isTest:
+                            self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao atualizar os dados: {e.msg}', 'red')) 
                         else:
                             print(colored(f'Erro ao atualizar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
                 else:
                     try:
-                        args = (id_volume, capitulo.nome, capitulo.volume, capitulo.capitulo,
-                                capitulo.linguagem, capitulo.scan, capitulo.isExtra, capitulo.isScan)
-                        sql = insertCapitulo.format(self.operacao.base)
+                        args = (id_chapter, page.name, page.number, page.hashPage)
+                        sql = insertPage.format(self.operation.base)
                         cursor.execute(sql, args)
-                        conexao.commit()
+                        connection.commit()
                         id = cursor.lastrowid
                     except ProgrammingError as e:
-                        if not self.operacao.isTeste:
-                            self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao gravar os dados: {e.msg}', 'red')) 
+                        if not self.operation.isTest:
+                            self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao gravar os dados: {e.msg}', 'red')) 
                         else:
                             print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
-                for pagina in capitulo.paginas:
-                    self.gravaPagina(id, pagina)
+                for text in page.texts:
+                    self.saveText(id, text)
 
             except ProgrammingError as e:
-                if not self.operacao.isTeste:
-                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao consultar registro: {e.msg}',  'red')) 
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao consultar registro: {e.msg}',  'red')) 
                 else:
                     print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
 
-    def gravaVolume(self, volume=None):
-        with conection() as conexao:
+    def saveChapter(self, id_volume=None, chapter=None):
+        with conection() as connection:
+            if (id_volume is None) or (chapter is None):
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar os dados, dados para inserção vazio.', 'red')) 
+                else:
+                    print(colored('Erro ao gravar os dados, dados para inserção vazio.', 'red', attrs=['reverse', 'blink']))
+                return
+
+            try:
+                id = None
+                args = (id_volume, chapter.name, chapter.volume, chapter.chapter, chapter.language, chapter.isExtra)
+                cursor = connection.cursor(buffered=True)
+                sql = selectChapter.format(self.operation.base)
+                cursor.execute(sql, args)
+
+                if cursor.rowcount > 0:
+                    try:
+                        id = cursor.fetchone()[0]
+                        args = (chapter.name, chapter.volume, chapter.chapter, chapter.language, 
+                                chapter.scan, chapter.isExtra, chapter.isScan, id)
+                        sql = updateChapter.format(self.operation.base)
+                        cursor.execute(sql, args)
+                        connection.commit()
+                    except ProgrammingError as e:
+                        if not self.operation.isTest:
+                            self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao atualizar os dados: {e.msg}', 'red')) 
+                        else:
+                            print(colored(f'Erro ao atualizar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                else:
+                    try:
+                        args = (id_volume, chapter.name, chapter.volume, chapter.chapter,
+                                chapter.language, chapter.scan, chapter.isExtra, chapter.isScan)
+                        sql = insertChapter.format(self.operation.base)
+                        cursor.execute(sql, args)
+                        connection.commit()
+                        id = cursor.lastrowid
+                    except ProgrammingError as e:
+                        if not self.operation.isTest:
+                            self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao gravar os dados: {e.msg}', 'red')) 
+                        else:
+                            print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
+
+                for page in chapter.pages:
+                    self.savePage(id, page)
+
+            except ProgrammingError as e:
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao consultar registro: {e.msg}',  'red')) 
+                else:
+                    print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
+
+
+    def saveVolume(self, volume=None):
+        with conection() as connection:
             if (volume is None):
-                if not self.operacao.isTeste:
-                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar os dados, dados para inserção vazio.', 'red')) 
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar os dados, dados para inserção vazio.', 'red')) 
                 else:
                     print(colored('Erro ao gravar os dados, dados para inserção vazio.', 'red', attrs=['reverse', 'blink']))
                 return None
 
             try:
                 id = None
-                args = (volume.nome, volume.volume, volume.linguagem)
-                cursor = conexao.cursor(buffered=True)
-                sql = selectVolume.format(self.operacao.base)
+                args = (volume.name, volume.volume, volume.language)
+                cursor = connection.cursor(buffered=True)
+                sql = selectVolume.format(self.operation.base)
                 cursor.execute(sql, args)
 
                 if cursor.rowcount > 0:
                     try:
                         id = cursor.fetchone()[0]
-                        args = (volume.nome, volume.volume, volume.linguagem, id)
-                        sql = updateVolume.format(self.operacao.base)
+                        args = (volume.name, volume.volume, volume.language, id)
+                        sql = updateVolume.format(self.operation.base)
                         cursor.execute(sql, args)
-                        conexao.commit()
+                        connection.commit()
                     except ProgrammingError as e:
-                        if not self.operacao.isTeste:
-                            self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao atualizar os dados: {e.msg}', 'red')) 
+                        if not self.operation.isTest:
+                            self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao atualizar os dados: {e.msg}', 'red')) 
                         else:
                             print(colored(f'Erro ao atualizar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
                 else:
                     try:
-                        args = (volume.nome, volume.volume, volume.linguagem)
-                        sql = insertVolume.format(self.operacao.base)
+                        args = (volume.name, volume.volume, volume.language)
+                        sql = insertVolume.format(self.operation.base)
                         cursor.execute(sql, args)
-                        conexao.commit()
+                        connection.commit()
                         id = cursor.lastrowid
                     except ProgrammingError as e:
-                        if not self.operacao.isTeste:
-                            self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao gravar os dados: {e.msg}', 'red')) 
+                        if not self.operation.isTest:
+                            self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao gravar os dados: {e.msg}', 'red')) 
                         else:
                             print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
-                for capitulo in volume.capitulos:
-                        self.gravaCapitulo(id, capitulo)
+                for chapter in volume.chapters:
+                        self.saveChapter(id, chapter)
 
             except ProgrammingError as e:
-                if not self.operacao.isTeste:
-                    self.operacao.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao consultar registro: {e.msg}',  'red')) 
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao consultar registro: {e.msg}',  'red')) 
                 else:
                     print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
 
-def testaConexao():
-    with conection() as conexao:
-        return conexao.is_connected()
+def testConnection():
+    with conection() as connection:
+        return connection.is_connected()
 
 
-def gravarDados(operacao, capitulo):
-    if operacao.base is None:
-        raise ValueError("Erro ao gravar os dados, tabela não informada.")
+def saveData(operation, chapter):
+    if operation.base is None:
+        raise ValueError("Erro ao gravar os dados, table não informada.")
 
-    util = BdUtil(operacao)
+    util = BdUtil(operation)
 
-    log = "Manga: " + capitulo.nome + " - Volume: " + capitulo.volume + " - Capitulo: " + capitulo.capitulo
-    if not operacao.isTeste:
-        operacao.window.write_event_value('-THREAD_LOG-', PrintLog('Gravando informações no banco de dados....', 'blue'))
-        operacao.window.write_event_value('-THREAD_LOG-', PrintLog(log)) 
-    elif operacao.isSilent:
-        printLog(PrintLog('Gravando informações no banco de dados....', caminho=operacao.caminhoAplicacao, isSilent=operacao.isSilent))
+    log = "Manga: " + chapter.name + " - Volume: " + chapter.volume + " - Chapter: " + chapter.chapter
+    if not operation.isTest:
+        operation.window.write_event_value('-THREAD_LOG-', PrintLog('Gravando informações no banco de dados....', 'blue'))
+        operation.window.write_event_value('-THREAD_LOG-', PrintLog(log)) 
+    elif operation.isSilent:
+        printLog(PrintLog('Gravando informações no banco de dados....', directory=operation.applicationPath, isSilent=operation.isSilent))
     else:
         print(colored('Gravando informações no banco de dados....', 'blue', attrs=['reverse', 'blink']))
         print(log)
 
-    util.gravaVolume(Volume(capitulo.nome, capitulo.volume, capitulo.linguagem, capitulo))
+    util.saveVolume(Volume(chapter.name, chapter.volume, chapter.language, chapter))
 
-    if not operacao.isTeste:
-        operacao.window.write_event_value('-THREAD_LOG-', PrintLog('Gravação concluida.', 'blue'))
-    elif operacao.isSilent:
-        printLog(PrintLog('Gravação concluida', caminho=operacao.caminhoAplicacao, isSilent=operacao.isSilent))
+    if not operation.isTest:
+        operation.window.write_event_value('-THREAD_LOG-', PrintLog('Gravação concluida.', 'blue'))
+    elif operation.isSilent:
+        printLog(PrintLog('Gravação concluida', directory=operation.applicationPath, isSilent=operation.isSilent))
     else:
         print(colored('Gravação concluida.', 'blue', attrs=['reverse', 'blink']))

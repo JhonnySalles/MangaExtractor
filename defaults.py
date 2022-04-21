@@ -1,10 +1,10 @@
-from classes import Operacao
+from classes import Operation
 
 
 ####################
-##  APLICATIVO
+##  APPLICATION
 ###################
-VERSAO_APLICATIVO = 2
+APPLICATION_VERSION = 2
 
 ####################
 ##  OCR
@@ -29,13 +29,13 @@ FOLDER_SAVE_IMAGE_NOT_LOCATED_TEXT=r'F:/Manga/naoreconhecido/'
 ####################
 ##  BD
 ###################
-NOME_DB = 'manga_extractor'
-PARAMETROS_BD = dict(
+BD_NAME = 'manga_extractor'
+BD_PARAMETER = dict(
     host='localhost',
     port=3306,
     user='admin',
     passwd='admin',
-    database=NOME_DB
+    database=BD_NAME
 )
 
 ####################
@@ -47,8 +47,8 @@ DEFAULT_TESSERACT_FOLDER= "C:/Program Files/Tesseract-OCR"
 ####################
 ##  SILENT
 ###################
-def ITENS_PROCESSAR():
-    operacoes = []
-    operacoes.append(Operacao("base",  "nome", r'F:/teste/jar', "ja", furigana=True, isSilent=True))
+def PROCESS_ITEMS():
+    operation = []
+    operation.append(Operation("base",  "nome", r'F:/teste/jar', "ja", furigana=True, isSilent=True))
 
-    return operacoes
+    return operation

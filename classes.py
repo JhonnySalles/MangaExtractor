@@ -1,99 +1,99 @@
 import defaults
 import os
 
-class Texto:
-    def __init__(self, texto, sequencia, posX1, posY1, posX2, posY2):
+class Text:
+    def __init__(self, text, sequence, posX1, posY1, posX2, posY2):
         pass
-        self.texto = texto
-        self.sequencia = sequencia
+        self.text = text
+        self.sequence = sequence
         self.posX1 = posX1
         self.posY1 = posY1
         self.posX2 = posX2
         self.posY2 = posY2
 
 
-class Pagina:
-    def __init__(self, nome, numero=0):
+class Page:
+    def __init__(self, name, number=0):
         pass
-        self.nome = nome
-        self.numero = numero
-        self.hashPagina = ""
-        self.arquivo = ""
-        self.textos = []
+        self.name = name
+        self.number = number
+        self.hashPage = ""
+        self.file = ""
+        self.texts = []
 
-    def addTexto(self, texto):
-        self.textos.append(texto)
+    def addTexto(self, text):
+        self.texts.append(text)
 
-class Capitulo:
-    def __init__(self, nome, volume, capitulo, linguagem):
+class Chapter:
+    def __init__(self, name, volume, chapter, language):
         pass
-        self.nome = nome
+        self.name = name
         self.volume = volume
-        self.capitulo = capitulo
-        self.linguagem = linguagem
-        self.paginas = []
+        self.chapter = chapter
+        self.language = language
+        self.pages = []
         self.scan = ""
         self.isScan = False
         self.isExtra = False
 
-    def addPagina(self, texto):
-        self.paginas.append(texto)
+    def addPagina(self, text):
+        self.pages.append(text)
 
 class Volume:
-    def __init__(self, nome, volume, linguagem, capitulo=None):
+    def __init__(self, name, volume, language, chapter=None):
         pass
-        self.nome = nome
+        self.name = name
         self.volume = volume
-        self.linguagem = linguagem
-        self.capitulos = []
-        if capitulo is not None:
-            self.capitulos.append(capitulo) 
+        self.language = language
+        self.chapters = []
+        if chapter is not None:
+            self.chapters.append(chapter) 
 
-    def addCapitulo(self, texto):
-        self.capitulos.append(texto)
+    def addCapitulo(self, text):
+        self.chapters.append(text)
 
 
 class PrintLog:
-    def __init__(self, mensagem, cor=None, save=True, logMemo=None, isTeste=False, caminho=None, isSilent=False):
+    def __init__(self, message, color=None, save=True, logMemo=None, isTest=False, directory=None, isSilent=False):
         pass
-        self.mensagem = mensagem
-        self.cor = cor
+        self.message = message
+        self.color = color
         self.save = save
-        self.caminho = caminho
+        self.directory = directory
         self.isSilent = isSilent
-        self.isTeste = isTeste
+        self.isTest = isTest
         self.logMemo = logMemo
 
 
-class Operacao:
-    def __init__(self, base, mangaNome, caminho, linguagem, window=None, ocrType='tesseract', furigana=False, isSilent=False):
+class Operation:
+    def __init__(self, base, nameManga, directory, language, window=None, ocrType='tesseract', furigana=False, isSilent=False):
         pass
-        self.mangaNome = mangaNome
-        self.caminho = caminho.replace('\\', '/')
-        self.linguagem = linguagem.lower()
-        self.textoVertical = None
+        self.nameManga = nameManga
+        self.directory = directory.replace('\\', '/')
+        self.language = language.lower()
+        self.verticalText = None
         self.volume = None
-        self.capitulo = None
+        self.chapter = None
         self.scan = None
         self.base = base
-        self.getInformacaoPasta = True
-        self.getNomePasta = True
+        self.getFolderInformation = True
+        self.getNameFolder = True
         self.furigana = furigana
-        self.filtroAdicional = False
+        self.furiganaFilter = False
         self.ocrType = ocrType
-        self.pastaTesseract = defaults.DEFAULT_TESSERACT_FOLDER
-        self.isTeste = window is None
+        self.tesseractFolder = defaults.DEFAULT_TESSERACT_FOLDER
+        self.isTest = window is None
         self.isSilent = isSilent
-        self.caminhoAplicacao = os.path.abspath('')
+        self.applicationPath = os.path.abspath('')
         self.window = window
 
-        if not self.isTeste:
+        if not self.isTest:
             self.logMemo = window['-OUTPUT-']
             self.progress = window['-PROGRESSBAR-']
 
 
 class Config:
-    def __init__(self, directory, manga='', volume='', chapter='', scan='', base='', language='', ocr='', isReadInformationFolder=True, isMangaNameFolder=True, isCleanFurigana=False, isFuriganaFilter=False):
+    def __init__(self, directory, manga='', volume='', chapter='', scan='', base='', language='', ocr='', getFolderInformation=True, getNameFolder=True, isCleanFurigana=False, isFuriganaFilter=False):
         pass
         self.directory = directory
         self.manga = manga
@@ -103,7 +103,7 @@ class Config:
         self.base = base
         self.language = language
         self.ocr = ocr
-        self.isReadInformationFolder = isReadInformationFolder
-        self.isMangaNameFolder = isMangaNameFolder
+        self.getFolderInformation = getFolderInformation
+        self.getNameFolder = getNameFolder
         self.isCleanFurigana = isCleanFurigana
         self.isFuriganaFilter = isFuriganaFilter

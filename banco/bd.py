@@ -2,16 +2,16 @@ from mysql.connector import connect
 from contextlib import contextmanager
 import sys
 sys.path.append("../")
-from defaults import PARAMETROS_BD
+from defaults import BD_PARAMETER
 
 # o context serve para utilizar o with, ou seja que sempre
 # terá a conexão aberta até enquanto tiver no escopo e destroi sozinho
 
 @contextmanager
 def conection():
-    conexao = connect(**PARAMETROS_BD)
+    connection = connect(**BD_PARAMETER)
     try:
-        yield conexao
+        yield connection
     finally:
-        if (conexao and conexao.is_connected()):
-            conexao.close()
+        if (connection and connection.is_connected()):
+            connection.close()
