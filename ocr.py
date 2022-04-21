@@ -209,12 +209,12 @@ class TextOcr():
                 else:
                     cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 0, 255)) # Caso não conseguiu identificar o texto pinta de vermelho
                     if saveImgNotProcess:
-                        self.saveNotProcess(cropped, nameIfNotProcess + '_Seq-' + str(sequencia) + '_Pos-' + str(x1) + '-' + str(y1) + str(x2) + '-' + str(y2) + '_')
+                        self.saveNotProcess(cropped, nameIfNotProcess + '_Seq-' + str(sequencia) + '_Pos-' + str(x1) + '-' + str(y1) + '-' + str(x2) + '-' + str(y2) + '_')
 
             else:
                 cv2.rectangle(imgWrite, (x1, y1), (x2, y2), (0, 0, 255)) # Caso não conseguiu identificar o texto pinta de vermelho
                 if saveImgNotProcess:
-                    self.saveNotProcess(cropped, nameIfNotProcess + '_Seq-' + str(sequencia) + '_Pos-' + str(x1) + '-' + str(y1) + str(x2) + '-' + str(y2) + '_')
+                    self.saveNotProcess(cropped, nameIfNotProcess + '_Seq-' + str(sequencia) + '_Pos-' + str(x1) + '-' + str(y1) + '-' + str(x2) + '-' + str(y2) + '_')
                       
         cv2.imwrite(folder+fileName, imgWrite)
         return texto

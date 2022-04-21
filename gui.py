@@ -1,12 +1,12 @@
 from banco.bdUtil import BdUtil, testaConexao
-from classes import Operacao, PrintLog
+from classes import Operacao, PrintLog, Config
 from processa import ImageProcess, extraiNomeDiretorio, extraiInformacoesDiretorio, moveArquivosDiretorios
 from datetime import datetime
 import os
 import threading
 import PySimpleGUI as sg
 import sys
-from util import printLog
+from util import printLog, saveConfig, readConfig
 from unidecode import unidecode
 from termcolor import colored
 import globals
@@ -93,6 +93,8 @@ def validaCampos(values):
         aviso('Favor informar uma base!')
         return False
 
+    saveConfig(Config(values['-CAMINHO-'], values['-MANGA-'], values['-VOLUME-'], values['-CAPITULO-'], values['-SCAN-'], values['-BASE-'], values['-LINGUAGEM-'],  
+            values['-OCRTYPE-'], values['-GET_INFORMACAO-'], values['-GET_NOME-'], values['-FURIGANA-'], values['-FILTRO_ADICIONAL_FURIGANA-']))
     return True
 
 
@@ -134,7 +136,6 @@ def limpaCampos():
     window['-GET_INFORMACAO-'].Update(True)
     window['-GET_NOME-'].Update(True)
     window['-FURIGANA-'].Update(False)
-    window['-FILTRO_ADICIONAL_FURIGANA-'].Update(False)
     window['-FILTRO_ADICIONAL_FURIGANA-'].Update(False)
 
 
@@ -263,26 +264,41 @@ def eventoCaminho(values):
     caminho = values["-CAMINHO-"]
 
     if (os.path.exists(caminho)):
-        manga = values["-MANGA-"]
-        pasta = ""
+        config = readConfig(caminho)
 
-        for diretorio, subpastas, arquivos in os.walk(caminho):
-            subpastas[:] = [sub for sub in subpastas if sub not in ['tmp']]
-            subpastas[:] = [sub for sub in subpastas if "capa" not in sub.lower()]
+        if config is not None and caminho == config.directory:            
+            window['-MANGA-'].Update(config.manga)
+            window['-VOLUME-'].Update(config.volume)
+            window['-CAPITULO-'].Update(config.chapter)
+            window['-SCAN-'].Update(config.scan)
+            window['-BASE-'].Update(config.base)
+            window['-LINGUAGEM-'].Update(config.language)
+            window['-OCRTYPE-'].Update(config.ocr)
+            window['-GET_INFORMACAO-'].Update(config.isReadInformationFolder)
+            window['-GET_NOME-'].Update(config.isMangaNameFolder)
+            window['-FURIGANA-'].Update(config.isCleanFurigana)
+            window['-FILTRO_ADICIONAL_FURIGANA-'].Update(config.isFuriganaFilter)
+        else:
+            manga = values["-MANGA-"]
+            pasta = ""
 
-            if len(subpastas) < 1:
-                return
-                
-            pasta = subpastas[0]
-            manga = extraiNomeDiretorio(pasta)
-            capitulo = extraiInformacoesDiretorio(pasta, manga)
-            break
+            for diretorio, subpastas, arquivos in os.walk(caminho):
+                subpastas[:] = [sub for sub in subpastas if sub not in ['tmp']]
+                subpastas[:] = [sub for sub in subpastas if "capa" not in sub.lower()]
 
-        window['-MANGA-'].Update(manga)
-        window['-VOLUME-'].Update(capitulo.volume)
-        window['-CAPITULO-'].Update(capitulo.capitulo)
-        window['-SCAN-'].Update(capitulo.scan)
-        window['-BASE-'].Update(unidecode(manga.replace("-", " "))[:40].strip())
+                if len(subpastas) < 1:
+                    return
+                    
+                pasta = subpastas[0]
+                manga = extraiNomeDiretorio(pasta)
+                capitulo = extraiInformacoesDiretorio(pasta, manga)
+                break
+
+            window['-MANGA-'].Update(manga)
+            window['-VOLUME-'].Update(capitulo.volume)
+            window['-CAPITULO-'].Update(capitulo.capitulo)
+            window['-SCAN-'].Update(capitulo.scan)
+            window['-BASE-'].Update(unidecode(manga.replace("-", " "))[:40].strip())
 
 
 def main():

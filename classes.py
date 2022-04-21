@@ -90,3 +90,20 @@ class Operacao:
         if not self.isTeste:
             self.logMemo = window['-OUTPUT-']
             self.progress = window['-PROGRESSBAR-']
+
+
+class Config:
+    def __init__(self, directory, manga='', volume='', chapter='', scan='', base='', language='', ocr='', isReadInformationFolder=True, isMangaNameFolder=True, isCleanFurigana=False, isFuriganaFilter=False):
+        pass
+        self.directory = directory
+        self.manga = manga
+        self.volume = volume
+        self.chapter = chapter
+        self.scan = scan
+        self.base = base
+        self.language = language
+        self.ocr = ocr
+        self.isReadInformationFolder = isReadInformationFolder
+        self.isMangaNameFolder = isMangaNameFolder
+        self.isCleanFurigana = isCleanFurigana
+        self.isFuriganaFilter = isFuriganaFilter

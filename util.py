@@ -3,6 +3,9 @@ import scipy.ndimage
 from pylab import zeros, amax, median
 import cv2
 from termcolor import colored
+import configparser
+from classes import Config
+import os.path
 
 
 def printLog(printLog, arquivo='log.txt'):
@@ -30,6 +33,48 @@ def printLog(printLog, arquivo='log.txt'):
     if (printLog.save) and (printLog.caminho is not None):
         with open(printLog.caminho + '/' + arquivo, 'a+', encoding='utf-8') as file:
             file.write(printLog.mensagem + '\n')
+
+
+def saveConfig(config):
+    parser = configparser.ConfigParser()
+    parser.add_section('operation')
+    parser.set('operation', 'caminho', config.directory)
+    parser.set('operation', 'manga', config.manga)
+    parser.set('operation', 'volume', config.volume)
+    parser.set('operation', 'capitulo', config.chapter)
+    parser.set('operation', 'scan', config.scan)
+    parser.set('operation', 'base', config.base)
+    parser.set('operation', 'linguagem', config.language)
+    parser.set('operation', 'ocr', config.ocr)
+    parser.set('operation', 'carregar_informacoes', str(config.isReadInformationFolder))
+    parser.set('operation', 'obter_nome_manga', str(config.isMangaNameFolder))
+    parser.set('operation', 'limpar_furigana',  str(config.isCleanFurigana))
+    parser.set('operation', 'filtro_adicional_furigana', str(config.isFuriganaFilter))
+
+    with open(config.directory + '/config.ini', 'w') as file:
+        parser.write(file)
+
+
+def readConfig(directory):
+    config = None
+    if os.path.isfile(directory + '/config.ini'):
+        parser = configparser.ConfigParser()
+        parser.read(directory + '/config.ini')
+        operation = parser["operation"]
+
+        config = Config(operation["caminho"])
+        config.manga = operation["manga"]
+        config.volume = operation["volume"]
+        config.chapter = operation["capitulo"] 
+        config.scan = operation["scan"]
+        config.base = operation["base"]
+        config.language = operation["linguagem"]
+        config.ocr = operation["ocr"]
+        config.isReadInformationFolder = operation["carregar_informacoes"].lower() in ("yes", "true", "t", "1")
+        config.isMangaNameFolder = operation["obter_nome_manga"].lower() in ("yes", "true", "t", "1")
+        config.isCleanFurigana = operation["limpar_furigana"].lower() in ("yes", "true", "t", "1")
+        config.isFuriganaFilter = operation["filtro_adicional_furigana"].lower() in ("yes", "true", "t", "1")
+    return config
 
 
 ##########################################################
