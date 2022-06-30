@@ -15,6 +15,7 @@ volumes = """
     volume int(4) DEFAULT NULL,
     linguagem varchar(6) DEFAULT NULL,
     vocabulario longtext,
+    arquivo varchar(250) DEFAULT NULL,
     is_processado Tinyint(1) DEFAULT '0',
     PRIMARY KEY (id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8
