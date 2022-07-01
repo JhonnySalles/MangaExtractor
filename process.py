@@ -125,6 +125,10 @@ def moveFilesDirectories(operation, diretorioOrigem, diretorioDestino, folderNam
                 elif '(v' in name:
                     volume = name[name.index('(v') + 1:]
                     volume = volume[:volume.index(')')].replace("(", "").replace(")", "")
+                elif re.search(" v\w+", name):
+                    test = re.findall("v\w+", name)[0].replace("v", "")
+                    if(test.isnumeric()):
+                        volume = test
 
                 if ('_ch' in name) or ('_c' in name):
                     chapter = name[name.index('_c') + 1:]
@@ -135,6 +139,11 @@ def moveFilesDirectories(operation, diretorioOrigem, diretorioDestino, folderNam
                 elif ('- c' in name):
                     chapter = name[name.index('- c') + 1:]
                     chapter = chapter[:chapter.index('(')].replace("-", "")
+                elif re.search(" c\w+", name):
+                    test = re.findall("c\w+", name)[0].replace("c", "")
+                    if(test.isnumeric()):
+                        chapter = test
+                        
 
                 volume = re.sub(r'[^0-9]', '', volume)
                 chapter = re.sub(r'[^0-9]', '', chapter)
