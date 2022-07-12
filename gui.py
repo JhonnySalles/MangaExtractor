@@ -326,6 +326,7 @@ def main():
                     window['-FURIGANA-'].update(disabled=False)  
                     window['-ADDITIONAL_FILTER_FURIGANA-'].update(disabled=False)  
             elif event == '-BTN_INSERT-':
+                SELECTED_ROW = None
                 if validateFields(values):
                     operation = load(values)
                     listOperations.append([operation, operation.base, operation.nameManga, operation.directory, operation.furigana, operation.language, ' - '])
