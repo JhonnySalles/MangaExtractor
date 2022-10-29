@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 /log.txt
 /logError.txt
+*.sql
