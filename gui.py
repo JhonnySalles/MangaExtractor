@@ -69,7 +69,7 @@ window = sg.Window('Manga Text Extractor', layout)
 PROGRESS = window['-PROGRESSBAR-']
 LOGMEMO = window['-OUTPUT-']
 OPERATION = None
-SELECTED_ROW = None
+SELECTED_ROW = []
 
 def validateFields(values):
     if values['-OCRTYPE-'].lower() == 'tesseract':
@@ -317,7 +317,7 @@ def main():
             elif event == '-MANGA-':
                 eventManga(values)
             elif event == '-TABLE-':
-                SELECTED_ROW = values['-TABLE-'][0]
+                SELECTED_ROW = values['-TABLE-']
             elif event == '-LANGUAGE-':
                 if "japonês" not in values['-LANGUAGE-'].lower():
                    window['-FURIGANA-'].update(value=False, disabled=True)
@@ -326,7 +326,7 @@ def main():
                     window['-FURIGANA-'].update(disabled=False)  
                     window['-ADDITIONAL_FILTER_FURIGANA-'].update(disabled=False)  
             elif event == '-BTN_INSERT-':
-                SELECTED_ROW = None
+                SELECTED_ROW = []
                 if validateFields(values):
                     operation = load(values)
                     listOperations.append([operation, operation.base, operation.nameManga, operation.directory, operation.furigana, operation.language, ' - '])
@@ -334,12 +334,12 @@ def main():
                     cleanFields()
             elif event == '-BTN_REMOVE-':
                 if len(listOperations) > 0:
-                    if (SELECTED_ROW is not None):
-                        listOperations.pop(SELECTED_ROW)
+                    if (len(SELECTED_ROW) > 0):
+                        listOperations.pop(SELECTED_ROW[0])
                     else:
                         listOperations.pop()
                     window['-TABLE-'].update(values=listOperations)
-                SELECTED_ROW = None
+                SELECTED_ROW = []
             elif ((event == '-BTN_PROCESS-') or (event == '-BTN_PROCESS_LIST-') or (event == '-BTN_COPY_FILES-')) and (window[event].get_text() == 'Parar processamento'):
                 globals.CANCEL_OPERATION = True
             elif (event == '-BTN_PROCESS-') or (event == '-BTN_PROCESS_LIST-') or (event == '-BTN_COPY_FILES-'):
