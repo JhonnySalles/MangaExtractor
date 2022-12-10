@@ -14,7 +14,6 @@ volumes = """
     manga varchar(250) DEFAULT NULL,
     volume int(4) DEFAULT NULL,
     linguagem varchar(6) DEFAULT NULL,
-    vocabulario longtext,
     arquivo varchar(250) DEFAULT NULL,
     is_processado Tinyint(1) DEFAULT '0',
     PRIMARY KEY (id)
@@ -32,7 +31,6 @@ chapters = """
         is_extra Tinyint(1) DEFAULT '0',
         is_raw BOOLEAN,
         is_processado Tinyint(1) DEFAULT '0',
-        vocabulario LONGTEXT COLLATE utf8mb4_unicode_ci,
         PRIMARY KEY (id),
         KEY %s_volumes_fk (id_volume),
         CONSTRAINT %s_volumes_capitulos_fk FOREIGN KEY (id_volume) REFERENCES %s_volumes (id) ON DELETE CASCADE ON UPDATE CASCADE
@@ -46,7 +44,6 @@ pages = """
         numero INT(11),
         hash_pagina VARCHAR(250),
         is_processado Tinyint(1) DEFAULT '0',
-        vocabulario LONGTEXT,
         PRIMARY KEY (id),
         KEY %s_capitulos_fk (id_capitulo),
         CONSTRAINT %s_capitulos_paginas_fk FOREIGN KEY (id_capitulo) REFERENCES %s_capitulos (id) ON DELETE CASCADE ON UPDATE CASCADE
