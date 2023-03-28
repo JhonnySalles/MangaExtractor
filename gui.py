@@ -10,6 +10,7 @@ from util import printLog, saveConfig, readConfig
 from unidecode import unidecode
 from termcolor import colored
 import globals
+from banco.bdUtil import findTable
 
 from PySimpleGUI.PySimpleGUI import ConvertArgsToSingleString
 sys.path.append("./banco/")
@@ -70,6 +71,7 @@ PROGRESS = window['-PROGRESSBAR-']
 LOGMEMO = window['-OUTPUT-']
 OPERATION = None
 SELECTED_ROW = []
+LAST_DIRECTORY = None
 
 def validateFields(values):
     if values['-OCRTYPE-'].lower() == 'tesseract':
@@ -127,6 +129,8 @@ def disableButtons(operation):
 
 
 def cleanFields():
+    global LAST_DIRECTORY
+    LAST_DIRECTORY = None
     window['-DIRECTORY-'].Update('C:/')
     window['-MANGA-'].Update('')
     window['-VOLUME-'].Update('')
@@ -261,9 +265,11 @@ def eventManga(values):
 
 
 def eventDirectory(values):
+    global LAST_DIRECTORY
     directory = values["-DIRECTORY-"]
 
-    if (os.path.exists(directory)):
+    if (LAST_DIRECTORY != directory and os.path.exists(directory)):
+        LAST_DIRECTORY = directory
         config = readConfig(directory)
 
         if config is not None and directory == config.directory:            
@@ -278,6 +284,7 @@ def eventDirectory(values):
             window['-GET_NAME-'].Update(config.getNameFolder)
             window['-FURIGANA-'].Update(config.isCleanFurigana)
             window['-ADDITIONAL_FILTER_FURIGANA-'].Update(config.isFuriganaFilter)
+            print(colored(f'Load config.', 'blue', attrs=['reverse', 'blink']))
         else:
             manga = values["-MANGA-"]
             folder = ""
@@ -298,14 +305,39 @@ def eventDirectory(values):
             window['-VOLUME-'].Update(chapter.volume)
             window['-CHAPTER-'].Update(chapter.chapter)
             window['-SCAN-'].Update(chapter.scan)
-            window['-BASE-'].Update(unidecode(manga.replace("-", " "))[:40].strip())
+
+            try:
+                base = unidecode(manga.replace("-", " "))[:40].strip().lower()
+                if base is not None and base != "":
+                    find = False
+                    words = base.split()
+                    base = ""
+                    for word in words:
+                        if base == "":
+                            base = word
+                        else:
+                            base = base + "_" + word
+                        if findTable(base):
+                            find = True
+                            break
+
+                    window['-BASE-'].Update(base)
+                    if find:
+                        print(colored(f'Tabela com nome "{base}" encontrado.', 'green', attrs=['reverse', 'blink']))
+                    else:
+                        print(colored(f'Não encontrado tabela, criação de nova tabela com nome "{base}".', 'yellow', attrs=['reverse', 'blink']))
+                else:
+                    window['-BASE-'].Update(unidecode(manga.replace("-", " "))[:40].strip())
+            except:
+                print(colored(f'Erro na busca da tabela.', 'red', attrs=['reverse', 'blink'])) 
+                window['-BASE-'].Update(unidecode(manga.replace("-", " "))[:40].strip())
 
 
 def main():
     if ISTEST:
         teste()
     else:
-        global OPERATION
+        global OPERATION, SELECTED_ROW
         MaxProgress = 1
         initialTime = datetime.now()
         while True:

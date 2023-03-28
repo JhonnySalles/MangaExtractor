@@ -120,6 +120,22 @@ class BdUtil:
         self.table = ''
 
 
+    def existTable(self, name=None):
+        if name == None:
+            raise ValueError("Table não informada.")
+
+        find = False
+        with conection() as connection:            
+            try:
+                table = name.replace(" ", "_")
+                cursor = connection.cursor(buffered=True)
+                cursor.execute(tableExists % (BD_NAME, table))
+                find = cursor.rowcount > 0
+            except ProgrammingError as e:
+                print(colored(f'Erro na verificação de existência da table: {e.msg}', 'red', attrs=['reverse', 'blink']))
+        return find
+
+
     def createTable(self, name=None):
         with conection() as connection:
             if name == None:
@@ -397,6 +413,11 @@ def testConnection():
     with conection() as connection:
         return connection.is_connected()
 
+
+def findTable(tableName):
+    util = BdUtil(None)
+    return util.existTable(tableName)
+    
 
 def saveData(operation, chapter):
     if operation.base is None:
