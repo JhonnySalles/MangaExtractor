@@ -56,7 +56,7 @@ layout = [[sg.Text('Caminho', text_color='orangered', size=(15, 1)), sg.Input(ke
           [sg.Text('Volume', size=(15, 1)), sg.InputText(key='-VOLUME-')],
           [sg.Text('Chapter', size=(15, 1)), sg.InputText(key='-CHAPTER-')],
           [sg.Text('Scan', size=(15, 1)), sg.InputText(key='-SCAN-')],
-          [sg.Text('Base', text_color='orangered', size=(15, 1)), sg.InputText(key='-BASE-')],
+          [sg.Text('Base', key='-LABELBASE-', text_color='white', size=(15, 1)), sg.InputText(key='-BASE-')],
           [sg.Text('Caminho Tesseract', text_color='cornflowerblue', size=(15, 1)), sg.Input(key='-TESSERACT_LOCATE-', default_text='C:/Program Files/Tesseract-OCR'), sg.FolderBrowse('Selecionar pasta')],
           [sg.Text('Linguagem', size=(15, 1)), sg.Combo(['Português', 'Japonês', 'Inglês', 'Japonês (vertical)', 'Japonês (horizontal)'], default_value='Japonês', key='-LANGUAGE-', size=(15, 1), enable_events=True)],
           [sg.Text('Recurso OCR', size=(15, 1)), sg.Combo(['WinOCR', 'Tesseract'], default_value='Tesseract', key='-OCRTYPE-', size=(15, 1))],
@@ -92,6 +92,7 @@ def validateFields(values):
         return False
 
     if (values['-BASE-'].strip() == ''):
+        window['-LABELBASE-'].Update('text_color=orangered')
         alert('Favor informar uma base!')
         return False
 
@@ -131,6 +132,7 @@ def disableButtons(operation):
 def cleanFields():
     global LAST_DIRECTORY
     LAST_DIRECTORY = None
+    window['-LABELBASE-'].Update('Base', text_color='white')
     window['-DIRECTORY-'].Update('C:/')
     window['-MANGA-'].Update('')
     window['-VOLUME-'].Update('')
@@ -269,6 +271,7 @@ def eventDirectory(values):
     directory = values["-DIRECTORY-"]
 
     if (LAST_DIRECTORY != directory and os.path.exists(directory)):
+        window['-LABELBASE-'].Update('Base', text_color='white')
         LAST_DIRECTORY = directory
         config = readConfig(directory)
 
@@ -284,6 +287,15 @@ def eventDirectory(values):
             window['-GET_NAME-'].Update(config.getNameFolder)
             window['-FURIGANA-'].Update(config.isCleanFurigana)
             window['-ADDITIONAL_FILTER_FURIGANA-'].Update(config.isFuriganaFilter)
+            window['-LABELBASE-'].Update('Base', text_color='chartreuse')
+
+            if "japonês" not in config.language.lower():
+                window['-FURIGANA-'].update(value=False, disabled=True)
+                window['-ADDITIONAL_FILTER_FURIGANA-'].update(value=False, disabled=True)
+            else:
+                window['-FURIGANA-'].update(disabled=False)  
+                window['-ADDITIONAL_FILTER_FURIGANA-'].update(disabled=False) 
+
             print(colored(f'Load config.', 'blue', attrs=['reverse', 'blink']))
         else:
             manga = values["-MANGA-"]
@@ -324,13 +336,17 @@ def eventDirectory(values):
                     window['-BASE-'].Update(base)
                     if find:
                         print(colored(f'Tabela com nome "{base}" encontrado.', 'green', attrs=['reverse', 'blink']))
+                        window['-LABELBASE-'].Update('Base', text_color='chartreuse')
                     else:
                         print(colored(f'Não encontrado tabela, criação de nova tabela com nome "{base}".', 'yellow', attrs=['reverse', 'blink']))
+                        window['-LABELBASE-'].Update('Base', text_color='orangered')
                 else:
                     window['-BASE-'].Update(unidecode(manga.replace("-", " "))[:40].strip())
+                    window['-LABELBASE-'].Update('Base', text_color='orangered')
             except:
                 print(colored(f'Erro na busca da tabela.', 'red', attrs=['reverse', 'blink'])) 
                 window['-BASE-'].Update(unidecode(manga.replace("-", " "))[:40].strip())
+                window['-LABELBASE-'].Update('Base', text_color='orangered')
 
 
 def main():
