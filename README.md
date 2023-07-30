@@ -134,7 +134,7 @@ Após obter as informações e gerar um objeto contendo as informações, estar�
 
 > Para instalar o projeto, primeiro instale a ultima versão do python e baixe o fonte em uma pasta para montar a estrutura estrutura.
 
-> Após baixar, abra o console (cmd) na pasta com o código fonte e execute o seguinte comando para instalar as dependências.
+> Após baixar, abra o console (cmd) na pasta com o código fonte e execute o seguinte comando para instalar as dependências. (Python 3.09)
 
     pip install -r requirements.txt
 
