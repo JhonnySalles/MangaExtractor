@@ -14,11 +14,9 @@ tableChapters = "_capitulos"
 tablePages = "_paginas"
 tableText = "_textos"
 tableVocabulary = "_vocabularios"
-table = """ CALL create_table('%s'); """
+tableCreate = """ CALL create_table('%s'); """
 
-trigger = """
-DELIMITER $$
-
+triggerInsert = """
 CREATE
     TRIGGER tr_%s_insert BEFORE INSERT
     ON %s
@@ -26,16 +24,16 @@ CREATE
 	IF (NEW.id IS NULL OR NEW.id = '')  THEN
 		SET new.id = UUID();
 	END IF;
-    END$$
+    END
+"""
 
+triggerUpdate = """
 CREATE
     TRIGGER tr_%s_update BEFORE UPDATE
     ON %s
     FOR EACH ROW BEGIN
 	    SET new.atualizacao = NOW();
-    END$$
-
-DELIMITER ;
+    END
 """
 
 selectVolume = 'SELECT id FROM {}_volumes WHERE manga = %s AND volume = %s AND linguagem = %s '
@@ -133,7 +131,7 @@ class BdUtil:
 
             try:
                 cursor = connection.cursor()
-                cursor.execute(table % table)
+                cursor.execute(tableCreate % table)
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
@@ -144,7 +142,8 @@ class BdUtil:
             try:
                 cursor = connection.cursor()
                 tableTrigger = table + tableVolumes
-                cursor.execute(trigger % (tableTrigger, tableTrigger, tableTrigger, tableTrigger))
+                cursor.execute(triggerInsert % (tableTrigger, tableTrigger))
+                cursor.execute(triggerUpdate % (tableTrigger, tableTrigger))
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
@@ -155,7 +154,8 @@ class BdUtil:
             try:
                 cursor = connection.cursor()
                 tableTrigger = table + tableChapters
-                cursor.execute(trigger % (tableTrigger, tableTrigger, tableTrigger, tableTrigger))
+                cursor.execute(triggerInsert % (tableTrigger, tableTrigger))
+                cursor.execute(triggerUpdate % (tableTrigger, tableTrigger))
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
@@ -166,7 +166,8 @@ class BdUtil:
             try:
                 cursor = connection.cursor()
                 tableTrigger = table + tablePages
-                cursor.execute(trigger % (tableTrigger, tableTrigger, tableTrigger, tableTrigger))
+                cursor.execute(triggerInsert % (tableTrigger, tableTrigger))
+                cursor.execute(triggerUpdate % (tableTrigger, tableTrigger))
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
@@ -177,7 +178,8 @@ class BdUtil:
             try:
                 cursor = connection.cursor()
                 tableTrigger = table + tableText
-                cursor.execute(trigger % (tableTrigger, tableTrigger, tableTrigger, tableTrigger))
+                cursor.execute(triggerInsert % (tableTrigger, tableTrigger))
+                cursor.execute(triggerUpdate % (tableTrigger, tableTrigger))
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
@@ -188,7 +190,8 @@ class BdUtil:
             try:
                 cursor = connection.cursor()
                 tableTrigger = table + tableVocabulary
-                cursor.execute(trigger % (tableTrigger, tableTrigger, tableTrigger, tableTrigger))
+                cursor.execute(triggerInsert % (tableTrigger, tableTrigger))
+                cursor.execute(triggerUpdate % (tableTrigger, tableTrigger))
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
