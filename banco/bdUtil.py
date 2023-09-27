@@ -83,6 +83,12 @@ tableExists = """
     GROUP BY Table_Name
 """
 
+selectLastVolume = """
+    SELECT volume, manga FROM {}_volumes 
+    WHERE linguagem = %s AND manga LIKE %s
+    ORDER BY volume DESC LIMIT 1
+"""
+
 
 class BdUtil:
     def __init__(self, operation):
@@ -92,7 +98,7 @@ class BdUtil:
 
     def existTable(self, name=None):
         if name == None:
-            raise ValueError("Table não informada.")
+            raise ValueError("Tabela não informada.")
 
         find = False
         with conection() as connection:            
@@ -102,14 +108,37 @@ class BdUtil:
                 cursor.execute(tableExists % (BD_NAME, table))
                 find = cursor.rowcount > 0
             except ProgrammingError as e:
-                print(colored(f'Erro na verificação de existência da table: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                print(colored(f'Erro na verificação de existência da tabela: {e.msg}', 'red', attrs=['reverse', 'blink']))
         return find
+    
+
+    def lastVolume(self, table, mangaName, language):
+        register = 'Não foi possível conectar no banco.'
+        with conection() as connection:   
+            register = 'Não localizado último volume.'         
+            try:
+                args = (language, mangaName)
+                sql = selectLastVolume.format(table)
+                cursor = connection.cursor(buffered=True)
+                cursor.execute(sql, args)
+                if cursor.rowcount > 0:
+                    result = cursor.fetchone()
+                    register = 'Último volume ' + str(result[0]) + ' do manga ' + result[1] + '.'
+                else:
+                    register = 'Não há volume novo com o parâmetro informado.'
+            except ProgrammingError as e:
+                print(colored(f'Erro na verificação do último volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                register = 'Erro na verificação do último volume.'
+            except Exception as e:
+                print(colored(f'Erro na verificação do último volume: {str(e)}', 'red', attrs=['reverse', 'blink']))
+                register = 'Erro na verificação do último volume.'
+        return register
 
 
     def createTable(self, name=None):
         with conection() as connection:
             if name == None:
-                raise ValueError("Erro na criação da table, table não informada.")
+                raise ValueError("Erro na criação da tabela, tabela não informada.")
 
             table = name.replace(" ", "_")
             try:
@@ -125,7 +154,7 @@ class BdUtil:
                     return table
             except ProgrammingError as e:
                 if not self.operation.isTest:
-                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da table volume: {e.msg}', 'red')) 
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela volume: {e.msg}', 'red')) 
                 else:
                     print(colored(f'Erro na consulta da existencia da tabela volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
@@ -135,7 +164,7 @@ class BdUtil:
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
-                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da table volume: {e.msg}', 'red')) 
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela volume: {e.msg}', 'red')) 
                 else:
                     print(colored(f'Erro na criação das tabelas: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
@@ -147,7 +176,7 @@ class BdUtil:
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
-                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da table chapter: {e.msg}', 'red')) 
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela chapter: {e.msg}', 'red')) 
                 else:
                     print(colored(f'Erro na criação da trigger volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
@@ -159,7 +188,7 @@ class BdUtil:
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
-                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da table chapter: {e.msg}', 'red')) 
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela chapter: {e.msg}', 'red')) 
                 else:
                     print(colored(f'Erro na criação da trigger capitulo: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
@@ -171,7 +200,7 @@ class BdUtil:
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
-                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da table chapter: {e.msg}', 'red')) 
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela chapter: {e.msg}', 'red')) 
                 else:
                     print(colored(f'Erro na criação da trigger pagina: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
@@ -183,7 +212,7 @@ class BdUtil:
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
-                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da table chapter: {e.msg}', 'red')) 
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela chapter: {e.msg}', 'red')) 
                 else:
                     print(colored(f'Erro na criação da trigger texto: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
@@ -195,7 +224,7 @@ class BdUtil:
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
-                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da table chapter: {e.msg}', 'red')) 
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela chapter: {e.msg}', 'red')) 
                 else:
                     print(colored(f'Erro na criação da trigger vocabulario: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
@@ -411,14 +440,30 @@ class BdUtil:
                     print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
 
+class TableLocate:
+    def __init__(self, exists):
+        self.exists = exists
+        self.table = ''
+        self.lastVolume = ''
+        self.obs = ''
+
+
 def testConnection():
     with conection() as connection:
         return connection.is_connected()
 
 
-def findTable(tableName):
+def findTable(tableName, mangaName, language):
     util = BdUtil(None)
-    return util.existTable(tableName)
+    table = tableName.replace(" ", "_")
+    locate = TableLocate(util.existTable(table))
+
+    if locate.exists:
+        locate.lastVolume = util.lastVolume(table, mangaName, language)
+    else:
+        locate.lastVolume = 'Tabela será criada.'
+
+    return locate
     
 
 def saveData(operation, chapter):

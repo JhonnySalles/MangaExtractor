@@ -58,7 +58,7 @@ layout = [[sg.Text('Caminho', text_color='orangered', size=(15, 1)), sg.Input(ke
           [sg.Text('Scan', size=(15, 1)), sg.InputText(key='-SCAN-')],
           [sg.Text('Base', key='-LABELBASE-', text_color='white', size=(15, 1)), sg.InputText(key='-BASE-')],
           [sg.Text('Caminho Tesseract', text_color='cornflowerblue', size=(15, 1)), sg.Input(key='-TESSERACT_LOCATE-', default_text='C:/Program Files/Tesseract-OCR'), sg.FolderBrowse('Selecionar pasta')],
-          [sg.Text('Linguagem', size=(15, 1)), sg.Combo(['Português', 'Japonês', 'Inglês', 'Japonês (vertical)', 'Japonês (horizontal)'], default_value='Japonês', key='-LANGUAGE-', size=(15, 1), enable_events=True)],
+          [sg.Text('Linguagem', size=(15, 1)), sg.Combo(['Português', 'Japonês', 'Inglês', 'Japonês (vertical)', 'Japonês (horizontal)'], default_value='Japonês', key='-LANGUAGE-', size=(15, 1), enable_events=True), sg.Text('', key='-LASTVOLUME-', text_color='white')],
           [sg.Text('Recurso OCR', size=(15, 1)), sg.Combo(['WinOCR', 'Tesseract'], default_value='Tesseract', key='-OCRTYPE-', size=(15, 1))],
           [sg.Checkbox('Carregar Informações da pasta?', default=True, key="-GET_INFORMATION-", size=(30, 1)), sg.Checkbox('Limpar furigana?', default=False, key="-FURIGANA-")],
           [sg.Checkbox('Obter o nome do manga da pasta?', default=True, key="-GET_NAME-", size=(30, 1)), sg.Checkbox('Filtro adicional para limpar o furigana?', default=False, key="-ADDITIONAL_FILTER_FURIGANA-")],
@@ -147,6 +147,20 @@ def cleanFields():
 
 def alert(text):
     sg.Popup(text, title='Aviso')
+
+
+def acronymLanguage(language):
+    acronym = ""
+    if (language == 'Japonês'):
+        acronym = "ja"
+    elif (language == 'Inglês'):
+        acronym = "en"
+    elif (language == 'Japonês (horizontal)'):
+        acronym = "ja"
+    elif (language == 'Japonês (vertical)'):
+        acronym = "ja"
+
+    return acronym
 
 
 def load(values):
@@ -263,7 +277,10 @@ def thread_copy_file(operation, fromFolder, toFolder, folderName):
 
 
 def eventManga(values):
-    window['-BASE-'].Update(unidecode(values['-MANGA-'].strip()))
+    base = values["-BASE-"]
+    manga = values["-MANGA-"]
+    language = acronymLanguage(values["-LANGUAGE-"])
+    findLastVolume(base, manga, language)
 
 
 def eventDirectory(values):
@@ -297,8 +314,10 @@ def eventDirectory(values):
                 window['-ADDITIONAL_FILTER_FURIGANA-'].update(disabled=False) 
 
             print(colored(f'Load config.', 'blue', attrs=['reverse', 'blink']))
+            findLastVolume(config.base, config.manga, acronymLanguage(config.language))
         else:
             manga = values["-MANGA-"]
+            language = acronymLanguage(values["-LANGUAGE-"])
             folder = ""
 
             for _, subFolder, _ in os.walk(directory):
@@ -324,12 +343,14 @@ def eventDirectory(values):
                     find = False
                     words = base.split()
                     base = ""
+                    table = None
                     for word in words:
                         if base == "":
                             base = word
                         else:
                             base = base + "_" + word
-                        if findTable(base):
+                        table = findTable(base, manga, language)
+                        if table.exists:
                             find = True
                             break
 
@@ -340,13 +361,39 @@ def eventDirectory(values):
                     else:
                         print(colored(f'Não encontrado tabela, criação de nova tabela com nome "{base}".', 'yellow', attrs=['reverse', 'blink']))
                         window['-LABELBASE-'].Update('Base', text_color='orangered')
+
+                    if table is not None:
+                        print(colored(f'Último volume: ' + table.lastVolume, 'yellow', attrs=['reverse', 'blink']))
+                        window['-LASTVOLUME-'].Update(table.lastVolume[:48])
+
                 else:
                     window['-BASE-'].Update(unidecode(manga.replace("-", " "))[:40].strip())
                     window['-LABELBASE-'].Update('Base', text_color='orangered')
-            except:
+                    window['-LASTVOLUME-'].Update('')
+            except Exception as e:
                 print(colored(f'Erro na busca da tabela.', 'red', attrs=['reverse', 'blink'])) 
+                print(colored(f"{str(e)}", 'red', attrs=['reverse', 'blink'])) 
                 window['-BASE-'].Update(unidecode(manga.replace("-", " "))[:40].strip())
                 window['-LABELBASE-'].Update('Base', text_color='orangered')
+                window['-LASTVOLUME-'].Update('')
+
+def eventFindLastVolume(values):
+    base = values["-BASE-"]
+    manga = values["-MANGA-"]
+    language = acronymLanguage(values["-LANGUAGE-"])
+    findLastVolume(base, manga, language)
+
+
+def findLastVolume(base, manga, language):
+    lastVolume = ''
+
+    if base is not None and base != "":
+        table = findTable(base, manga, language)
+        if table is not None:
+            lastVolume = table.lastVolume
+            print(colored(f'Último volume: ' + table.lastVolume, 'yellow', attrs=['reverse', 'blink']))
+
+    window['-LASTVOLUME-'].Update(lastVolume[:48])
 
 
 def main():
@@ -364,6 +411,8 @@ def main():
                 eventDirectory(values)
             elif event == '-MANGA-':
                 eventManga(values)
+            elif event == '-BASE-':
+                eventFindLastVolume(values)
             elif event == '-TABLE-':
                 SELECTED_ROW = values['-TABLE-']
             elif event == '-LANGUAGE-':
@@ -372,7 +421,8 @@ def main():
                    window['-ADDITIONAL_FILTER_FURIGANA-'].update(value=False, disabled=True)
                 else:
                     window['-FURIGANA-'].update(disabled=False)  
-                    window['-ADDITIONAL_FILTER_FURIGANA-'].update(disabled=False)  
+                    window['-ADDITIONAL_FILTER_FURIGANA-'].update(disabled=False)
+                eventFindLastVolume(values)
             elif event == '-BTN_INSERT-':
                 SELECTED_ROW = []
                 if validateFields(values):
