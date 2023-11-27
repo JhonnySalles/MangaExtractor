@@ -14,6 +14,7 @@ tableChapters = "_capitulos"
 tablePages = "_paginas"
 tableText = "_textos"
 tableVocabulary = "_vocabularios"
+tableCover = "_capas"
 tableCreate = """ CALL create_table('%s'); """
 
 triggerInsert = """
@@ -154,7 +155,7 @@ class BdUtil:
                     return table
             except ProgrammingError as e:
                 if not self.operation.isTest:
-                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela volume: {e.msg}', 'red')) 
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação das tabelas: {e.msg}', 'red')) 
                 else:
                     print(colored(f'Erro na consulta da existencia da tabela volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
@@ -164,7 +165,7 @@ class BdUtil:
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
-                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela volume: {e.msg}', 'red')) 
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação das tabelas: {e.msg}', 'red')) 
                 else:
                     print(colored(f'Erro na criação das tabelas: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
@@ -176,7 +177,7 @@ class BdUtil:
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
-                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela chapter: {e.msg}', 'red')) 
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da trigger de volumes: {e.msg}', 'red')) 
                 else:
                     print(colored(f'Erro na criação da trigger volume: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
@@ -188,7 +189,7 @@ class BdUtil:
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
-                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela chapter: {e.msg}', 'red')) 
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da trigger de capítulos: {e.msg}', 'red')) 
                 else:
                     print(colored(f'Erro na criação da trigger capitulo: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
@@ -200,7 +201,7 @@ class BdUtil:
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
-                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela chapter: {e.msg}', 'red')) 
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da trigger de páginas: {e.msg}', 'red')) 
                 else:
                     print(colored(f'Erro na criação da trigger pagina: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
@@ -212,7 +213,7 @@ class BdUtil:
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
-                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela chapter: {e.msg}', 'red')) 
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da trigger de texto: {e.msg}', 'red')) 
                 else:
                     print(colored(f'Erro na criação da trigger texto: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
@@ -224,7 +225,19 @@ class BdUtil:
                 connection.commit()
             except ProgrammingError as e:
                 if not self.operation.isTest:
-                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da tabela chapter: {e.msg}', 'red')) 
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da trigger de vocabulário: {e.msg}', 'red')) 
+                else:
+                    print(colored(f'Erro na criação da trigger vocabulario: {e.msg}', 'red', attrs=['reverse', 'blink']))
+
+            try:
+                cursor = connection.cursor()
+                tableTrigger = table + tableCover
+                cursor.execute(triggerInsert % (tableTrigger, tableTrigger))
+                cursor.execute(triggerUpdate % (tableTrigger, tableTrigger))
+                connection.commit()
+            except ProgrammingError as e:
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da trigger da capa: {e.msg}', 'red')) 
                 else:
                     print(colored(f'Erro na criação da trigger vocabulario: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
