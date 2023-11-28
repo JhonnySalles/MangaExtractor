@@ -1,6 +1,18 @@
 import defaults
 import os
 
+class Cover:
+    def __init__(self, name, volume, language, fileName, extension, file):
+        pass
+        self.name = name
+        self.volume = volume
+        self.language = language
+        self.fileName = fileName
+        self.extension = extension
+        self.file = file
+        self.saved = False
+
+
 class Text:
     def __init__(self, text, sequence, posX1, posY1, posX2, posY2):
         pass
@@ -40,14 +52,16 @@ class Chapter:
         self.pages.append(text)
 
 class Volume:
-    def __init__(self, name, volume, language, chapter=None):
+    def __init__(self, name, volume, language, chapter=None, cover=None):
         pass
         self.name = name
         self.volume = volume
         self.language = language
         self.chapters = []
+        self.cover = cover
         if chapter is not None:
             self.chapters.append(chapter) 
+            
 
     def addCapitulo(self, text):
         self.chapters.append(text)

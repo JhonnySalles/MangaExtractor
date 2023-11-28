@@ -6,7 +6,7 @@ import hashlib
 from segmentation import TextSegmenation
 from detection import TextDetection
 from ocr import TextOcr
-from classes import PrintLog, Page, Chapter
+from classes import PrintLog, Page, Chapter, Cover
 from termcolor import colored
 from banco.bdUtil import saveData
 from furigana import RemoveFurigana
@@ -214,6 +214,11 @@ class ImageProcess:
             chapter.isScan = bool(chapter.scan)
         
         return chapter
+    
+    def createClassCover(self, directory, file):
+        name, extension = os.path.splitext(file)
+        extension = extension.replace(".", "")
+        return Cover(self.nameManga, self.operation.volume, self.language, name, extension, directory + '/' + file)
 
     def processImages(self):
         segmentation = TextSegmenation(self.operation)
@@ -242,11 +247,12 @@ class ImageProcess:
                 if file.lower().endswith(images_extensions):
                     os.rename(os.path.join(directory, file), os.path.join(directory, unidecode(file)))
 
+        
+        cover = None
+
         for directory, subFolder, files in os.walk(self.folder):
             # Ignora as pastas temporárias da busca
             subFolder[:] = [sub for sub in subFolder if sub not in ['tmp']]
-            # Ignora as pastas de capa
-            subFolder[:] = [sub for sub in subFolder if "capa" not in sub.lower()]
 
             # Faz a limpeza da folder temporaria para que files com o mesmo name não impactem
             self.cleanDirectories()
@@ -258,6 +264,10 @@ class ImageProcess:
                     print(colored("Nome obtido: " + self.nameManga, 'yellow', attrs=['reverse', 'blink']))
 
             if len(files) <= 0:
+                continue
+
+            if "capa" in directory.lower():
+                cover = self.createClassCover(directory, files[0])
                 continue
 
             i += 1
@@ -297,7 +307,7 @@ class ImageProcess:
                 break
 
             if len(chapter.pages) > 0:
-                saveData(self.operation, chapter)
+                saveData(self.operation, chapter, cover)
 
             if not self.operation.isTest:
                 self.operation.window.write_event_value('-THREAD_PROGRESSBAR_UPDATE-', i)

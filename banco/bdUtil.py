@@ -8,6 +8,7 @@ from classes import PrintLog, Volume
 from util import printLog
 from defaults import BD_NAME, APPLICATION_VERSION
 import uuid
+import base64
 
 tableVolumes = "_volumes"
 tableChapters = "_capitulos"
@@ -74,6 +75,16 @@ insertText = """
 """
 updateText = """
     UPDATE {}_textos SET sequencia = %s, texto = %s, posicao_x1 = %s, posicao_y1 = %s, posicao_x2 = %s, posicao_y2 = %s, versao_app = %s
+    WHERE id = %s
+"""
+
+selectCover = 'SELECT id FROM {}_capas WHERE id_volume = "%s" '
+insertCover = """
+    INSERT INTO {}_capas (id, id_volume, manga, volume, linguagem, arquivo, extensao, capa) 
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+"""
+updateCover = """
+    UPDATE {}_capas SET manga = %s, volume = %s, linguagem = %s, arquivo = %s, extensao = %s, capa = %s
     WHERE id = %s
 """
 
@@ -244,6 +255,75 @@ class BdUtil:
 
             self.table = table
             return table
+        
+    def convertToBinaryData(filename):
+        # Convert digital data to binary format
+        with open(filename, 'rb') as file:
+            binaryData = file.read()
+        return binaryData
+
+
+    def saveCover(self, id_volume=None, cover=None):
+        with conection() as connection:
+            if (id_volume is None):
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar a capa, não informado id.', 'red'))
+                else:
+                    print(colored('Erro ao gravar a capa, não informado id.', 'red', attrs=['reverse', 'blink']))
+                return
+            elif cover is None:
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar a capa, capa não encontrada.', 'red'))
+                else:
+                    print(colored('Erro ao gravar a capa, capa não encontrada.', 'red', attrs=['reverse', 'blink']))
+                return
+            elif cover.saved:
+                return
+            
+            try:
+                # Open a file in binary mode
+                file = open(cover.file,'rb').read()
+                
+                # We must encode the file to get base64 string
+                #file = base64.b64encode(file)
+
+                cursor = connection.cursor(buffered=True)
+                sql = selectCover.format(self.operation.base)
+                cursor.execute(sql % str(id_volume))
+
+                if cursor.rowcount > 0:
+                    try:
+                        args = (cover.name, cover.volume, cover.language, cover.fileName,
+                                cover.extension, file, cursor.fetchone()[0])
+                        sql = updateCover.format(self.operation.base)
+                        cursor.execute(sql, args)
+                        connection.commit()
+                        cover.saved = True
+                    except ProgrammingError as e:
+                        if not self.operation.isTest:
+                            self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao atualizar os dados: {e.msg}', 'red'))
+                        else:
+                            print(colored(f'Erro ao atualizar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                else:
+                    try:
+                        id = uuid.uuid4()
+                        args = (str(id), str(id_volume), cover.name, cover.volume, cover.language,
+                                cover.fileName, cover.extension, file)
+                        
+                        sql = insertCover.format(self.operation.base)
+                        cursor.execute(sql, args)
+                        connection.commit()
+                        cover.saved = True
+                    except ProgrammingError as e:
+                        if not self.operation.isTest:
+                            self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao gravar os dados: {e.msg}', 'red'))
+                        else:
+                            print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
+            except ProgrammingError as e:
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao consultar registro: {e.msg}',  'red'))
+                else:
+                    print(colored(f'Erro ao consultar registro: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
 
     def saveText(self, id_page=None, text=None):
@@ -444,8 +524,10 @@ class BdUtil:
                             print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
                 for chapter in volume.chapters:
-                        self.saveChapter(id, chapter)
+                    self.saveChapter(id, chapter)
 
+                self.saveCover(id, volume.cover)
+                
             except ProgrammingError as e:
                 if not self.operation.isTest:
                     self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao consultar registro: {e.msg}',  'red')) 
@@ -479,7 +561,7 @@ def findTable(tableName, mangaName, language):
     return locate
     
 
-def saveData(operation, chapter):
+def saveData(operation, chapter, cover):
     if operation.base is None:
         raise ValueError("Erro ao gravar os dados, table não informada.")
 
@@ -495,7 +577,7 @@ def saveData(operation, chapter):
         print(colored('Gravando informações no banco de dados....', 'blue', attrs=['reverse', 'blink']))
         print(log)
 
-    util.saveVolume(Volume(chapter.name, chapter.volume, chapter.language, chapter))
+    util.saveVolume(Volume(chapter.name, chapter.volume, chapter.language, chapter, cover))
 
     if not operation.isTest:
         operation.window.write_event_value('-THREAD_LOG-', PrintLog('Gravação concluida.', 'blue'))
