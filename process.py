@@ -216,9 +216,21 @@ class ImageProcess:
         return chapter
     
     def createClassCover(self, directory, file):
-        name, extension = os.path.splitext(file)
+        cover = directory + "/capa.jpg"
+        with Image.open(directory + '/' + file) as im:
+            oldSize = im.size
+            im.thumbnail((616, 616))
+            cv = im.convert('RGB')
+            cv.save(cover)
+
+            if not self.operation.isTest:
+                self.operation.window.write_event_value('-THREAD_LOG-', PrintLog("Resize imagem capa: " + file + " -- " + str(oldSize) + " -> " + str(im.size), 'yellow'))
+            else:
+                print(colored("Resize imagem capa: " + file + " -- " + str(oldSize) + " -> " + str(im.size), 'yellow', attrs=['reverse', 'blink']))
+
+        name, extension = os.path.splitext(cover)
         extension = extension.replace(".", "")
-        return Cover(self.nameManga, self.operation.volume, self.language, name, extension, directory + '/' + file)
+        return Cover(self.nameManga, self.operation.volume, self.language, name, extension, cover)
 
     def processImages(self):
         segmentation = TextSegmenation(self.operation)
@@ -267,7 +279,11 @@ class ImageProcess:
                 continue
 
             if "capa" in directory.lower():
-                cover = self.createClassCover(directory, files[0])
+                for file in files:
+                    if "frente." in file.lower():
+                        cover = self.createClassCover(directory, file)
+                        break
+
                 continue
 
             i += 1
