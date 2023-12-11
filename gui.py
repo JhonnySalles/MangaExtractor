@@ -159,6 +159,8 @@ def acronymLanguage(language):
         acronym = "ja"
     elif (language == 'Japonês (vertical)'):
         acronym = "ja"
+    else:
+        acronym = "pt"
 
     return acronym
 

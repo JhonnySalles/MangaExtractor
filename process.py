@@ -216,7 +216,8 @@ class ImageProcess:
         return chapter
     
     def createClassCover(self, directory, file):
-        cover = directory + "/capa.jpg"
+        name = "capa.jpg"
+        cover = directory + "/" + name
         with Image.open(directory + '/' + file) as im:
             oldSize = im.size
             im.thumbnail((616, 616))
@@ -228,9 +229,9 @@ class ImageProcess:
             else:
                 print(colored("Resize imagem capa: " + file + " -- " + str(oldSize) + " -> " + str(im.size), 'yellow', attrs=['reverse', 'blink']))
 
-        name, extension = os.path.splitext(cover)
+        _, extension = os.path.splitext(cover)
         extension = extension.replace(".", "")
-        return Cover(self.nameManga, self.operation.volume, self.language, name, extension, cover)
+        return Cover(name, extension, cover)
 
     def processImages(self):
         segmentation = TextSegmenation(self.operation)
@@ -324,6 +325,13 @@ class ImageProcess:
 
             if len(chapter.pages) > 0:
                 saveData(self.operation, chapter, cover)
+                
+                if cover.saved and os.path.exists(cover.file):
+                    os.remove(cover.file)
+                    if not self.operation.isTest:
+                        self.operation.window.write_event_value('-THREAD_LOG-', PrintLog('Salvado capa com sucesso, apagado arquivo temporário.', 'yellow'))
+                    else:
+                        print(colored('Salvado capa com sucesso, apagado arquivo temporário.', 'yellow', attrs=['reverse', 'blink']))
 
             if not self.operation.isTest:
                 self.operation.window.write_event_value('-THREAD_PROGRESSBAR_UPDATE-', i)

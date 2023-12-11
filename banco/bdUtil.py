@@ -8,7 +8,7 @@ from classes import PrintLog, Volume
 from util import printLog
 from defaults import BD_NAME, APPLICATION_VERSION
 import uuid
-import base64
+import os
 
 tableVolumes = "_volumes"
 tableChapters = "_capitulos"
@@ -263,7 +263,7 @@ class BdUtil:
         return binaryData
 
 
-    def saveCover(self, id_volume=None, cover=None):
+    def saveCover(self, id_volume=None, volume=None):
         with conection() as connection:
             if (id_volume is None):
                 if not self.operation.isTest:
@@ -271,16 +271,28 @@ class BdUtil:
                 else:
                     print(colored('Erro ao gravar a capa, não informado id.', 'red', attrs=['reverse', 'blink']))
                 return
-            elif cover is None:
+            elif volume.cover is None:
                 if not self.operation.isTest:
                     self.operation.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar a capa, capa não encontrada.', 'red'))
                 else:
                     print(colored('Erro ao gravar a capa, capa não encontrada.', 'red', attrs=['reverse', 'blink']))
                 return
-            elif cover.saved:
+            elif volume.cover.saved:
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog('Capa já salva, retornando.', 'yellow'))
+                else:
+                    print(colored('Capa já salva, retornando.', 'yellow', attrs=['reverse', 'blink']))
+                return
+            elif not os.path.exists(volume.cover.file):
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao gravar a capa, arquivo de capa não encontrada.', 'red'))
+                else:
+                    print(colored('Erro ao gravar a capa, arquivo de capa não encontrada.', 'red', attrs=['reverse', 'blink']))
                 return
             
             try:
+                cover = volume.cover
+
                 # Open a file in binary mode
                 file = open(cover.file,'rb').read()
                 
@@ -293,7 +305,7 @@ class BdUtil:
 
                 if cursor.rowcount > 0:
                     try:
-                        args = (cover.name, cover.volume, cover.language, cover.fileName,
+                        args = (volume.name, volume.volume, volume.language, cover.fileName,
                                 cover.extension, file, cursor.fetchone()[0])
                         sql = updateCover.format(self.operation.base)
                         cursor.execute(sql, args)
@@ -307,7 +319,7 @@ class BdUtil:
                 else:
                     try:
                         id = uuid.uuid4()
-                        args = (str(id), str(id_volume), cover.name, cover.volume, cover.language,
+                        args = (str(id), str(id_volume), volume.name, volume.volume, volume.language,
                                 cover.fileName, cover.extension, file)
                         
                         sql = insertCover.format(self.operation.base)
@@ -526,7 +538,7 @@ class BdUtil:
                 for chapter in volume.chapters:
                     self.saveChapter(id, chapter)
 
-                self.saveCover(id, volume.cover)
+                self.saveCover(id, volume)
                 
             except ProgrammingError as e:
                 if not self.operation.isTest:
