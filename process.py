@@ -216,8 +216,9 @@ class ImageProcess:
         return chapter
     
     def createClassCover(self, directory, file):
-        name = "capa.jpg"
-        cover = directory + "/" + name
+        name, _ = os.path.splitext(file)
+        extension = "jpg"
+        cover = directory + "/capa." + extension
         with Image.open(directory + '/' + file) as im:
             oldSize = im.size
             im.thumbnail((616, 616))
@@ -228,10 +229,7 @@ class ImageProcess:
                 self.operation.window.write_event_value('-THREAD_LOG-', PrintLog("Resize imagem capa: " + file + " -- " + str(oldSize) + " -> " + str(im.size), 'yellow'))
             else:
                 print(colored("Resize imagem capa: " + file + " -- " + str(oldSize) + " -> " + str(im.size), 'yellow', attrs=['reverse', 'blink']))
-
-        _, extension = os.path.splitext(cover)
-        extension = extension.replace(".", "")
-        return Cover(name, extension, cover)
+        return Cover(name + "." + extension, extension, cover)
 
     def processImages(self):
         segmentation = TextSegmenation(self.operation)
