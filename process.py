@@ -324,7 +324,7 @@ class ImageProcess:
             if len(chapter.pages) > 0:
                 saveData(self.operation, chapter, cover)
                 
-                if cover.saved and os.path.exists(cover.file):
+                if cover is not None and cover.saved and os.path.exists(cover.file):
                     os.remove(cover.file)
                     if not self.operation.isTest:
                         self.operation.window.write_event_value('-THREAD_LOG-', PrintLog('Salvado capa com sucesso, apagado arquivo temporário.', 'yellow'))

@@ -289,12 +289,12 @@ def eventDirectory(values):
     global LAST_DIRECTORY
     directory = values["-DIRECTORY-"]
 
-    if (LAST_DIRECTORY != directory and os.path.exists(directory)):
+    if (LAST_DIRECTORY != directory):
         window['-LABELBASE-'].Update('Base', text_color='white')
         LAST_DIRECTORY = directory
         config = readConfig(directory)
 
-        if config is not None and directory == config.directory:            
+        if config is not None:            
             window['-MANGA-'].Update(config.manga)
             window['-VOLUME-'].Update(config.volume)
             window['-CHAPTER-'].Update(config.chapter)
