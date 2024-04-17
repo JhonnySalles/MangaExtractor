@@ -13,8 +13,7 @@ from furigana import RemoveFurigana
 from util import printLog
 import re
 from unidecode import unidecode
-import globals 
-import shutil
+import globals
 
 
 def getDirectoryName(directory):
@@ -204,7 +203,7 @@ class ImageProcess:
         page.hashPage = md5hash.hexdigest()
         return page
 
-    def createClassChapter(self, directory, file):
+    def createClassChapter(self, directory):
         chapter = None
         if self.operation.getFolderInformation:
             chapter = getDirectoryInformation(directory, self.nameManga, self.language)
@@ -229,7 +228,7 @@ class ImageProcess:
                 self.operation.window.write_event_value('-THREAD_LOG-', PrintLog("Resize imagem capa: " + file + " -- " + str(oldSize) + " -> " + str(im.size), 'yellow'))
             else:
                 print(colored("Resize imagem capa: " + file + " -- " + str(oldSize) + " -> " + str(im.size), 'yellow', attrs=['reverse', 'blink']))
-        return Cover(name + "." + extension, extension, cover)
+        return Cover(name + "." + extension, extension, cover, directory)
 
     def processImages(self):
         segmentation = TextSegmenation(self.operation)
@@ -247,15 +246,20 @@ class ImageProcess:
             print("Iniciado o processamento....")
 
 
-        images_extensions = ('.png', '.jpg', '.jpeg')
+        processedFolder = self.folder + '\concluido'
+        if not os.path.exists(processedFolder):
+            os.mkdir(processedFolder)
+
+
+        imagesExtensions = ('.png', '.jpg', '.jpeg')
         for directory, subFolder, files in os.walk(self.folder):
             # Ignora as pastas temporárias da busca
-            subFolder[:] = [sub for sub in subFolder if sub not in ['tmp']]
+            subFolder[:] = [sub for sub in subFolder if sub.lower() not in ['tmp','concluido']]
             # Ignora as pastas de capa
             subFolder[:] = [sub for sub in subFolder if "capa" not in sub.lower()]
 
             for file in files:
-                if file.lower().endswith(images_extensions):
+                if file.lower().endswith(imagesExtensions):
                     os.rename(os.path.join(directory, file), os.path.join(directory, unidecode(file)))
 
         
@@ -263,7 +267,7 @@ class ImageProcess:
 
         for directory, subFolder, files in os.walk(self.folder):
             # Ignora as pastas temporárias da busca
-            subFolder[:] = [sub for sub in subFolder if sub not in ['tmp']]
+            subFolder[:] = [sub for sub in subFolder if sub not in ['tmp','concluido']]
 
             # Faz a limpeza da folder temporaria para que files com o mesmo name não impactem
             self.cleanDirectories()
@@ -287,9 +291,9 @@ class ImageProcess:
 
             i += 1
             pageNumber = 0
-            chapter = self.createClassChapter(directory, files[0])
+            chapter = self.createClassChapter(directory)
             for file in files:
-                if file.lower().endswith(images_extensions):
+                if file.lower().endswith(imagesExtensions):
                     pageNumber += 1
 
                     log = os.path.join(directory, file)
@@ -324,8 +328,13 @@ class ImageProcess:
             if len(chapter.pages) > 0:
                 saveData(self.operation, chapter, cover)
                 
+                shutil.move(directory, processedFolder)
                 if cover is not None and cover.saved and os.path.exists(cover.file):
                     os.remove(cover.file)
+                    if cover.directory is not None:
+                        shutil.move(cover.directory, processedFolder)
+                        cover.directory = None
+                    
                     if not self.operation.isTest:
                         self.operation.window.write_event_value('-THREAD_LOG-', PrintLog('Salvado capa com sucesso, apagado arquivo temporário.', 'yellow'))
                     else:

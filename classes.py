@@ -2,8 +2,9 @@ import defaults
 import os
 
 class Cover:
-    def __init__(self, fileName, extension, file):
+    def __init__(self, fileName, extension, file, directory):
         pass
+        self.directory = directory
         self.fileName = fileName
         self.extension = extension
         self.file = file
