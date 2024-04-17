@@ -54,7 +54,7 @@ insertChapter = """
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
 """
 updateChapter = """
-    UPDATE {}_capitulos SET manga = %s, volume = %s, capitulo = %s, linguagem = %s, scan = %s, is_extra = %s, is_raw = %s, is_processado = 0
+    UPDATE {}_capitulos SET manga = %s, volume = %s, capitulo = %s, linguagem = %s, scan = %s, is_extra = %s, is_raw = %s
     WHERE id = %s
 """
 
@@ -64,7 +64,7 @@ insertPage = """
     VALUES (%s, %s, %s, %s, %s)
 """
 updatePage = """
-    UPDATE {}_paginas SET nome = %s, numero = %s, hash_pagina = %s, is_processado = 0
+    UPDATE {}_paginas SET nome = %s, numero = %s, hash_pagina = %s
     WHERE id = %s
 """
 
@@ -231,7 +231,6 @@ class BdUtil:
             try:
                 cursor = connection.cursor()
                 tableTrigger = table + tableVocabulary
-                cursor.execute(triggerInsert % (tableTrigger, tableTrigger))
                 cursor.execute(triggerUpdate % (tableTrigger, tableTrigger))
                 connection.commit()
             except ProgrammingError as e:
