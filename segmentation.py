@@ -149,18 +149,23 @@ class TextSegmenation():
         return text
 
     def filter_text_like_areas(self, img, segmentation, average_size):
-        # see if a given rectangular area (2d slice) is very text like
-        # First step is to estimate furigana like elements so they can be masked
-        furigana = RemoveFurigana(self.operation)
-        furigana_areas = furigana.estimate_furigana(img, segmentation)
-        furigana_mask = np.array(furigana_areas == 0, 'B')
+
+        if self.operation.furigana:
+            # see if a given rectangular area (2d slice) is very text like
+            # First step is to estimate furigana like elements so they can be masked
+            furigana = RemoveFurigana(self.operation)
+            furigana_areas = furigana.estimate_furigana(img, segmentation)
+            furigana_mask = np.array(furigana_areas == 0, 'B')
 
         # binarize the image, clean it via the segmentation and remove furigana too
         binary = clean.binarize(img, threshold=defaults.BINARY_THRESHOLD)
 
         segmentation_mask = np.array(segmentation != 0, 'B')
-        cleaned = binary * segmentation_mask * furigana_mask
-        inv_cleaned = cv2.bitwise_not(cleaned)
+
+        if self.operation.furigana:
+            cleaned = binary * segmentation_mask * furigana_mask
+        else:
+            cleaned = binary * segmentation_mask
 
         areas = util.get_connected_components(segmentation)
         text_like_areas = []
