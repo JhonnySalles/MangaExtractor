@@ -25,7 +25,9 @@ class TextSegmenation():
     def __init__(self, operation):
         pass
         self.operation = operation
+        os.environ["CUDA_VISIBLE_DEVICES"] = "0"
         print("\n" + "Numbers of GPUs available: " + str(len(tf.config.list_physical_devices('GPU'))))
+        
         # tf.reset_default_graph
         #core.load_model(defaults.SNETPATH, '0.1.0')
         #core.load_model(defaults.CNETPATH, '0.1.0')

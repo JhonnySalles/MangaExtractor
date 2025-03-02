@@ -4,7 +4,7 @@ from process import ImageProcess, getDirectoryName, getDirectoryInformation, mov
 from datetime import datetime
 import os
 import threading
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 import sys
 from util import printLog, saveConfig, readConfig
 from unidecode import unidecode
@@ -12,7 +12,6 @@ from termcolor import colored
 import globals
 from banco.bdUtil import findTable
 
-from PySimpleGUI.PySimpleGUI import ConvertArgsToSingleString
 sys.path.append("./banco/")
 
 
@@ -146,7 +145,7 @@ def cleanFields():
 
 
 def alert(text):
-    sg.Popup(text, title='Aviso')
+    sg.popup(text, title='Aviso')
 
 
 def acronymLanguage(language):
@@ -289,7 +288,7 @@ def eventDirectory(values):
     global LAST_DIRECTORY
     directory = values["-DIRECTORY-"]
 
-    if (LAST_DIRECTORY != directory):
+    if (LAST_DIRECTORY != directory) and (directory.strip() != '') and (os.path.exists(directory)):
         window['-LABELBASE-'].Update('Base', text_color='white')
         LAST_DIRECTORY = directory
         config = readConfig(directory)

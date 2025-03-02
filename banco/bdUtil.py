@@ -1,4 +1,3 @@
-from PySimpleGUI.PySimpleGUI import No
 from mysql.connector.errors import ProgrammingError
 from .bd import conection
 from termcolor import colored
