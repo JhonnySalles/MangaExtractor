@@ -100,6 +100,44 @@ selectLastVolume = """
     ORDER BY volume DESC LIMIT 1
 """
 
+selectNextChapters = """
+    SELECT Cap.ID AS ID FROM {}_capitulos AS reg 
+    INNER JOIN {}_capitulos AS cap ON reg.id_volume = cap.id_volume AND (cap.capitulo >= reg.capitulo OR cap.is_extra = 1) 
+    WHERE reg.id IN ("%s") 
+    ORDER BY cap.is_Extra, cap.Capitulo
+"""
+
+deleteVocabularyPageFromChapter = """
+    DELETE vol FROM {}_vocabularios AS vol 
+    INNER JOIN {}_paginas AS p ON p.id = vol.id_pagina 
+    INNER JOIN {}_capitulos AS c ON c.id = p.id_capitulo 
+    WHERE c.id IN ("%s");
+"""
+
+deleteVocabularyChapterFromChapter = """
+    DELETE vol FROM {}_vocabularios AS vol 
+    INNER JOIN {}_capitulos AS c ON c.id = vol.id_capitulo 
+    WHERE c.id IN ("%s");
+"""
+
+deleteTextsFromChapter = """ 
+    DELETE t FROM {}_textos AS t 
+    INNER JOIN {}_paginas AS p ON p.id = t.id_pagina 
+    INNER JOIN {}_capitulos AS c ON c.id = p.id_capitulo 
+    WHERE c.id IN ("%s");
+"""
+
+deletePagesFromChapter = """ 
+    DELETE p FROM {}_paginas p 
+    INNER JOIN {}_capitulos AS c ON c.id = p.id_capitulo 
+    WHERE c.id IN ("%s");
+"""
+
+deleteChapter = """
+    DELETE c FROM {}_capitulos AS c 
+    WHERE c.id IN ("%s");
+"""
+
 
 class BdUtil:
     def __init__(self, operation):
@@ -157,12 +195,15 @@ class BdUtil:
                 cursor.execute(tableExists % (BD_NAME, table))
 
                 if cursor.rowcount > 0:
+                    cursor.close()
                     if not self.operation.isTest:
                         self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Estrutura de tabelas já existente. Tabela: {table}', 'red')) 
                     else:
                         print(colored(f'Estrutura de tabelas já existente. Tabela: {table}', 'red', attrs=['reverse', 'blink']))
                     self.table = table
                     return table
+                
+                cursor.close()
             except ProgrammingError as e:
                 if not self.operation.isTest:
                     self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação das tabelas: {e.msg}', 'red')) 
@@ -173,6 +214,7 @@ class BdUtil:
                 cursor = connection.cursor()
                 cursor.execute(tableCreate % table)
                 connection.commit()
+                cursor.close()
             except ProgrammingError as e:
                 if not self.operation.isTest:
                     self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação das tabelas: {e.msg}', 'red')) 
@@ -185,6 +227,7 @@ class BdUtil:
                 cursor.execute(triggerInsert % (tableTrigger, tableTrigger))
                 cursor.execute(triggerUpdate % (tableTrigger, tableTrigger))
                 connection.commit()
+                cursor.close()
             except ProgrammingError as e:
                 if not self.operation.isTest:
                     self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da trigger de volumes: {e.msg}', 'red')) 
@@ -197,6 +240,7 @@ class BdUtil:
                 cursor.execute(triggerInsert % (tableTrigger, tableTrigger))
                 cursor.execute(triggerUpdate % (tableTrigger, tableTrigger))
                 connection.commit()
+                cursor.close()
             except ProgrammingError as e:
                 if not self.operation.isTest:
                     self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da trigger de capítulos: {e.msg}', 'red')) 
@@ -209,6 +253,7 @@ class BdUtil:
                 cursor.execute(triggerInsert % (tableTrigger, tableTrigger))
                 cursor.execute(triggerUpdate % (tableTrigger, tableTrigger))
                 connection.commit()
+                cursor.close()
             except ProgrammingError as e:
                 if not self.operation.isTest:
                     self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da trigger de páginas: {e.msg}', 'red')) 
@@ -221,6 +266,7 @@ class BdUtil:
                 cursor.execute(triggerInsert % (tableTrigger, tableTrigger))
                 cursor.execute(triggerUpdate % (tableTrigger, tableTrigger))
                 connection.commit()
+                cursor.close()
             except ProgrammingError as e:
                 if not self.operation.isTest:
                     self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da trigger de texto: {e.msg}', 'red')) 
@@ -232,6 +278,7 @@ class BdUtil:
                 tableTrigger = table + tableVocabulary
                 cursor.execute(triggerUpdate % (tableTrigger, tableTrigger))
                 connection.commit()
+                cursor.close()
             except ProgrammingError as e:
                 if not self.operation.isTest:
                     self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da trigger de vocabulário: {e.msg}', 'red')) 
@@ -244,6 +291,7 @@ class BdUtil:
                 cursor.execute(triggerInsert % (tableTrigger, tableTrigger))
                 cursor.execute(triggerUpdate % (tableTrigger, tableTrigger))
                 connection.commit()
+                cursor.close()
             except ProgrammingError as e:
                 if not self.operation.isTest:
                     self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na criação da trigger da capa: {e.msg}', 'red')) 
@@ -259,6 +307,72 @@ class BdUtil:
         with open(filename, 'rb') as file:
             binaryData = file.read()
         return binaryData
+
+
+    def deleteChapter(self, id_chapter=None):
+        with conection() as connection:
+            if (id_chapter is None):
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog('Erro ao excluir capítulo, não informado id.', 'red'))
+                else:
+                    print(colored('Erro ao excluir capítulo, não informado id.', 'red', attrs=['reverse', 'blink']))
+                return
+            
+            if not self.operation.isTest:
+                self.operation.window.write_event_value('-THREAD_LOG-', PrintLog('Apagando capítulos posteriores a partir do capítulo atual. ID: ' + str(id_chapter), 'yellow'))
+            else:
+                print(colored('Apagando capítulos posteriores a partir do capítulo atual. ID: ' + str(id_chapter), 'yellow', attrs=['reverse', 'blink']))
+
+            try:
+                cursor = connection.cursor(buffered=True)
+                sql = selectNextChapters.format(self.operation.base, self.operation.base)
+                cursor.execute(sql % str(id_chapter))
+                connection.commit()
+
+                if cursor.rowcount > 0:
+                    for (row) in cursor:
+                        try:
+                            ID = row[0]
+                            if not self.operation.isTest:
+                                self.operation.window.write_event_value('-THREAD_LOG-', PrintLog('Apagando capítulo. ID: ' + ID, 'yellow'))
+                            else:
+                                print(colored('Apagando capítulo. ID: ' + ID, 'yellow', attrs=['reverse', 'blink']))
+
+                            cursorDelete = connection.cursor()
+                            connection.autocommit = False
+
+                            sql = deleteVocabularyPageFromChapter.format(self.operation.base, self.operation.base, self.operation.base)
+                            cursorDelete.execute(sql % ID)
+
+                            sql = deleteVocabularyChapterFromChapter.format(self.operation.base, self.operation.base)
+                            cursorDelete.execute(sql % ID)
+
+                            sql = deleteTextsFromChapter.format(self.operation.base, self.operation.base, self.operation.base)
+                            cursorDelete.execute(sql % ID)
+
+                            sql = deletePagesFromChapter.format(self.operation.base, self.operation.base)
+                            cursorDelete.execute(sql % ID)
+
+                            sql = deleteChapter.format(self.operation.base)
+                            cursorDelete.execute(sql % ID)
+
+                            connection.commit()
+                            cursorDelete.close()
+                        except ProgrammingError as e:
+                            connection.rollback()
+                            if not self.operation.isTest:
+                                self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao excluir capítulo: {e.msg}', 'red'))
+                            else:
+                                print(colored(f'Erro ao excluir capítulo: {e.msg}', 'red', attrs=['reverse', 'blink']))
+                    
+                    connection.autocommit = True
+
+                cursor.close()
+            except ProgrammingError as e:
+                if not self.operation.isTest:
+                    self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro na exclusão a partir do capítulo: {e.msg}',  'red')) 
+                else:
+                    print(colored(f'Erro na exclusão a partir do capítulo: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
 
     def saveCover(self, id_volume=None, volume=None):
@@ -329,6 +443,8 @@ class BdUtil:
                             self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao gravar os dados: {e.msg}', 'red'))
                         else:
                             print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
+
+                cursor.close()
             except ProgrammingError as e:
                 if not self.operation.isTest:
                     self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao consultar registro: {e.msg}',  'red'))
@@ -381,6 +497,8 @@ class BdUtil:
                             self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao gravar os dados: {e.msg}', 'red'))
                         else:
                             print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
+
+                cursor.close()
             except ProgrammingError as e:
                 if not self.operation.isTest:
                     self.operation.window.write_event_value('-THREAD_LOG-', PrintLog(f'Erro ao consultar registro: {e.msg}',  'red'))
@@ -429,6 +547,7 @@ class BdUtil:
                         else:
                             print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
+                cursor.close()
                 for text in page.texts:
                     self.saveText(id, text)
 
@@ -455,6 +574,12 @@ class BdUtil:
                 sql = selectChapter.format(self.operation.base)
                 cursor.execute(sql, args)
 
+                if (cursor.rowcount > 0) and (not chapter.isExtra):
+                    id = uuid.UUID(cursor.fetchone()[0])
+                    self.deleteChapter(id)
+                    connection.commit() # Clear buffer
+                    cursor.execute(sql, args)
+                    
                 if cursor.rowcount > 0:
                     try:
                         id = uuid.UUID(cursor.fetchone()[0])
@@ -482,6 +607,7 @@ class BdUtil:
                         else:
                             print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
+                cursor.close()
                 for page in chapter.pages:
                     self.savePage(id, page)
 
@@ -533,6 +659,7 @@ class BdUtil:
                         else:
                             print(colored(f'Erro ao gravar os dados: {e.msg}', 'red', attrs=['reverse', 'blink']))
 
+                cursor.close()
                 for chapter in volume.chapters:
                     self.saveChapter(id, chapter)
 
