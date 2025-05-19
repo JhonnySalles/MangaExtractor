@@ -12,6 +12,8 @@ from termcolor import colored
 import globals
 from banco.bdUtil import findTable
 
+import tensorflow as tf
+
 sys.path.append("./banco/")
 
 
@@ -398,6 +400,17 @@ def findLastVolume(base, manga, language):
 
 
 def main():
+    print("\n" + "Numbers of GPUs available: " + str(len(tf.config.list_physical_devices('GPU'))))
+    if False : # Forçar não funciona, basta remover a pasta CUDNN_PATH do path ou apontar para uma pasta não localizada.
+        os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    else:
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
+    if tf.test.gpu_device_name():
+        print("\n" +'Enabled use GPU.')
+    else:
+        print("\n" +"Disabled use GPU.")
+     
     if ISTEST:
         teste()
     else:
