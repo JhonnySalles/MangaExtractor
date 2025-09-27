@@ -1,2 +1,2 @@
 chcp 65001
-python gui.py
+py -3.9 gui.py
