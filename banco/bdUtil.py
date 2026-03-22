@@ -15,7 +15,7 @@ tablePages = "_paginas"
 tableText = "_textos"
 tableVocabulary = "_vocabularios"
 tableCover = "_capas"
-tableCreate = """ CALL create_table('%s'); """
+tableCreate = """ CALL sp_create_table('%s'); """
 
 triggerInsert = """
 CREATE
