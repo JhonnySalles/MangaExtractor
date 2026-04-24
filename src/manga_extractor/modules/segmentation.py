@@ -23,14 +23,14 @@ from manga_extractor.modules.furigana import RemoveFurigana
 class TextSegmenation():
     def __init__(self, operation):
         import core
-        pass
+        self.core = core
         self.operation = operation
         # tf.reset_default_graph
-        #core.load_model(defaults.SNETPATH, '0.1.0')
-        #core.load_model(defaults.CNETPATH, '0.1.0')
+        #self.core.load_model(defaults.SNETPATH, '0.1.0')
+        #self.core.load_model(defaults.CNETPATH, '0.1.0')
 
     def imgpath2mask(self, imgpath):
-        return fp.go(imgpath, lambda path: imgio.load(path, imgio.NDARR), core.segmap, imgio.segmap2mask)
+        return fp.go(imgpath, lambda path: imgio.load(path, imgio.NDARR), self.core.segmap, imgio.segmap2mask)
 
     def resize(self, imgPath):
         # text resize by 1000px height
@@ -49,7 +49,7 @@ class TextSegmenation():
             fileName = os.path.basename(imgPath)
             oriImage = imgio.load(imgPath, imgio.IMAGE)  # ori image
             maskImage = imgio.mask2segmap(self.imgpath2mask(imgPath))  # mask image
-            # inpaintedImage = core.inpainted(oriImage, maskImage)        #notext image
+            # inpaintedImage = self.core.inpainted(oriImage, maskImage)        #notext image
             textOnlyImage = cv2.bitwise_and(
                 oriImage, maskImage)  # text only image
             textOnlyImage[maskImage == 0] = 255

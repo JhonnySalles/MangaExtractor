@@ -31,8 +31,11 @@ def printLog(printLog, file='log.txt'):
             printLog.logMemo.print(printLog.message, text_color=corMemo)
 
     if (printLog.save) and (printLog.directory is not None):
-        with open(printLog.directory + '/' + file, 'a+', encoding='utf-8') as file:
-            file.write(printLog.message + '\n')
+        try:
+            with open(printLog.directory + '/' + file, 'a+', encoding='utf-8', errors='replace') as f:
+                f.write(printLog.message + '\n')
+        except Exception as e:
+            print(f"Erro ao salvar log: {e}")
 
 
 def saveConfig(config):
@@ -57,23 +60,35 @@ def saveConfig(config):
 
 def readConfig(directory):
     config = None
-    if os.path.isfile(directory + '/config.ini'):
+    path = directory + '/config.ini'
+    if os.path.isfile(path):
         parser = configparser.ConfigParser()
-        parser.read(directory + '/config.ini', encoding="utf-8")
-        operation = parser["operation"]
+        
+        # Tenta ler com UTF-8, se falhar tenta latin-1
+        try:
+            parser.read(path, encoding="utf-8")
+        except UnicodeDecodeError:
+            parser.read(path, encoding="latin-1")
+            
+        try:
+            operation = parser["operation"]
 
-        config = Config(operation["directory"])
-        config.manga = operation["manga"]
-        config.volume = operation["volume"]
-        config.chapter = operation["chapter"] 
-        config.scan = operation["scan"]
-        config.base = operation["base"]
-        config.language = operation["language"]
-        config.ocr = operation["ocr"]
-        config.getFolderInformation = operation["folder_information"].lower() in ("yes", "true", "t", "1")
-        config.getNameFolder = operation["name_folder"].lower() in ("yes", "true", "t", "1")
-        config.isCleanFurigana = operation["clean_furigana"].lower() in ("yes", "true", "t", "1")
-        config.isFuriganaFilter = operation["furigana_filter"].lower() in ("yes", "true", "t", "1")
+            config = Config(operation["directory"])
+            config.manga = operation["manga"]
+            config.volume = operation["volume"]
+            config.chapter = operation["chapter"] 
+            config.scan = operation["scan"]
+            config.base = operation["base"]
+            config.language = operation["language"]
+            config.ocr = operation["ocr"]
+            config.getFolderInformation = operation["folder_information"].lower() in ("yes", "true", "t", "1")
+            config.getNameFolder = operation["name_folder"].lower() in ("yes", "true", "t", "1")
+            config.isCleanFurigana = operation["clean_furigana"].lower() in ("yes", "true", "t", "1")
+            config.isFuriganaFilter = operation["furigana_filter"].lower() in ("yes", "true", "t", "1")
+        except Exception as e:
+            print(f"Erro ao processar config.ini: {e}")
+            return None
+            
     return config
 
 

@@ -1,14 +1,19 @@
-# gui configs
+import os
 import json
 import utils.futils as fu
 
-FOLDERPATH = 'F:/Projeto/MangaExtractor/lib_/SickZil-Machine/resource'
+# Obter o caminho base do SickZil-Machine
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+FOLDERPATH = os.path.join(BASE_DIR, 'resource')
 
 config = {}
-def load_config(config_fpath = './resource/config.json'):
+def load_config(config_fpath = None):
     global config
-    with open(config_fpath) as f:
-        config = json.load(f)
+    if config_fpath is None:
+        config_fpath = os.path.join(BASE_DIR, 'resource', 'config.json')
+    if os.path.exists(config_fpath):
+        with open(config_fpath, 'r', encoding='utf-8') as f:
+            config = json.load(f)
 
 ###### DO NOT CHANGE BELOW! ######
 MAIN_CONTEXT_NAME = 'main'
@@ -22,8 +27,8 @@ PREV_MASKDIR = 'prev_' + MASKDIR
 # core config
 #TF_CPP_MIN_LOG_LEVEL = '1' #'3'
 TF_CPP_MIN_LOG_LEVEL = '3'
-SNETPATH = './resource/snet/snet-0.1.0.pb'
-CNETPATH = './resource/cnet/cnet-0.1.0.pb'
+SNETPATH = os.path.join(BASE_DIR, 'resource', 'snet', 'snet-0.1.0.pb')
+CNETPATH = os.path.join(BASE_DIR, 'resource', 'cnet', 'cnet-0.1.0.pb')
 #TODO: it.. has.. some... smell...
 def model_name(mpath, version):
     return {

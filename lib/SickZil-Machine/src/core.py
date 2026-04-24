@@ -26,7 +26,8 @@ def load_model(mpath, version):
     with graph.as_default():
         graph_def = tf.compat.v1.GraphDef()
         #with tf.gfile.GFile(mpath, 'rb') as f:
-        with tf.io.gfile.GFile(mpath, 'rb') as f:
+        #with tf.io.gfile.GFile(mpath, 'rb') as f:
+        with open(mpath, 'rb') as f:
             graph_def.ParseFromString(f.read())
             tf.import_graph_def(
                 graph_def, 

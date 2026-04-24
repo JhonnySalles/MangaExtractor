@@ -52,8 +52,12 @@ class TextOcr():
         cv2.imwrite(inputFile, img)
         p = subprocess.Popen(('./lib/winocr/winocr.exe'))
         p.wait()
-        with open(outputFile, "r", encoding="utf-8") as f:
-            text = f.read()  # txt to str
+        try:
+            with open(outputFile, "r", encoding="utf-8") as f:
+                text = f.read()  # txt to str
+        except UnicodeDecodeError:
+            with open(outputFile, "r", encoding="latin-1") as f:
+                text = f.read()
         if os.path.exists(inputFile):
             os.remove(inputFile)
         if os.path.exists(outputFile):
@@ -65,8 +69,12 @@ class TextOcr():
         p = subprocess.Popen(('./lib/winocr/winocr.exe'))
         p.wait()
         if os.path.exists("./lib/loadResult.txt"):
-            with open("./lib/loadResult.txt", "r", encoding="utf-8") as f:
-                text = f.read()  # txt to str
+            try:
+                with open("./lib/loadResult.txt", "r", encoding="utf-8") as f:
+                    text = f.read()  # txt to str
+            except UnicodeDecodeError:
+                with open("./lib/loadResult.txt", "r", encoding="latin-1") as f:
+                    text = f.read()
             if text == "True":
                 return True
         return False

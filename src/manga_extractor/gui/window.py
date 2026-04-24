@@ -11,6 +11,7 @@ from unidecode import unidecode
 from termcolor import colored
 import manga_extractor.core.globals as globals
 from manga_extractor.database.db_util import findTable
+import traceback
 
 # Simular um teste sem abrir a janela
 ISTEST = False
@@ -419,7 +420,14 @@ def main():
         MaxProgress = 1
         initialTime = datetime.now()
         while True:
-            event, values = window.read()
+            try:
+                event, values = window.read()
+            except Exception as e:
+                error_msg = traceback.format_exc()
+                print(colored(f"Erro crítico no loop principal:\n{error_msg}", 'red', attrs=['reverse', 'blink']))
+                sg.popup_scrolled(f"Erro crítico no loop principal:\n{error_msg}", title="Erro de Codificação")
+                break
+
             if event == sg.WIN_CLOSED or event == '-BTN_CANCEL-':
                 break
             elif event == '-DIRECTORY-':
