@@ -1,4 +1,4 @@
-import manga_extractor.core.defaults as defaults
+
 import os
 
 class Cover:
@@ -93,6 +93,7 @@ class Operation:
         self.furigana = furigana
         self.furiganaFilter = False
         self.ocrType = ocrType
+        import manga_extractor.core.defaults as defaults
         self.tesseractFolder = defaults.DEFAULT_TESSERACT_FOLDER
         self.isTest = window is None
         self.isSilent = isSilent

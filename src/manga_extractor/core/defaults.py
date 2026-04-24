@@ -1,4 +1,5 @@
-from manga_extractor.core.classes import Operation
+
+
 
 
 ####################
@@ -48,6 +49,7 @@ DEFAULT_TESSERACT_FOLDER= "C:/Program Files/Tesseract-OCR"
 ##  SILENT
 ###################
 def PROCESS_ITEMS():
+    from manga_extractor.core.classes import Operation
     operation = []
     operation.append(Operation("base",  "nome", r'F:/teste/jar', "ja", furigana=True, isSilent=True))
 

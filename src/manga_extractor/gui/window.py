@@ -1,6 +1,10 @@
+print("DEBUG: Window.py - Starting imports...")
 from manga_extractor.database.db_util import BdUtil, testConnection
+print("DEBUG: Window.py - db_util imported")
 from manga_extractor.core.classes import Operation, PrintLog, Config
+print("DEBUG: Window.py - classes imported")
 from manga_extractor.core.processor import ImageProcess, getDirectoryName, getDirectoryInformation, moveFilesDirectories
+print("DEBUG: Window.py - processor imported")
 from datetime import datetime
 import os
 import threading
@@ -12,11 +16,13 @@ from termcolor import colored
 import manga_extractor.core.globals as globals
 from manga_extractor.database.db_util import findTable
 
-import tensorflow as tf
+
+# tensorflow import moved to main()
 
 # sys.path manipulation removed as we now use proper packages
 
 
+print("DEBUG: Window.py - Global variables defined")
 # Simular um teste sem abrir a janela
 ISTEST = False
 
@@ -66,8 +72,10 @@ layout = [[sg.Text('Caminho', text_color='orangered', size=(15, 1)), sg.Input(ke
           [sg.TabGroup([[sg.Tab('Operação', tabOperation), sg.Tab('Lista operações', tabLista), sg.Tab('Montar estrutura de arquivos', tabMoverImagens)]])],
           [sg.ProgressBar(100, orientation='h', size=(45, 5), key='-PROGRESSBAR-')]]
 
+print("DEBUG: Window.py - Layout defined, creating window...")
 # Create the Window
 window = sg.Window('Manga Text Extractor', layout)
+print("DEBUG: Window.py - Window created")
 PROGRESS = window['-PROGRESSBAR-']
 LOGMEMO = window['-OUTPUT-']
 OPERATION = None
@@ -400,16 +408,22 @@ def findLastVolume(base, manga, language):
 
 
 def main():
-    print("\n" + "Numbers of GPUs available: " + str(len(tf.config.list_physical_devices('GPU'))))
-    if False : # Forçar não funciona, basta remover a pasta CUDNN_PATH do path ou apontar para uma pasta não localizada.
-        os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-    else:
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+    # Check GPU availability only when starting, and handle errors gracefully
+    try:
+        import tensorflow as tf
+        print("\n" + "Numbers of GPUs available: " + str(len(tf.config.list_physical_devices('GPU'))))
+        if False : # Forçar não funciona, basta remover a pasta CUDNN_PATH do path ou apontar para uma pasta não localizada.
+            os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+        else:
+            os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-    if tf.test.gpu_device_name():
-        print("\n" +'Enabled use GPU.')
-    else:
-        print("\n" +"Disabled use GPU.")
+        if tf.test.gpu_device_name():
+            print("\n" +'Enabled use GPU.')
+        else:
+            print("\n" +"Disabled use GPU.")
+    except Exception as e:
+        print(f"\nWarning: TensorFlow could not be initialized. GPU features will be disabled. Error: {e}")
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
      
     if ISTEST:
         teste()

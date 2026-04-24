@@ -3,10 +3,9 @@ originalWorkingPath = os.getcwd()
 import sys
 # sys.path.append("./lib_/SickZil-Machine/src/")
 # Adjusted to look from project root
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../lib/SickZil-Machine/src/")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../lib/SickZil-Machine/src/")))
 
-import tensorflow as tf
-import core
+# # import core moved to class/methods
 import imgio
 import utils.fp as fp
 import cv2
@@ -23,6 +22,7 @@ from manga_extractor.modules.furigana import RemoveFurigana
 
 class TextSegmenation():
     def __init__(self, operation):
+        import core
         pass
         self.operation = operation
         # tf.reset_default_graph
