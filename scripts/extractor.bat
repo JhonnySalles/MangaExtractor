@@ -1,3 +1,5 @@
+@echo off
 chcp 65001
 cd /d "%~dp0\.."
-py -3.9 -m src.manga_extractor.main
+.\.venv\Scripts\python.exe src/manga_extractor/main.py
+if %errorlevel% neq 0 pause

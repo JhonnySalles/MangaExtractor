@@ -1,42 +1,19 @@
 import sys
-print("DEBUG: Processor.py - Starting imports...")
-sys.stdout.flush()
 import os
-print("DEBUG: os imported")
-sys.stdout.flush()
 import shutil
-print("DEBUG: shutil imported")
-sys.stdout.flush()
 from PIL import Image
-print("DEBUG: PIL imported")
-sys.stdout.flush()
 from numpy.lib.function_base import append
-print("DEBUG: numpy.append imported")
-sys.stdout.flush()
 import hashlib
-print("DEBUG: hashlib imported")
-sys.stdout.flush()
-print("DEBUG: Processor.py - Basic modules imported")
-sys.stdout.flush()
 from manga_extractor.modules.segmentation import TextSegmenation
-print("DEBUG: Processor.py - segmentation imported")
-sys.stdout.flush()
 from manga_extractor.modules.detection import TextDetection
-print("DEBUG: Processor.py - detection imported")
-sys.stdout.flush()
 from manga_extractor.modules.ocr import TextOcr
-print("DEBUG: Processor.py - ocr imported")
-sys.stdout.flush()
 from manga_extractor.core.classes import PrintLog, Page, Chapter, Cover
 from termcolor import colored
-# from manga_extractor.database.db_util import saveData moved to methods
 from manga_extractor.modules.furigana import RemoveFurigana
-print("DEBUG: Processor.py - furigana imported")
 from manga_extractor.utils.helpers import printLog
 import re
 from unidecode import unidecode
 import manga_extractor.core.globals as globals
-print("DEBUG: Processor.py - All modules imported")
 
 
 def getDirectoryName(directory):
@@ -270,7 +247,7 @@ class ImageProcess:
             print("Iniciado o processamento....")
 
 
-        processedFolder = self.folder + '\concluido'
+        processedFolder = os.path.join(self.folder, 'concluido')
         if not os.path.exists(processedFolder):
             os.mkdir(processedFolder)
 
