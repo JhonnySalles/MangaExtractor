@@ -11,7 +11,8 @@ from unidecode import unidecode
 from termcolor import colored
 import manga_extractor.core.globals as globals
 from manga_extractor.database.db_util import findTable
-import traceback
+from manga_extractor.core.hardware import HardwareManager
+import manga_extractor.core.defaults as defaults
 
 # Simular um teste sem abrir a janela
 ISTEST = False
@@ -194,25 +195,30 @@ def load(values):
     return OPERATION
 
 
-def process(operation):
+def process(operation, hardware):
     db = BdUtil(operation)
     operation.base = db.createTable(operation.base)
 
-    process = ImageProcess(operation)
+    if defaults.PARALLEL_PROCESSING:
+        from manga_extractor.core.parallel_processor import ParallelImageProcess
+        process = ParallelImageProcess(operation, hardware)
+    else:
+        process = ImageProcess(operation)
+        
     process.processImages()
 
 
-def thread_process(operation, window):
+def thread_process(operation, window, hardware):
     globals.CANCEL_OPERATION = False
     try:
-        process(operation)
+        process(operation, hardware)
         window.write_event_value('-THREAD_END-', 'Processamento concluído com sucesso. \nManga: ' + operation.nameManga)
     except Exception as e:
         print(e)
         window.write_event_value('-THREAD_ERROR-', str(e))
 
 
-def thread_list_process(operationList, window):
+def thread_list_process(operationList, window, hardware):
     globals.CANCEL_OPERATION = False
     mangas = ''
 
@@ -233,7 +239,7 @@ def thread_list_process(operationList, window):
                 print(colored("Inicio do processo do manga " + OPERATION.nameManga + " da lista de operações.", 'magenta', attrs=['reverse', 'blink']))
                 print(colored('Inicio do processo: ' + initialMangaTime.strftime("%H:%M:%S"), 'yellow', attrs=['reverse', 'blink']))
 
-            process(OPERATION)
+            process(OPERATION, hardware)
 
             if not globals.CANCEL_OPERATION:
                 mangas += OPERATION.nameManga + ', '
@@ -396,22 +402,8 @@ def findLastVolume(base, manga, language):
 
 
 def main():
-    # Check GPU availability only when starting, and handle errors gracefully
-    try:
-        import tensorflow as tf
-        print("\n" + "Numbers of GPUs available: " + str(len(tf.config.list_physical_devices('GPU'))))
-        if False : # Forçar não funciona, basta remover a pasta CUDNN_PATH do path ou apontar para uma pasta não localizada.
-            os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-        else:
-            os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-
-        if tf.test.gpu_device_name():
-            print("\n" +'Enabled use GPU.')
-        else:
-            print("\n" +"Disabled use GPU.")
-    except Exception as e:
-        print(f"\nWarning: TensorFlow could not be initialized. GPU features will be disabled. Error: {e}")
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+    # Hardware management initialization
+    hardware = HardwareManager(mode=defaults.PROCESSING_MODE, window=window)
      
     if ISTEST:
         teste()
@@ -481,14 +473,14 @@ def main():
                         initialTime = datetime.now()
                         LOGMEMO.Update('')
                         printLog(PrintLog('Inicio do processo: ' + initialTime.strftime("%H:%M:%S"), 'yellow', logMemo=LOGMEMO, directory=os.path.abspath('')))
-                        threading.Thread(target=thread_list_process,args=(listOperations, window),daemon=True).start()
+                        threading.Thread(target=thread_list_process,args=(listOperations, window, hardware),daemon=True).start()
                 elif validateFields(values):
                     disableButtons("OPERAÇÃO")
                     initialTime = datetime.now()
                     LOGMEMO.Update('')
                     OPERATION = load(values)
                     printLog(PrintLog('Inicio do processo: ' + initialTime.strftime("%H:%M:%S"), 'yellow', logMemo=LOGMEMO, directory=OPERATION.directory))
-                    threading.Thread(target=thread_process,args=(OPERATION, window),daemon=True).start()
+                    threading.Thread(target=thread_process,args=(OPERATION, window, hardware),daemon=True).start()
             elif event == '-THREAD_AVISO-':
                 alert(values[event])
             elif event == '-THREAD_LOG-':

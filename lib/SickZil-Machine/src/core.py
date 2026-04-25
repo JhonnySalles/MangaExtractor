@@ -9,9 +9,14 @@ import numpy as np
 import utils.imutils as iu
 import utils.fp as fp
 
+import threading
+
 config = tf.compat.v1.ConfigProto()
 config.gpu_options.allow_growth = True
 graph = tf.Graph()
+
+# Lock global para a sessão TF (serializa acessos à GPU)
+_session_lock = threading.Lock()
 
 seg_limit = 4000000 # dev-machine: state, and init with user info...
 compl_limit = 657666 #  then.. what is the optimal size?
@@ -107,13 +112,14 @@ def segmap(image):
         def snet(img): 
             return sess.run(snet_out, feed_dict={snet_in:img})
 
-        return fp.go(
-            image,
-            iu.channel3img, iu.float32, # preprocess
-            assert_img_range,
-            lambda img: segment(snet,img),
-            iu.map_max_row, decategorize, iu.uint8, # postprocess
-        )
+        with _session_lock:
+            return fp.go(
+                image,
+                iu.channel3img, iu.float32, # preprocess
+                assert_img_range,
+                lambda img: segment(snet,img),
+                iu.map_max_row, decategorize, iu.uint8, # postprocess
+            )
 #----------------------------------------------------------------
 # Completion Network
 def inpaint_or_oom(complnet, image, segmap):
@@ -184,9 +190,10 @@ def inpainted(image, segmap):
     with sess.as_default():
         cnet_in  = consts.cnet_in('0.1.0',sess)
         cnet_out = consts.cnet_out('0.1.0',sess)
-        return inpaint(
-            lambda img:sess.run(
-                cnet_out, feed_dict={cnet_in:img}
-            ), 
-            image, segmap
-        )
+        with _session_lock:
+            return inpaint(
+                lambda img:sess.run(
+                    cnet_out, feed_dict={cnet_in:img}
+                ), 
+                image, segmap
+            )

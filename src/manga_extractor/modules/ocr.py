@@ -2,6 +2,7 @@ import os
 import cv2
 import re
 import subprocess
+import threading
 from manga_extractor.core.classes import Text, PrintLog
 from PIL import Image
 import pytesseract
@@ -47,8 +48,9 @@ class TextOcr():
 
 
     def getTextWindowOcr(self, img):
-        inputFile = "lib/input.jpg"
-        outputFile = 'lib/output.txt'
+        thread_id = threading.current_thread().ident
+        inputFile = f"lib/input_{thread_id}.jpg"
+        outputFile = f'lib/output_{thread_id}.txt'
         cv2.imwrite(inputFile, img)
         p = subprocess.Popen(('./lib/winocr/winocr.exe'))
         p.wait()
@@ -80,7 +82,8 @@ class TextOcr():
         return False
 
     def getTextTesseractOcr(self, img, folder):
-        inputFile = folder + "input.jpg"
+        thread_id = threading.current_thread().ident
+        inputFile = folder + f"input_{thread_id}.jpg"
         cv2.imwrite(inputFile, img)
         pytesseract.pytesseract.tesseract_cmd = self.tesseractLocation
 
@@ -88,6 +91,9 @@ class TextOcr():
             text = pytesseract.image_to_string(Image.open(inputFile), config=self.tesseractConfig)
         else:
             text = pytesseract.image_to_string(Image.open(inputFile))
+        
+        if os.path.exists(inputFile):
+            os.remove(inputFile)
 
         text = self.filterText(text)
         return text

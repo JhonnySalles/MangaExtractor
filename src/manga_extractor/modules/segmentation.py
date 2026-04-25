@@ -42,19 +42,21 @@ class TextSegmenation():
             cv2.imwrite(imgPath, img)
 
     def segmentPage(self, imgPath, outputInpaintedPath, outputTextOnlyPath):
-        with tf.device('/gpu:0'):  # Força a utilização da gpu
-            # self.resize(imgPath)        #because of sickzil has poor quality on high resolution image
+        # self.resize(imgPath)        #because of sickzil has poor quality on high resolution image
 
-            # Processamento do Sickzil
-            fileName = os.path.basename(imgPath)
-            oriImage = imgio.load(imgPath, imgio.IMAGE)  # ori image
-            maskImage = imgio.mask2segmap(self.imgpath2mask(imgPath))  # mask image
-            # inpaintedImage = self.core.inpainted(oriImage, maskImage)        #notext image
-            textOnlyImage = cv2.bitwise_and(
-                oriImage, maskImage)  # text only image
-            textOnlyImage[maskImage == 0] = 255
-            #imgio.save(outputInpaintedPath+fileName, inpaintedImage)
-            imgio.save(outputTextOnlyPath+fileName, textOnlyImage)
+        # Processamento do Sickzil
+        fileName = os.path.basename(imgPath)
+        oriImage = imgio.load(imgPath, imgio.IMAGE)  # ori image
+        
+        # O lock agora é gerenciado internamente no core.segmap (via refatoração do core.py)
+        # ou se necessário, podemos reforçar aqui
+        maskImage = imgio.mask2segmap(self.imgpath2mask(imgPath))  # mask image
+        # inpaintedImage = self.core.inpainted(oriImage, maskImage)        #notext image
+        textOnlyImage = cv2.bitwise_and(
+            oriImage, maskImage)  # text only image
+        textOnlyImage[maskImage == 0] = 255
+        #imgio.save(outputInpaintedPath+fileName, inpaintedImage)
+        imgio.save(outputTextOnlyPath+fileName, textOnlyImage)
 
 # Tratamentos de segmentação para remoção do furigana
 ##############################################################################

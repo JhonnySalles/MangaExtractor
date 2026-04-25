@@ -54,3 +54,23 @@ def PROCESS_ITEMS():
     operation.append(Operation("base",  "nome", r'F:/teste/jar', "ja", furigana=True, isSilent=True))
 
     return operation
+
+
+####################
+##  PARALLEL PROCESSING
+###################
+# Ativa o processamento paralelo (False = fluxo sequencial original)
+PARALLEL_PROCESSING = True
+
+# Número máximo de imagens processadas simultaneamente
+# Controla a carga na CPU/GPU para evitar superaquecimento
+MAX_PARALLEL_PAGES = 4
+
+# Modo de processamento de hardware: 'cpu', 'gpu', 'auto'
+PROCESSING_MODE = 'auto'
+
+# Número máximo de workers para OCR (Tesseract/WinOCR)
+MAX_OCR_WORKERS = 4
+
+# Tamanho do batch para segmentação na GPU
+GPU_BATCH_SIZE = 2
