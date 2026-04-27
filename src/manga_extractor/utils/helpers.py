@@ -254,34 +254,29 @@ def segment_into_lines(img, component, min_segment_threshold=1):
     start_col = xs.start
     for col in range(xs.start, xs.stop):
         count = np.count_nonzero(img[ys.start:ys.stop, col])
-        if count <= min_segment_threshold or col == (xs.stop):
+        if count <= min_segment_threshold:
             if start_col >= 0:
                 vertical.append((slice(ys.start, ys.stop), slice(start_col, col)))
                 start_col = -1
         elif start_col < 0:
             start_col = col
+    if start_col >= 0:
+        vertical.append((slice(ys.start, ys.stop), slice(start_col, xs.stop)))
 
     # detect horizontal rows of non-zero pixels
     horizontal = []
     start_row = ys.start
     for row in range(ys.start, ys.stop):
         count = np.count_nonzero(img[row, xs.start:xs.stop])
-        if count <= min_segment_threshold or row == (ys.stop):
+        if count <= min_segment_threshold:
             if start_row >= 0:
                 horizontal.append((slice(start_row, row), slice(xs.start, xs.stop)))
                 start_row = -1
         elif start_row < 0:
             start_row = row
+    if start_row >= 0:
+        horizontal.append((slice(start_row, ys.stop), slice(xs.start, xs.stop)))
 
-    # we've now broken up the original bounding box into possible vertical
-    # and horizontal lines.
-    # We now wish to:
-    # 1) Determine if the original bounding box contains text running V or H
-    # 2) Eliminate all bounding boxes (don't return them in our output lists) that
-    #   we can't explicitly say have some "regularity" in their line width/heights
-    # 3) Eliminate all bounding boxes that can't be divided into v/h lines at all(???)
-    # also we will give possible vertical text runs preference as they're more common
-    # if len(vertical)<2 and len(horizontal)<2:continue
     return (aspect, vertical, horizontal)
 
 def draw_2d_slices(img, slices, color=(0, 0, 255), line_size=1):

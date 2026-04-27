@@ -32,9 +32,10 @@ class TextOcr():
 
     def filterText(self, inputText):
         if (self.language == "ja"):
-            caracteres = '[\\\\+/§◎*)@<>#%(&=$_\-^01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz:;«¢~「」〃ゝゞヽヾ一●▲・ヽ÷①↓®▽■◆『£〆∴∞▼™↑←]'
+            caracteres = r'[\\+/§◎*)@<>#%(&=$_\-^01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz:;«¢~「」〃ゝゞヽヾ一●▲・ヽ÷①↓®▽■◆『£〆∴∞▼™↑←]'
         else:
-            caracteres = '[\\\\+/§◎*)@<>#%(&=$_\-^«¢~「」〃ゝゞヽヾ一●▲・ヽ÷①↓®▽■◆『£〆∴∞▼™↑←]'
+            caracteres = r'[\\+/§◎*)@<>#%(&=$_\-^«¢~「」〃ゝゞヽヾ一●▲・ヽ÷①↓®▽■◆『£〆∴∞▼™↑←]'
+
 
         inputText = re.sub(caracteres, '', inputText)  # remove special cha
 
